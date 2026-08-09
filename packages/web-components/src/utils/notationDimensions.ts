@@ -484,12 +484,6 @@ export const COURTESY_CLEF_MARGIN_RIGHT_PX = STAFF_LINE_SPACING * 0.5;
 export const BRACE_WIDTH_PX = STAFF_LINE_SPACING * 2.2;
 
 /**
- * How far (px) the brace's curve bulges left at its vertical midpoint,
- * beyond its top/bottom anchor points.
- */
-export const BRACE_MID_BULGE_PX = STAFF_LINE_SPACING * 1.8;
-
-/**
  * Horizontal gap (px) between the brace's right edge and the staff barline
  * it connects to. Brace-only — bracket connectors stay flush against the
  * barline. Starting value — tune visually in Storybook.

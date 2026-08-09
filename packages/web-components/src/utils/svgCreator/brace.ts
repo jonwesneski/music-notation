@@ -1,6 +1,5 @@
 import { SVG_NS } from '../consts';
 import {
-  BRACE_MID_BULGE_PX,
   BRACE_WIDTH_PX,
   BRACKET_HOOK_REACH_PX,
   BRACKET_HOOK_RISE_PX,
@@ -9,107 +8,28 @@ import {
   BRACKET_WIDTH_PX,
 } from '../notationDimensions';
 
-// Half-width of the small gap left at the brace's mid-junction (where the
-// top and bottom halves meet) — configurable, kept deliberately thin but
-// non-zero rather than a full pinch to a point.
-const BRACE_MID_JUNCTION_WIDTH_PX = 0.5;
-
-// Control-point offset that bulges each half's outline outward around its
-// own midpoint. Per the cubic-bezier identity offset(t) = 3d*t*(1-t) (both
-// control points offset by d, endpoints near 0), the resulting peak is
-// ~0.75 of this value — tune visually as usual.
-const BRACE_HUMP_WIDTH_PX = 2;
-
-// Half-width of the small gap left at the very top/bottom tips, so they
-// read as a little thicker than a true point — configurable, same amount
-// at both tips.
-const BRACE_TIP_WIDTH_PX = 0.4;
-
-// grand staff
-export function createBraceSvg(height: number): SVGSVGElement {
-  const svg = document.createElementNS(SVG_NS, 'svg');
-  svg.classList.add('brace');
-  svg.setAttribute('width', `${BRACE_WIDTH_PX}`);
-  svg.setAttribute('height', `${height}`);
-  svg.setAttribute('viewBox', `0 0 ${BRACE_WIDTH_PX} ${height}`);
-  svg.style.overflow = 'visible';
-
-  const topX = BRACE_WIDTH_PX;
-  const topY = 0;
-  const bottomX = BRACE_WIDTH_PX;
-  const bottomY = height;
-  const midX = BRACE_WIDTH_PX - BRACE_MID_BULGE_PX;
-  const midY = height / 2;
-
-  // Off-curve control points shaping the two centerline S-curves (top->mid,
-  // mid->bottom). Reused below both to build the filled outline (offset by
-  // +/- midHalfWidth) and to place debug dots.
-  const topC1 = {
-    x: topX - BRACE_WIDTH_PX * 0.8,
-    y: topY + (midY - topY) * 0.3,
-  };
-  const topC2 = {
-    x: midX + BRACE_WIDTH_PX * 0.55,
-    y: midY - (midY - topY) * 0.2,
-  };
-  const botC1 = {
-    x: midX + BRACE_WIDTH_PX * 0.55,
-    y: midY + (bottomY - midY) * 0.2,
-  };
-  const botC2 = {
-    x: bottomX - BRACE_WIDTH_PX * 0.8,
-    y: bottomY - (bottomY - midY) * 0.3,
-  };
-
-  const path = document.createElementNS(SVG_NS, 'path');
-  path.setAttribute(
-    'd',
-    `M ${topX - BRACE_TIP_WIDTH_PX} ${topY} ` +
-      `C ${topC1.x - BRACE_HUMP_WIDTH_PX} ${topC1.y}, ` +
-      `${topC2.x - BRACE_HUMP_WIDTH_PX} ${topC2.y}, ` +
-      `${midX - BRACE_MID_JUNCTION_WIDTH_PX} ${midY} ` +
-      `C ${botC1.x - BRACE_HUMP_WIDTH_PX} ${botC1.y}, ` +
-      `${botC2.x - BRACE_HUMP_WIDTH_PX} ${botC2.y}, ` +
-      `${bottomX - BRACE_TIP_WIDTH_PX} ${bottomY} ` +
-      `L ${bottomX + BRACE_TIP_WIDTH_PX} ${bottomY} ` +
-      `C ${botC2.x + BRACE_HUMP_WIDTH_PX} ${botC2.y}, ` +
-      `${botC1.x + BRACE_HUMP_WIDTH_PX} ${botC1.y}, ` +
-      `${midX + BRACE_MID_JUNCTION_WIDTH_PX} ${midY} ` +
-      `C ${topC2.x + BRACE_HUMP_WIDTH_PX} ${topC2.y}, ` +
-      `${topC1.x + BRACE_HUMP_WIDTH_PX} ${topC1.y}, ` +
-      `${topX + BRACE_TIP_WIDTH_PX} ${topY} ` +
-      `Z`
-  );
-  path.setAttribute('fill', 'currentColor');
-  path.setAttribute('stroke', 'none');
-  svg.appendChild(path);
-
-  return svg;
-}
-
-// ─── SMuFL-derived brace (alternate renderer) ──────────────────────────────
+// ─── Brace ──────────────────────────────────────────────────────────────────
 //
-// Path data below is derived from the "brace" glyph (U+E000) in the Bravura
-// font (github.com/steinbergmedia/bravura, SIL Open Font License 1.1) — the
-// SMuFL (Standard Music Font Layout) reference font — via a one-off
-// extraction/processing script (not checked in), keeping the glyph's
-// original 20-segment cubic-bezier structure intact. The outline traces
-// both walls of the brace's curved "ribbon" (an outer wall out to each tip,
-// an inner wall back from each tip to the mid-junction pinch); every point
-// in the path — anchors and control points alike — is tagged with which of
-// those four wall arcs it belongs to, matched against its nearest
-// (by vertical position) point on the opposite wall of the same tip's
-// ribbon, and moved 25% of the way toward that match. Since both sides of
-// a matched pair move toward each other by the same fraction, the gap
-// between them (the local stroke width) shrinks to half its original
+// Path data below is derived from an engraved brace glyph outline via a
+// one-off extraction/processing script (not checked in), keeping the
+// glyph's original 20-segment cubic-bezier structure intact. The outline
+// traces both walls of the brace's curved "ribbon" (an outer wall out to
+// each tip, an inner wall back from each tip to the mid-junction pinch);
+// every point in the path — anchors and control points alike — is tagged
+// with which of those four wall arcs it belongs to, matched against its
+// nearest (by vertical position) point on the opposite wall of the same
+// tip's ribbon, and moved 25% of the way toward that match. Since both
+// sides of a matched pair move toward each other by the same fraction, the
+// gap between them (the local stroke width) shrinks to half its original
 // size — verified by sampling cross-sections at several heights (~43-48%
 // width reduction at the humps, converging naturally to ~0 at the tips and
 // pinch where the two walls already meet). Finally the origin is
 // normalized so the path's own coordinate space is already
-// X ∈ [0, SMUFL_BRACE_NATURAL_WIDTH], Y ∈ [0, SMUFL_BRACE_NATURAL_HEIGHT]
+// X ∈ [0, BRACE_NATURAL_WIDTH], Y ∈ [0, BRACE_NATURAL_HEIGHT]
 // (top-left origin, Y-down) — so no translation is needed at render time,
-// only the scale below.
-const SMUFL_BRACE_PATH_D =
+// only the scale below. See CLAUDE.md's "Grand Staff / Part Connectors"
+// section for provenance details.
+const BRACE_PATH_D =
   'M 6.25 504 ' +
   'C 30.5 477.5, 60 406, 60 346 ' +
   'C 60 342.25, 60 337.75, 59.25 334 ' +
@@ -133,40 +53,39 @@ const SMUFL_BRACE_PATH_D =
   'C 60 591, 28 517.5, 6.25 504 Z';
 
 /** Full width (units) of the thinned+normalized glyph outline's bounding box. */
-const SMUFL_BRACE_NATURAL_WIDTH = 60.75;
+const BRACE_NATURAL_WIDTH = 60.75;
 
 /**
  * Full height (units) of the thinned+normalized glyph outline's bounding
- * box — its default/natural size. SMuFL specifies that the brace glyph is
- * meant to be scaled disproportionately (Y independent of X) to fit
- * whatever gap the connected staves need, which is what createSmuflBraceSvg
- * does below.
+ * box — its default/natural size. The source glyph is meant to be scaled
+ * disproportionately (Y independent of X) to fit whatever gap the connected
+ * staves need, which is what createBraceSvg does below.
  */
-const SMUFL_BRACE_NATURAL_HEIGHT = 997;
+const BRACE_NATURAL_HEIGHT = 997;
 
 /**
- * Alternate brace renderer built from a SMuFL glyph outline (see
- * SMUFL_BRACE_PATH_D above) instead of hand-computed bezier curves. Same
- * signature and right-edge-at-x=BRACE_WIDTH_PX positioning contract as
- * createBraceSvg, so the two are directly interchangeable for comparison.
+ * Brace renderer built from an engraved glyph outline (see BRACE_PATH_D
+ * above; provenance in CLAUDE.md). Right edge sits at x=BRACE_WIDTH_PX,
+ * matching the positioning convention used by the other connector
+ * renderers below.
  */
-export function createSmuflBraceSvg(height: number): SVGSVGElement {
+export function createBraceSvg(height: number): SVGSVGElement {
   const svg = document.createElementNS(SVG_NS, 'svg');
-  svg.classList.add('brace', 'brace--smufl');
+  svg.classList.add('brace');
   svg.setAttribute('width', `${BRACE_WIDTH_PX}`);
   svg.setAttribute('height', `${height}`);
   svg.setAttribute('viewBox', `0 0 ${BRACE_WIDTH_PX} ${height}`);
   svg.style.overflow = 'visible';
 
   // Width scales by a fixed factor regardless of height (disproportionate
-  // scaling — see SMUFL_BRACE_NATURAL_HEIGHT comment); height scales to
+  // scaling — see BRACE_NATURAL_HEIGHT comment); height scales to
   // exactly fill the requested span. The path's own coordinates already
   // start at (0, 0), so scale is the only transform needed.
-  const scaleX = BRACE_WIDTH_PX / SMUFL_BRACE_NATURAL_WIDTH;
-  const scaleY = height / SMUFL_BRACE_NATURAL_HEIGHT;
+  const scaleX = BRACE_WIDTH_PX / BRACE_NATURAL_WIDTH;
+  const scaleY = height / BRACE_NATURAL_HEIGHT;
 
   const path = document.createElementNS(SVG_NS, 'path');
-  path.setAttribute('d', SMUFL_BRACE_PATH_D);
+  path.setAttribute('d', BRACE_PATH_D);
   path.setAttribute('transform', `scale(${scaleX}, ${scaleY})`);
   path.setAttribute('fill', 'currentColor');
   path.setAttribute('stroke', 'none');
@@ -180,9 +99,9 @@ export function createSmuflBraceSvg(height: number): SVGSVGElement {
  * choir pair) — a thick vertical stem with a small curled hook flourish at
  * each end: curling up-and-right at the top, down-and-right at the bottom
  * (vertical mirror images of each other). Rendered as a single filled
- * closed path, the same approach as createBraceSvg above. Positioned the
- * same way createBraceSvg is: right edge (x=BRACKET_WIDTH_PX) sits just
- * left of the staves' plain barline connector.
+ * closed path. Positioned the same way the brace renderers above are: right
+ * edge (x=BRACKET_WIDTH_PX) sits just left of the staves' plain barline
+ * connector.
  */
 export function createBracketSvg(height: number): SVGSVGElement {
   const svg = document.createElementNS(SVG_NS, 'svg');
