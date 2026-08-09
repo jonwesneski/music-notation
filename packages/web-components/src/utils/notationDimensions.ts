@@ -485,45 +485,58 @@ export const BRACE_WIDTH_PX = STAFF_LINE_SPACING * 2.2;
 
 /**
  * Horizontal gap (px) between the brace's right edge and the staff barline
- * it connects to. Brace-only — bracket connectors stay flush against the
- * barline. Starting value — tune visually in Storybook.
+ * it connects to. Starting value — tune visually in Storybook.
  */
 export const BRACE_STAFF_GAP_PX = STAFF_LINE_SPACING * 0.3;
 
 /**
+ * Horizontal overlap (px) the bracket's hook tip is pulled past the staff
+ * barline it connects to (i.e. a negative gap) — the hook's own curl already
+ * holds its stem well clear of the staff, so pulling the tip slightly past
+ * the barline brings the visually-dominant stem closer without touching the
+ * hook glyph's own shape. Starting value — tune visually in Storybook.
+ */
+export const BRACKET_STAFF_GAP_PX = STAFF_LINE_SPACING * 1;
+
+/**
+ * Horizontal gap (px) reserved to the left of a bracket connector's stem,
+ * so it doesn't sit flush against the container/page edge. Starting value —
+ * tune visually in Storybook.
+ */
+export const BRACKET_LEFT_MARGIN_PX = STAFF_LINE_SPACING * 0.5;
+
+/**
  * Horizontal depth (px) a bracket connector extends left of the staves it
- * joins — shallower than a brace, since it's just a stem + hooks. Wide
- * enough that its end hooks read as visually distinct from the adjacent
- * plain barline connector.
+ * joins: the natural width of the engraved hook glyphs it's built from (see
+ * `utils/svgCreator/brace.ts`) plus `BRACKET_LEFT_MARGIN_PX`. Combined with
+ * `BRACKET_STAFF_GAP_PX` (see `measure.ts`'s `#renderGroupConnectors`), the
+ * hook's outermost tip lands slightly past the staves' plain barline
+ * connector, while the stem gets breathing room on its other side.
  */
-export const BRACKET_WIDTH_PX = STAFF_LINE_SPACING * 1.4;
+export const BRACKET_WIDTH_PX =
+  STAFF_LINE_SPACING * 1.876 + BRACKET_LEFT_MARGIN_PX;
 
 /**
- * Half-width (px) of a bracket connector's stem. The stem is drawn as a
- * filled path with two parallel vertical edges straddling its centerline
- * rather than a stroked line, so this directly sets the visible stem
- * thickness (2x this value).
+ * Additional upward shift (px) applied to a bracket connector's top (and,
+ * since its height is unchanged, its bottom follows automatically) beyond
+ * the shared CONNECTOR_TOP_PX baseline used by the barline/brace — a
+ * bracket's hook needs to curl clearly above/below the staves it groups,
+ * not just blend into the top/bottom staff line. Brace-only connectors are
+ * unaffected. Starting value — tune visually in Storybook.
  */
-export const BRACKET_STEM_HALF_WIDTH_PX = STAFF_LINE_SPACING * 0.2;
+export const BRACKET_TOP_OFFSET_PX = STAFF_LINE_SPACING * 0.5;
 
 /**
- * Horizontal reach (px) of the curled hook at each end of a bracket
- * connector, measured from the stem's centerline to the hook's outermost
- * tip.
+ * Extra height (px) added to a bracket connector's overall span, split
+ * evenly between the top and bottom shift — on top of BRACKET_TOP_OFFSET_PX
+ * — so both hooks clear their staff lines by a bit more margin. Brace-only
+ * connectors are unaffected. Starting value — tune visually in Storybook.
  */
-export const BRACKET_HOOK_REACH_PX = STAFF_LINE_SPACING * 0.9;
+export const BRACKET_EXTRA_HEIGHT_PX = STAFF_LINE_SPACING * 0.5;
 
 /**
- * Vertical rise (px) of a bracket connector's hook flourish — how far its
- * peak extends beyond the stem's end (above the top, below the bottom)
- * before curving back in to the tip. Starting value — tune visually in
- * Storybook.
+ * Thickness (px) of a bracket connector's straight stem, drawn as a plain
+ * filled rectangle between its top and bottom hook glyphs. Sourced from the
+ * reference engraving font's bracket stem thickness (0.5 staff-spaces).
  */
-export const BRACKET_HOOK_RISE_PX = STAFF_LINE_SPACING * 0.5;
-
-/**
- * Half-width (px) of the small flat segment at the very tip of a bracket
- * connector's hook flourish, so the curl reads as a short thick edge
- * rather than tapering to a sharp point.
- */
-export const BRACKET_TIP_WIDTH_PX = STAFF_LINE_SPACING * 0.1;
+export const BRACKET_STEM_THICKNESS_PX = STAFF_LINE_SPACING * 0.5;

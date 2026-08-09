@@ -1,9 +1,9 @@
-import { resolveStaffGroupPairs } from '../rules/staffGroupRules';
+import { resolveStaffGroups } from '../rules/staffGroupRules';
 import { minWidthToFlexGrow } from '../rules/staffWidth';
 import { StaffGroupType } from '../types/theory';
 import {
+  createBraceSvg,
   createBracketSvg,
-  createSmuflBraceSvg,
   isStaffNodeName,
   MUSIC_COMPOSITION,
   STAFF_EVENTS,
@@ -11,6 +11,9 @@ import {
 import {
   BRACE_STAFF_GAP_PX,
   BRACE_WIDTH_PX,
+  BRACKET_EXTRA_HEIGHT_PX,
+  BRACKET_STAFF_GAP_PX,
+  BRACKET_TOP_OFFSET_PX,
   BRACKET_WIDTH_PX,
   EMPTY_MEASURE_FLEX_BASIS_PX,
   STAFF_BOTTOM_MARGIN,
@@ -239,11 +242,12 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
       }
     }
 
-    // A staff with a `group` attribute pairs implicitly with its immediate
-    // next sibling — no shared name needed, membership is purely positional.
-    // Pairing/validation is a pure function (rules/staffGroupRules.ts) so it
-    // stays independently testable; this method only turns the resolved
-    // pairs into positioned SVG glyphs.
+    // A staff with a `group` attribute joins a brace/bracket connector with
+    // other staves — implicitly via position (pairs with its immediate next
+    // sibling) or, for brackets spanning more than 2 staves, explicitly via
+    // a shared `group-id`. Resolution/validation is a pure function
+    // (rules/staffGroupRules.ts) so it stays independently testable; this
+    // method only turns the resolved spans into positioned SVG glyphs.
     #renderGroupConnectors() {
       const container =
         this.shadowRoot?.querySelector<HTMLElement>('.group-connectors');
@@ -257,27 +261,40 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
 
       const staves = Array.from(this.children).filter((el) =>
         isStaffNodeName(el.nodeName)
-      ) as (HTMLElement & { group?: StaffGroupType | null })[];
+      ) as (HTMLElement & {
+        group?: StaffGroupType | null;
+        groupId?: string | null;
+      })[];
 
-      const { pairs, warnings } = resolveStaffGroupPairs(
-        staves.map((staff) => staff.group ?? null)
+      const { groups, warnings } = resolveStaffGroups(
+        staves.map((staff) => ({
+          group: staff.group ?? null,
+          groupId: staff.groupId ?? null,
+        }))
       );
       for (const warning of warnings) {
         console.warn(`[music-measure] ${warning}`);
       }
 
-      for (const { index, group } of pairs) {
-        const pairHeight = STAFF_SLOT_HEIGHT_PX * 2 + STAFF_SLOT_GAP_PX;
+      for (const { index, count, group } of groups) {
+        const isGrandStaff = group === 'grand';
+        const bracketExtraHeight = isGrandStaff
+          ? 0
+          : BRACKET_EXTRA_HEIGHT_PX / 2;
+        const spanHeight =
+          STAFF_SLOT_HEIGHT_PX * count +
+          STAFF_SLOT_GAP_PX * (count - 1) +
+          bracketExtraHeight;
         const topOffset =
-          CONNECTOR_TOP_PX + index * (STAFF_SLOT_HEIGHT_PX + STAFF_SLOT_GAP_PX);
+          CONNECTOR_TOP_PX +
+          index * (STAFF_SLOT_HEIGHT_PX + STAFF_SLOT_GAP_PX) -
+          (isGrandStaff ? 0 : BRACKET_TOP_OFFSET_PX + bracketExtraHeight);
 
-        const glyph =
-          group === 'grand'
-            ? createSmuflBraceSvg(pairHeight)
-            : createBracketSvg(pairHeight);
-        const glyphWidth =
-          group === 'grand' ? BRACE_WIDTH_PX : BRACKET_WIDTH_PX;
-        const gap = group === 'grand' ? BRACE_STAFF_GAP_PX : 0;
+        const glyph = isGrandStaff
+          ? createBraceSvg(spanHeight)
+          : createBracketSvg(spanHeight);
+        const glyphWidth = isGrandStaff ? BRACE_WIDTH_PX : BRACKET_WIDTH_PX;
+        const gap = isGrandStaff ? BRACE_STAFF_GAP_PX : -BRACKET_STAFF_GAP_PX;
         glyph.style.left = `${-(glyphWidth + gap)}px`;
         glyph.style.top = `${topOffset}px`;
         container.appendChild(glyph);

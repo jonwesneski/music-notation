@@ -69,6 +69,23 @@ export abstract class StaffElementBase extends _MaybeHTMLElement {
     }
   }
 
+  // Shared identifier joining this staff with other `group="bracket"`
+  // staves into one multi-staff bracket connector (e.g. a 4-staff SATB
+  // choir) — see `rules/staffGroupRules.ts`. Meaningless on `group="grand"`
+  // staves, which always pair with just their immediate next sibling.
+  // Plain string passthrough, same non-reactive rationale as `group` above.
+  get groupId(): string | null {
+    return this.getAttribute('group-id');
+  }
+
+  set groupId(value: string | null) {
+    if (value === null) {
+      this.removeAttribute('group-id');
+    } else {
+      this.setAttribute('group-id', value);
+    }
+  }
+
   protected render() {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- contructor creates it
     this.shadowRoot!.innerHTML = `

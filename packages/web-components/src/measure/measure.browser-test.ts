@@ -413,6 +413,92 @@ test.describe(`${MUSIC_MEASURE} group connectors`, () => {
     expect(glyphs).toHaveLength(0);
   });
 
+  test("a bracket's hook tip sits past the barline, closer than the old flush position", async ({
+    page,
+  }) => {
+    await buildMeasureWithStaves(page, ['bracket', null]);
+    const rects = await page.evaluate((measureTag) => {
+      const measure = document.querySelector(measureTag);
+      const shadow = measure?.shadowRoot;
+      const bracket = shadow?.querySelector('.group-connectors svg.bracket');
+      const stem = bracket?.querySelector('rect');
+      const barline = shadow?.querySelector<HTMLElement>('.staff-connector');
+      return {
+        bracketRight: bracket?.getBoundingClientRect().right ?? null,
+        stemRight: stem?.getBoundingClientRect().right ?? null,
+        barlineLeft: barline?.getBoundingClientRect().left ?? null,
+      };
+    }, MUSIC_MEASURE);
+
+    expect(rects.bracketRight).not.toBeNull();
+    expect(rects.stemRight).not.toBeNull();
+    expect(rects.barlineLeft).not.toBeNull();
+
+    // The hook tip now overlaps slightly past the barline instead of
+    // landing exactly flush against it.
+    expect(rects.bracketRight as number).toBeGreaterThan(
+      rects.barlineLeft as number
+    );
+    // The stem (the visually-dominant straight part) sits well within the
+    // old ~13.76-18.76px flush-position gap, not right at its outer edge.
+    expect(
+      (rects.barlineLeft as number) - (rects.stemRight as number)
+    ).toBeLessThan(14);
+  });
+
+  test("a bracket's top/bottom hooks clear the first/last staff lines instead of sitting level with them", async ({
+    page,
+  }) => {
+    await buildMeasureWithStaves(page, ['bracket', null]);
+    const rects = await page.evaluate(
+      ({ measureTag, staffTag }) => {
+        const measure = document.querySelector(measureTag);
+        const shadow = measure?.shadowRoot;
+        const bracket = shadow?.querySelector('.group-connectors svg.bracket');
+        // The SVG's own getBoundingClientRect() reflects its declared
+        // width/height box, not the hook paths' painted ink that overflows
+        // it (top hook draws above y=0, bottom hook below y=height) — read
+        // the actual top/bottom hook <path> elements instead.
+        const hookPaths = bracket?.querySelectorAll('path') ?? [];
+        const topHook = hookPaths[0];
+        const bottomHook = hookPaths[hookPaths.length - 1];
+        const staffContainers = Array.from(
+          measure?.querySelectorAll(staffTag) ?? []
+        )
+          .map((staff) =>
+            staff.shadowRoot?.querySelector<HTMLElement>('.staff-container')
+          )
+          .filter((el): el is HTMLElement => el !== null && el !== undefined);
+        const firstStaffLine = staffContainers[0];
+        const lastStaffLine = staffContainers[staffContainers.length - 1];
+        return {
+          hookTop: topHook?.getBoundingClientRect().top ?? null,
+          hookBottom: bottomHook?.getBoundingClientRect().bottom ?? null,
+          firstStaffLineTop:
+            firstStaffLine?.getBoundingClientRect().top ?? null,
+          lastStaffLineBottom:
+            lastStaffLine?.getBoundingClientRect().bottom ?? null,
+        };
+      },
+      { measureTag: MUSIC_MEASURE, staffTag: MUSIC_STAFF }
+    );
+
+    expect(rects.hookTop).not.toBeNull();
+    expect(rects.hookBottom).not.toBeNull();
+    expect(rects.firstStaffLineTop).not.toBeNull();
+    expect(rects.lastStaffLineBottom).not.toBeNull();
+
+    // The bracket's top hook must clear the first staff's top line by a
+    // visible margin, not just barely graze it.
+    expect(rects.firstStaffLineTop as number).toBeGreaterThan(
+      (rects.hookTop as number) + 2
+    );
+    // Symmetrically, the bottom hook must clear the last staff's bottom line.
+    expect(rects.hookBottom as number).toBeGreaterThan(
+      (rects.lastStaffLineBottom as number) + 2
+    );
+  });
+
   test('a grand-staff pair connector height matches its 2 staves, not the whole measure', async ({
     page,
   }) => {

@@ -1,10 +1,8 @@
 import { SVG_NS } from '../consts';
 import {
   BRACE_WIDTH_PX,
-  BRACKET_HOOK_REACH_PX,
-  BRACKET_HOOK_RISE_PX,
-  BRACKET_STEM_HALF_WIDTH_PX,
-  BRACKET_TIP_WIDTH_PX,
+  BRACKET_LEFT_MARGIN_PX,
+  BRACKET_STEM_THICKNESS_PX,
   BRACKET_WIDTH_PX,
 } from '../notationDimensions';
 
@@ -94,14 +92,172 @@ export function createBraceSvg(height: number): SVGSVGElement {
   return svg;
 }
 
+// ─── Bracket ────────────────────────────────────────────────────────────────
+//
+// A bracket is a straight stem with a curled hook flourish at each end.
+// Unlike the brace above, that hook must never stretch — real engraving
+// keeps it a fixed size no matter how many staves the bracket spans; only
+// the straight stem between the hooks gets longer. So rather than one glyph
+// scaled to fit, this is built from two independent, fixed-size hook
+// outlines (traced from an engraved reference glyph, one per end, each
+// already normalized to this file's px coordinate scale) plus a stem
+// rectangle sized to whatever span is requested.
+//
+// Both hooks share one outline shape (mirror images of each other), traced
+// with its own top-left origin, X ∈ [0, 18.76], Y ∈ [0, 11.8]. Within that
+// shape, X ∈ [0, 5] (matching the stem's own thickness) is the flat edge
+// that meets the stem; the curled tip reaches out toward X=18.76. For the
+// top hook, that meeting edge must land at Y=0 (flush with the stem's own
+// top) with the tip curling out to Y=-11.8 (up and away) — i.e. the outline
+// is *mirrored* (Y negated), not shifted, relative to its natural Y ∈
+// [0, 11.8]. BRACKET_TOP_PATH_D below is that mirrored outline, with
+// BRACKET_LEFT_MARGIN_PX also added to every X so the whole hook (and the
+// stem it caps) sits with a bit of breathing room left of the connector's
+// own bounding box. The bottom hook needs the same mirroring, but can't be
+// pre-computed the same way since how far down it sits depends on the
+// requested height, so it's kept as per-point (x, y) data and re-serialized
+// into a `d` string with that mirror + offset applied at call time — see
+// `bracketBottomPathD` — rather than repositioned with a `transform`.
+const BRACKET_TOP_PATH_D =
+  `M ${0 + BRACKET_LEFT_MARGIN_PX} 0 L ${5 + BRACKET_LEFT_MARGIN_PX} 0 ` +
+  `C ${11.4 + BRACKET_LEFT_MARGIN_PX} -1.2, ${
+    17.12 + BRACKET_LEFT_MARGIN_PX
+  } -4.16, ${18.72 + BRACKET_LEFT_MARGIN_PX} -10.84 ` +
+  `C ${18.76 + BRACKET_LEFT_MARGIN_PX} -11, ${
+    18.76 + BRACKET_LEFT_MARGIN_PX
+  } -11.12, ${18.76 + BRACKET_LEFT_MARGIN_PX} -11.24 ` +
+  `C ${18.76 + BRACKET_LEFT_MARGIN_PX} -11.56, ${
+    18.64 + BRACKET_LEFT_MARGIN_PX
+  } -11.72, ${18.44 + BRACKET_LEFT_MARGIN_PX} -11.8 ` +
+  `C ${18.08 + BRACKET_LEFT_MARGIN_PX} -11.8, ${
+    17.64 + BRACKET_LEFT_MARGIN_PX
+  } -11.52, ${17.44 + BRACKET_LEFT_MARGIN_PX} -11.24 ` +
+  `C ${17.04 + BRACKET_LEFT_MARGIN_PX} -10.8, ${
+    12 + BRACKET_LEFT_MARGIN_PX
+  } -5.52, ${4.36 + BRACKET_LEFT_MARGIN_PX} -4.96 ` +
+  `L ${0.32 + BRACKET_LEFT_MARGIN_PX} -4.96 ` +
+  `C ${0.08 + BRACKET_LEFT_MARGIN_PX} -4.96, ${
+    0 + BRACKET_LEFT_MARGIN_PX
+  } -4.92, ${0 + BRACKET_LEFT_MARGIN_PX} -4.68 Z`;
+
+/** Full natural height (px) of a hook cap's own outline — see comment above. */
+const BRACKET_CAP_NATURAL_HEIGHT = 11.8;
+
+type PathSegment =
+  | { cmd: 'M' | 'L'; x: number; y: number }
+  | {
+      cmd: 'C';
+      x1: number;
+      y1: number;
+      x2: number;
+      y2: number;
+      x: number;
+      y: number;
+    }
+  | { cmd: 'Z' };
+
+// Natural (unmirrored) coordinates, X already shifted right by
+// BRACKET_LEFT_MARGIN_PX — Y is mirrored (and offset by the requested
+// height) at call time in bracketBottomPathD, since that part of the
+// transform genuinely depends on a runtime value.
+const BRACKET_BOTTOM_PATH_SEGMENTS: PathSegment[] = [
+  { cmd: 'M', x: 0 + BRACKET_LEFT_MARGIN_PX, y: 7.12 },
+  {
+    cmd: 'C',
+    x1: 0 + BRACKET_LEFT_MARGIN_PX,
+    y1: 6.88,
+    x2: 0.08 + BRACKET_LEFT_MARGIN_PX,
+    y2: 6.84,
+    x: 0.32 + BRACKET_LEFT_MARGIN_PX,
+    y: 6.84,
+  },
+  { cmd: 'L', x: 4.36 + BRACKET_LEFT_MARGIN_PX, y: 6.84 },
+  {
+    cmd: 'C',
+    x1: 12 + BRACKET_LEFT_MARGIN_PX,
+    y1: 6.28,
+    x2: 17.04 + BRACKET_LEFT_MARGIN_PX,
+    y2: 1,
+    x: 17.44 + BRACKET_LEFT_MARGIN_PX,
+    y: 0.56,
+  },
+  {
+    cmd: 'C',
+    x1: 17.64 + BRACKET_LEFT_MARGIN_PX,
+    y1: 0.28,
+    x2: 18.08 + BRACKET_LEFT_MARGIN_PX,
+    y2: 0,
+    x: 18.44 + BRACKET_LEFT_MARGIN_PX,
+    y: 0,
+  },
+  {
+    cmd: 'C',
+    x1: 18.64 + BRACKET_LEFT_MARGIN_PX,
+    y1: 0.08,
+    x2: 18.76 + BRACKET_LEFT_MARGIN_PX,
+    y2: 0.24,
+    x: 18.76 + BRACKET_LEFT_MARGIN_PX,
+    y: 0.56,
+  },
+  {
+    cmd: 'C',
+    x1: 18.76 + BRACKET_LEFT_MARGIN_PX,
+    y1: 0.68,
+    x2: 18.76 + BRACKET_LEFT_MARGIN_PX,
+    y2: 0.8,
+    x: 18.72 + BRACKET_LEFT_MARGIN_PX,
+    y: 0.96,
+  },
+  {
+    cmd: 'C',
+    x1: 17.12 + BRACKET_LEFT_MARGIN_PX,
+    y1: 7.64,
+    x2: 11.4 + BRACKET_LEFT_MARGIN_PX,
+    y2: 10.6,
+    x: 5 + BRACKET_LEFT_MARGIN_PX,
+    y: 11.8,
+  },
+  { cmd: 'L', x: 0 + BRACKET_LEFT_MARGIN_PX, y: 11.8 },
+  { cmd: 'Z' },
+];
+
 /**
- * A square bracket connecting independently-notated staves (e.g. an SATB
- * choir pair) — a thick vertical stem with a small curled hook flourish at
- * each end: curling up-and-right at the top, down-and-right at the bottom
- * (vertical mirror images of each other). Rendered as a single filled
- * closed path. Positioned the same way the brace renderers above are: right
- * edge (x=BRACKET_WIDTH_PX) sits just left of the staves' plain barline
- * connector.
+ * Re-serializes the bottom hook's outline mirrored (Y negated relative to
+ * its own natural height) and shifted down by `offsetY` — see the comment
+ * above BRACKET_TOP_PATH_D for why the meeting edge needs to land at
+ * `offsetY` (flush with the stem's bottom) with the tip curling out past it.
+ */
+function bracketBottomPathD(offsetY: number): string {
+  const y = (naturalY: number) =>
+    BRACKET_CAP_NATURAL_HEIGHT - naturalY + offsetY;
+  return BRACKET_BOTTOM_PATH_SEGMENTS.map((segment) => {
+    switch (segment.cmd) {
+      case 'M':
+        return `M ${segment.x} ${y(segment.y)}`;
+      case 'L':
+        return `L ${segment.x} ${y(segment.y)}`;
+      case 'C':
+        return (
+          `C ${segment.x1} ${y(segment.y1)}, ` +
+          `${segment.x2} ${y(segment.y2)}, ` +
+          `${segment.x} ${y(segment.y)}`
+        );
+      case 'Z':
+        return 'Z';
+    }
+  }).join(' ');
+}
+
+/**
+ * Bracket renderer built from the two hook outlines above plus a stem
+ * rectangle, in a local coordinate space where the hook tips sit at the
+ * right edge (x=BRACKET_WIDTH_PX) and BRACKET_LEFT_MARGIN_PX of breathing
+ * room is reserved on the left — see `measure.ts`'s `#renderGroupConnectors`
+ * for how that right edge is placed relative to the staff barline
+ * (BRACKET_STAFF_GAP_PX). No `transform` is used — the bottom hook's
+ * placement and the stem's length are both plain arithmetic on `height`, so
+ * this scales cleanly to any span (a 2-staff pair or a many-staff bracket)
+ * without distorting either hook.
  */
 export function createBracketSvg(height: number): SVGSVGElement {
   const svg = document.createElementNS(SVG_NS, 'svg');
@@ -111,49 +267,25 @@ export function createBracketSvg(height: number): SVGSVGElement {
   svg.setAttribute('viewBox', `0 0 ${BRACKET_WIDTH_PX} ${height}`);
   svg.style.overflow = 'visible';
 
-  const lineX = BRACKET_WIDTH_PX * 0.5;
-  const stemLeftX = lineX - BRACKET_STEM_HALF_WIDTH_PX;
-  const stemRightX = lineX + BRACKET_STEM_HALF_WIDTH_PX;
+  const topCap = document.createElementNS(SVG_NS, 'path');
+  topCap.setAttribute('d', BRACKET_TOP_PATH_D);
+  topCap.setAttribute('fill', 'currentColor');
+  topCap.setAttribute('stroke', 'none');
+  svg.appendChild(topCap);
 
-  const topTipX = lineX + BRACKET_HOOK_REACH_PX;
-  const topTipOuterY = -BRACKET_HOOK_RISE_PX - BRACKET_TIP_WIDTH_PX;
-  const topTipInnerY = -BRACKET_HOOK_RISE_PX + BRACKET_TIP_WIDTH_PX;
+  const stem = document.createElementNS(SVG_NS, 'rect');
+  stem.setAttribute('x', `${BRACKET_LEFT_MARGIN_PX}`);
+  stem.setAttribute('y', '0');
+  stem.setAttribute('width', `${BRACKET_STEM_THICKNESS_PX}`);
+  stem.setAttribute('height', `${height}`);
+  stem.setAttribute('fill', 'currentColor');
+  svg.appendChild(stem);
 
-  const bottomTipX = lineX + BRACKET_HOOK_REACH_PX;
-  const bottomTipOuterY = height + BRACKET_HOOK_RISE_PX + BRACKET_TIP_WIDTH_PX;
-  const bottomTipInnerY = height + BRACKET_HOOK_RISE_PX - BRACKET_TIP_WIDTH_PX;
-
-  // The outer contour departs the stem's far corner and sweeps out to the
-  // tip's more extreme point; the inner contour departs the near corner and
-  // sweeps to the tip's nearer point. Pairing longer-travel with the more
-  // extreme target (and vice versa) keeps the two contours from crossing.
-  const topOuterControl = { x: stemLeftX, y: -BRACKET_HOOK_RISE_PX };
-  const topInnerControl = { x: stemRightX, y: -BRACKET_HOOK_RISE_PX };
-  const bottomOuterControl = {
-    x: stemLeftX,
-    y: height + BRACKET_HOOK_RISE_PX,
-  };
-  const bottomInnerControl = {
-    x: stemRightX,
-    y: height + BRACKET_HOOK_RISE_PX,
-  };
-
-  const path = document.createElementNS(SVG_NS, 'path');
-  path.setAttribute(
-    'd',
-    `M ${topTipX} ${topTipOuterY} ` +
-      `Q ${topOuterControl.x} ${topOuterControl.y}, ${stemLeftX} 0 ` +
-      `L ${stemLeftX} ${height} ` +
-      `Q ${bottomOuterControl.x} ${bottomOuterControl.y}, ${bottomTipX} ${bottomTipOuterY} ` +
-      `L ${bottomTipX} ${bottomTipInnerY} ` +
-      `Q ${bottomInnerControl.x} ${bottomInnerControl.y}, ${stemRightX} ${height} ` +
-      `L ${stemRightX} 0 ` +
-      `Q ${topInnerControl.x} ${topInnerControl.y}, ${topTipX} ${topTipInnerY} ` +
-      `Z`
-  );
-  path.setAttribute('fill', 'currentColor');
-  path.setAttribute('stroke', 'none');
-  svg.appendChild(path);
+  const bottomCap = document.createElementNS(SVG_NS, 'path');
+  bottomCap.setAttribute('d', bracketBottomPathD(height));
+  bottomCap.setAttribute('fill', 'currentColor');
+  bottomCap.setAttribute('stroke', 'none');
+  svg.appendChild(bottomCap);
 
   return svg;
 }

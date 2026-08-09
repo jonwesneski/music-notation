@@ -4,10 +4,7 @@ export {
   type ArticulationMarksProps,
 } from './articulations';
 export { BeamsBuilder, type NoteYPosition } from './beams';
-export {
-  createBracketSvg,
-  createBraceSvg as createSmuflBraceSvg,
-} from './brace';
+export { createBraceSvg, createBracketSvg } from './brace';
 export { createChordSvg } from './chord';
 export {
   createCurveSvg,

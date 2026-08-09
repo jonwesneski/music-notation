@@ -185,6 +185,53 @@ export const PartBracket: Story = {
   `,
 };
 
+export const SatbChoirBracket: Story = {
+  render: () => html`
+    <music-measure number="1" keySig="C" mode="major" time="4/4">
+      <music-staff
+        clef="treble"
+        group="bracket"
+        group-id="choir"
+        keySig="C"
+        mode="major"
+        time="4/4"
+      >
+        <music-note note="C" octave="5" duration="whole"></music-note>
+      </music-staff>
+      <music-staff
+        clef="treble"
+        group="bracket"
+        group-id="choir"
+        keySig="C"
+        mode="major"
+        time="4/4"
+      >
+        <music-note note="G" octave="4" duration="whole"></music-note>
+      </music-staff>
+      <music-staff
+        clef="bass"
+        group="bracket"
+        group-id="choir"
+        keySig="C"
+        mode="major"
+        time="4/4"
+      >
+        <music-note note="E" octave="4" duration="whole"></music-note>
+      </music-staff>
+      <music-staff
+        clef="bass"
+        group="bracket"
+        group-id="choir"
+        keySig="C"
+        mode="major"
+        time="4/4"
+      >
+        <music-note note="C" octave="3" duration="whole"></music-note>
+      </music-staff>
+    </music-measure>
+  `,
+};
+
 export const WithGuitarTab: Story = {
   args: { number: 1, keySig: 'C', mode: 'major', time: '4/4' },
   render: (args) => html`
