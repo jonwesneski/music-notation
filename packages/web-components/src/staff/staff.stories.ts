@@ -351,3 +351,193 @@ export const MultipleClefChanges: Story = {
     </music-staff>
   `,
 };
+
+export const SingleMeasure: Story = {
+  args: { clef: 'treble', keySig: 'C', mode: 'major', time: '4/4' },
+  render: (args) => html`
+    <music-staff
+      clef=${args.clef}
+      keySig=${args.keySig}
+      mode=${args.mode}
+      time=${args.time}
+    >
+      <music-note note="C" duration="quarter"></music-note>
+      <music-note note="E" duration="quarter"></music-note>
+      <music-note note="G" duration="quarter"></music-note>
+      <music-note note="C" duration="quarter"></music-note>
+    </music-staff>
+  `,
+};
+
+export const WithTies: Story = {
+  args: { clef: 'treble', keySig: 'C', mode: 'major', time: '4/4' },
+  render: (args) => html`
+    <music-staff
+      clef=${args.clef}
+      keySig=${args.keySig}
+      mode=${args.mode}
+      time=${args.time}
+    >
+      <music-note
+        note="C"
+        octave="5"
+        duration="quarter"
+        tie="start"
+      ></music-note>
+      <music-note note="C" octave="5" duration="quarter" tie="end"></music-note>
+      <music-note
+        note="C"
+        octave="4"
+        duration="quarter"
+        tie="start"
+      ></music-note>
+      <music-note note="C" octave="4" duration="quarter" tie="end"></music-note>
+    </music-staff>
+  `,
+};
+
+export const WithSlurs: Story = {
+  args: { clef: 'treble', keySig: 'C', mode: 'major', time: '4/4' },
+  render: (args) => html`
+    <music-staff
+      clef=${args.clef}
+      keySig=${args.keySig}
+      mode=${args.mode}
+      time=${args.time}
+    >
+      <music-note
+        note="C"
+        octave="5"
+        duration="eighth"
+        slur="start"
+      ></music-note>
+      <music-note note="D" octave="5" duration="eighth"></music-note>
+      <music-note note="E" octave="5" duration="eighth"></music-note>
+      <music-note note="F" octave="5" duration="eighth" slur="end"></music-note>
+      <music-note
+        note="C"
+        octave="4"
+        duration="eighth"
+        slur="start"
+      ></music-note>
+      <music-note note="D" octave="4" duration="eighth"></music-note>
+      <music-note note="E" octave="4" duration="eighth"></music-note>
+      <music-note note="F" octave="4" duration="eighth" slur="end"></music-note>
+    </music-staff>
+  `,
+};
+
+export const WithNestedSlurs: Story = {
+  args: { clef: 'treble', keySig: 'C', mode: 'major', time: '4/4' },
+  render: (args) => html`
+    <music-staff
+      clef=${args.clef}
+      keySig=${args.keySig}
+      mode=${args.mode}
+      time=${args.time}
+    >
+      <music-note
+        note="C"
+        octave="5"
+        duration="eighth"
+        slur="start"
+      ></music-note>
+      <music-note
+        note="D"
+        octave="5"
+        duration="eighth"
+        slur="start"
+      ></music-note>
+      <music-note note="E" octave="5" duration="eighth"></music-note>
+      <music-note note="F" octave="5" duration="eighth" slur="end"></music-note>
+      <music-note note="G" octave="5" duration="eighth"></music-note>
+      <music-note note="A" octave="5" duration="eighth"></music-note>
+      <music-note note="B" octave="5" duration="eighth"></music-note>
+      <music-note note="C" octave="6" duration="eighth" slur="end"></music-note>
+    </music-staff>
+  `,
+};
+
+export const ChordWithPartialTie: Story = {
+  args: { clef: 'treble', keySig: 'C', mode: 'major', time: '4/4' },
+  render: (args) => html`
+    <music-staff
+      clef=${args.clef}
+      keySig=${args.keySig}
+      mode=${args.mode}
+      time=${args.time}
+    >
+      <music-chord duration="half">
+        <music-note
+          note="G"
+          octave="5"
+          duration="half"
+          tie="start"
+        ></music-note>
+        <music-note note="E" octave="5" duration="half"></music-note>
+        <music-note note="C" octave="5" duration="half"></music-note>
+      </music-chord>
+      <music-chord duration="half">
+        <music-note note="G" octave="5" duration="half" tie="end"></music-note>
+        <music-note note="E" octave="5" duration="half"></music-note>
+        <music-note note="C" octave="5" duration="half"></music-note>
+      </music-chord>
+    </music-staff>
+  `,
+};
+
+export const ChordWithTie: Story = {
+  args: { clef: 'treble', keySig: 'C', mode: 'major', time: '4/4' },
+  render: (args) => html`
+    <music-staff
+      clef=${args.clef}
+      keySig=${args.keySig}
+      mode=${args.mode}
+      time=${args.time}
+    >
+      <music-chord duration="half" tie="start">
+        <music-note note="C" octave="5" duration="half"></music-note>
+        <music-note note="E" octave="5" duration="half"></music-note>
+        <music-note note="G" octave="5" duration="half"></music-note>
+      </music-chord>
+      <music-chord duration="half" tie="end">
+        <music-note note="C" octave="5" duration="half"></music-note>
+        <music-note note="E" octave="5" duration="half"></music-note>
+        <music-note note="G" octave="5" duration="half"></music-note>
+      </music-chord>
+    </music-staff>
+  `,
+};
+
+export const ChordWithSlur: Story = {
+  args: { clef: 'treble', keySig: 'C', mode: 'major', time: '4/4' },
+  render: (args) => html`
+    <music-staff
+      clef=${args.clef}
+      keySig=${args.keySig}
+      mode=${args.mode}
+      time=${args.time}
+    >
+      <music-chord duration="quarter" slur="start">
+        <music-note note="C" octave="5" duration="quarter"></music-note>
+        <music-note note="E" octave="5" duration="quarter"></music-note>
+        <music-note note="G" octave="5" duration="quarter"></music-note>
+      </music-chord>
+      <music-chord duration="quarter">
+        <music-note note="D" octave="5" duration="quarter"></music-note>
+        <music-note note="F" octave="5" duration="quarter"></music-note>
+        <music-note note="A" octave="5" duration="quarter"></music-note>
+      </music-chord>
+      <music-chord duration="quarter">
+        <music-note note="E" octave="5" duration="quarter"></music-note>
+        <music-note note="G" octave="5" duration="quarter"></music-note>
+        <music-note note="B" octave="5" duration="quarter"></music-note>
+      </music-chord>
+      <music-chord duration="quarter" slur="end">
+        <music-note note="F" octave="5" duration="quarter"></music-note>
+        <music-note note="A" octave="5" duration="quarter"></music-note>
+        <music-note note="C" octave="6" duration="quarter"></music-note>
+      </music-chord>
+    </music-staff>
+  `,
+};

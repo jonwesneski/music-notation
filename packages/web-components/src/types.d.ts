@@ -1,5 +1,5 @@
 import 'react';
-import type { ConnectorRole } from './types/elements';
+import type { ConnectorRole, GuitarFret } from './types/elements';
 import type {
   ArticulationType,
   Chord,
@@ -16,6 +16,7 @@ import type {
   StaffGroupType,
   StressType,
   TimeSignature,
+  TupletRatio,
   Voice,
 } from './types/theory';
 
@@ -35,6 +36,7 @@ declare module 'react' {
         time?: TimeSignature;
       };
       'music-measure': WebComponentProps & {
+        number?: number;
         keySig?: Note;
         mode?: Mode;
         time?: TimeSignature;
@@ -50,15 +52,17 @@ declare module 'react' {
         // Pairs this staff with its immediate next sibling under a
         // brace ("grand") or bracket connector — see StaffElementBase#group.
         group?: StaffGroupType;
+        // Shared identifier joining this staff with other group="bracket"
+        // staves into one multi-staff bracket connector — see StaffElementBase#groupId.
+        'group-id'?: string;
         onClick?: React.MouseEventHandler<HTMLElement>;
       };
       'music-clef': WebComponentProps & {
         clef?: ClefType;
       };
       'music-staff-guitar-tab': WebComponentProps & {
-        time?: TimeSignature;
         group?: StaffGroupType;
-        children?: React.ReactNode;
+        'group-id'?: string;
       };
       'music-staff-vocal': WebComponentProps & {
         voice?: Voice;
@@ -68,12 +72,19 @@ declare module 'react' {
         editable?: boolean;
         managed?: boolean;
         group?: StaffGroupType;
+        'group-id'?: string;
       };
       'music-lyrics': WebComponentProps & {
         verse?: string;
       };
       'music-rest': WebComponentProps & {
         duration?: DurationType;
+        onClick?: (e: MouseEvent) => void;
+        onPointerDown?: (e: PointerEvent) => void;
+        onPointerUp?: (e: PointerEvent) => void;
+      };
+      'music-tuplet': WebComponentProps & {
+        ratio?: TupletRatio;
       };
       'music-chord': WebComponentProps & {
         chord?: Chord;
@@ -135,7 +146,7 @@ declare module 'react' {
         // useRef + addEventListener in React — they are not auto-wired by prop name.
       };
       'music-guitar-note': WebComponentProps & {
-        fret?: number | 'x';
+        fret?: GuitarFret;
         string?: number;
         duration?: DurationType;
         tie?: ConnectorRole;

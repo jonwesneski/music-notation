@@ -1,5 +1,5 @@
 import { expect, type Page, test } from '@playwright/test';
-import { waitForRedrawCycle } from '../../test-fixtures/helpers';
+import { resizeHost, waitForRedrawCycle } from '../../test-fixtures/helpers';
 import type { NoteLetterOctave } from '../types/elements';
 import type { DurationType } from '../types/theory';
 import {
@@ -315,35 +315,45 @@ test.describe(`${MUSIC_MEASURE} min-width layout`, () => {
 });
 
 test.describe(`${MUSIC_MEASURE} group connectors`, () => {
-  async function buildMeasureWithStaves(
+  async function buildMeasuresWithStaves(
     page: Page,
-    staffGroups: (string | null)[]
+    measures: (string | null)[][],
+    hostWidth = 900
   ): Promise<void> {
     await page.evaluate(
-      ({ compositionTag, measureTag, staffTag, noteTag, staffGroups }) => {
+      ({
+        compositionTag,
+        measureTag,
+        staffTag,
+        noteTag,
+        measures,
+        hostWidth,
+      }) => {
         const host = document.getElementById('host');
         if (host === null) {
           throw new Error('host missing');
         }
         host.innerHTML = '';
-        host.style.width = '900px';
+        host.style.width = `${hostWidth}px`;
         const composition = document.createElement(compositionTag);
-        const measure = document.createElement(measureTag);
 
-        for (const group of staffGroups) {
-          const staff = document.createElement(staffTag);
-          if (group !== null) {
-            staff.setAttribute('group', group);
+        for (const staffGroups of measures) {
+          const measure = document.createElement(measureTag);
+          for (const group of staffGroups) {
+            const staff = document.createElement(staffTag);
+            if (group !== null) {
+              staff.setAttribute('group', group);
+            }
+            const note = document.createElement(noteTag);
+            note.setAttribute('note', 'C');
+            note.setAttribute('octave', '4');
+            note.setAttribute('duration', 'whole');
+            staff.appendChild(note);
+            measure.appendChild(staff);
           }
-          const note = document.createElement(noteTag);
-          note.setAttribute('note', 'C');
-          note.setAttribute('octave', '4');
-          note.setAttribute('duration', 'whole');
-          staff.appendChild(note);
-          measure.appendChild(staff);
+          composition.appendChild(measure);
         }
 
-        composition.appendChild(measure);
         host.appendChild(composition);
       },
       {
@@ -351,11 +361,19 @@ test.describe(`${MUSIC_MEASURE} group connectors`, () => {
         measureTag: MUSIC_MEASURE,
         staffTag: MUSIC_STAFF,
         noteTag: MUSIC_NOTE,
-        staffGroups,
+        measures,
+        hostWidth,
       }
     );
     await waitForRedrawCycle(page);
     await waitForRedrawCycle(page);
+  }
+
+  async function buildMeasureWithStaves(
+    page: Page,
+    staffGroups: (string | null)[]
+  ): Promise<void> {
+    await buildMeasuresWithStaves(page, [staffGroups]);
   }
 
   async function readGroupConnectorGlyphs(
@@ -371,6 +389,34 @@ test.describe(`${MUSIC_MEASURE} group connectors`, () => {
         tag: el.tagName,
         className: el.getAttribute('class') ?? '',
       }));
+    }, MUSIC_MEASURE);
+  }
+
+  // Groups every measure's .group-connectors glyph count by visual row
+  // (same top-diff-tolerance technique as composition.ts's
+  // #computeMeasureRows), so assertions don't need to know exactly how many
+  // measures fit per row.
+  async function readGroupConnectorGlyphCountsByRow(
+    page: Page
+  ): Promise<number[][]> {
+    return page.evaluate((measureTag) => {
+      const measures = Array.from(
+        document.querySelectorAll(measureTag)
+      ) as HTMLElement[];
+      const rows: { top: number; glyphCounts: number[] }[] = [];
+      for (const measure of measures) {
+        const top = measure.getBoundingClientRect().top;
+        const container =
+          measure.shadowRoot?.querySelector('.group-connectors');
+        const glyphCount = container ? container.children.length : 0;
+        const existingRow = rows.find((r) => Math.abs(r.top - top) <= 5);
+        if (existingRow === undefined) {
+          rows.push({ top, glyphCounts: [glyphCount] });
+        } else {
+          existingRow.glyphCounts.push(glyphCount);
+        }
+      }
+      return rows.map((r) => r.glyphCounts);
     }, MUSIC_MEASURE);
   }
 
@@ -545,5 +591,76 @@ test.describe(`${MUSIC_MEASURE} group connectors`, () => {
       return wrapper?.classList.contains('has-group-connector') ?? false;
     }, MUSIC_COMPOSITION);
     expect(withoutGroup).toBe(false);
+  });
+
+  test('multiple measures sharing a row render the group connector only on the first measure of that row', async ({
+    page,
+  }) => {
+    // 3 whole-note measures comfortably fit under the 900px composition
+    // width cap, so all three land on one row.
+    await buildMeasuresWithStaves(page, [
+      ['grand', null],
+      ['grand', null],
+      ['grand', null],
+    ]);
+
+    const rows = await readGroupConnectorGlyphCountsByRow(page);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toEqual([1, 0, 0]);
+  });
+
+  test('after a resize wraps measures into their own rows, each row shows exactly one brace on its own first measure', async ({
+    page,
+  }) => {
+    await buildMeasuresWithStaves(page, [
+      ['grand', null],
+      ['grand', null],
+      ['grand', null],
+      ['grand', null],
+    ]);
+
+    const wideRows = await readGroupConnectorGlyphCountsByRow(page);
+    expect(wideRows).toHaveLength(1);
+    expect(wideRows[0]).toEqual([1, 0, 0, 0]);
+
+    // Well under a single measure's own minimum footprint, so each measure
+    // is forced onto its own row.
+    await resizeHost(page, 150);
+
+    const narrowRows = await readGroupConnectorGlyphCountsByRow(page);
+    expect(narrowRows.length).toBeGreaterThan(1);
+    for (const row of narrowRows) {
+      expect(row).toEqual([1]);
+    }
+  });
+
+  test('brace glyphs are cleared from measures that lose first-in-row status when widening back', async ({
+    page,
+  }) => {
+    await buildMeasuresWithStaves(
+      page,
+      [
+        ['grand', null],
+        ['grand', null],
+        ['grand', null],
+      ],
+      150
+    );
+
+    const narrowRows = await readGroupConnectorGlyphCountsByRow(page);
+    expect(narrowRows.length).toBeGreaterThan(1);
+    for (const row of narrowRows) {
+      expect(row).toEqual([1]);
+    }
+
+    await resizeHost(page, 900);
+
+    const wideRows = await readGroupConnectorGlyphCountsByRow(page);
+    expect(wideRows).toHaveLength(1);
+    // Only the very first measure keeps a glyph — measures 2 and 3, which
+    // briefly had their own glyph while first-in-their-own-row at 150px,
+    // must have it cleared now a resize merged them back into measure 1's
+    // row. This is the specific regression this fix targets.
+    expect(wideRows[0]).toEqual([1, 0, 0]);
   });
 });

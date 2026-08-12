@@ -215,31 +215,27 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
         STAFF_SLOT_HEIGHT_PX * total + STAFF_SLOT_GAP_PX * (total - 1);
       staffConnector.style.height = `${connectorHeight}px`;
 
-      this.#renderGroupConnectors();
+      const isFirstInRow = this.#isFirstInRow(allMeasures, currentIndex);
 
+      this.#renderGroupConnectors(isFirstInRow);
+      staffConnector.classList.toggle('hidden', !isFirstInRow);
+    }
+
+    #isFirstInRow(allMeasures: Element[], currentIndex: number): boolean {
       if (currentIndex === 0) {
-        // First measure always shows connector
-        staffConnector.classList.remove('hidden');
-        return;
+        return true;
       }
 
       const prevMeasure = allMeasures[currentIndex - 1];
       if (!prevMeasure) {
-        staffConnector.classList.add('hidden');
-        return;
+        return false;
       }
 
       const prevRect = prevMeasure.getBoundingClientRect();
       const currentRect = this.getBoundingClientRect();
 
-      // Check if this measure is on a new row (wrapped)
       // Tolerance of 5px for rounding errors
-      const isNewRow = Math.abs(currentRect.top - prevRect.top) > 5;
-      if (isNewRow) {
-        staffConnector.classList.remove('hidden');
-      } else {
-        staffConnector.classList.add('hidden');
-      }
+      return Math.abs(currentRect.top - prevRect.top) > 5;
     }
 
     // A staff with a `group` attribute joins a brace/bracket connector with
@@ -248,7 +244,15 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
     // a shared `group-id`. Resolution/validation is a pure function
     // (rules/staffGroupRules.ts) so it stays independently testable; this
     // method only turns the resolved spans into positioned SVG glyphs.
-    #renderGroupConnectors() {
+    //
+    // Like the plain barline, a brace/bracket is a system-start decoration:
+    // only the first measure of a visual row draws one, even when every
+    // measure in the row carries the same grouped staves (see
+    // composition.ts's showDescribe for the analogous clef/key/time
+    // behavior). `isFirstInRow` is computed once by the caller
+    // (#updateConnectorVisibility) — when false, any glyph left over from a
+    // previous layout pass is cleared and nothing new is resolved/drawn.
+    #renderGroupConnectors(isFirstInRow: boolean) {
       const container =
         this.shadowRoot?.querySelector<HTMLElement>('.group-connectors');
       if (!container) {
@@ -257,6 +261,10 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
 
       while (container.firstChild) {
         container.removeChild(container.firstChild);
+      }
+
+      if (!isFirstInRow) {
+        return;
       }
 
       const staves = Array.from(this.children).filter((el) =>
