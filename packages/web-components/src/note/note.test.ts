@@ -26,10 +26,6 @@ afterEach(() => {
 });
 
 describe(MUSIC_NOTE, () => {
-  it('registers as a custom element', () => {
-    expect(customElements.get(MUSIC_NOTE)).toBeDefined();
-  });
-
   it('renders with default duration and note', () => {
     const noteElement = document.createElement(MUSIC_NOTE) as NoteElementType;
     document.body.appendChild(noteElement);

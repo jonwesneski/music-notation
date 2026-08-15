@@ -19,10 +19,6 @@ afterEach(() => {
 });
 
 describe(MUSIC_CHORD, () => {
-  it('registers as a custom element', () => {
-    expect(customElements.get(MUSIC_CHORD)).toBeDefined();
-  });
-
   it('renders shadow root with default duration', () => {
     const chordElement = document.createElement(
       MUSIC_CHORD

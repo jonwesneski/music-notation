@@ -14,10 +14,6 @@ afterEach(() => {
 });
 
 describe(MUSIC_REST, () => {
-  it('registers as a custom element', () => {
-    expect(customElements.get(MUSIC_REST)).toBeDefined();
-  });
-
   it('renders a rest SVG in shadow DOM', () => {
     const restElement = document.createElement(MUSIC_REST) as RestElementType;
     restElement.setAttribute('duration', 'quarter');

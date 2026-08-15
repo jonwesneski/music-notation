@@ -1,11 +1,12 @@
 import { resolveStaffGroups } from '../rules/staffGroupRules';
 import { minWidthToFlexGrow } from '../rules/staffWidth';
-import { StaffGroupType } from '../types/theory';
+import type { StaffElementBaseType } from '../types/elements';
 import {
   createBraceSvg,
   createBracketSvg,
   isStaffNodeName,
   MUSIC_COMPOSITION,
+  MUSIC_MEASURE,
   STAFF_EVENTS,
 } from '../utils';
 import {
@@ -204,7 +205,7 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
         this.shadowRoot!.querySelector<HTMLElement>('.staff-connector')!;
       const allMeasures = Array.from(
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- it does exist
-        this.parentNode!.querySelectorAll('music-measure')
+        this.parentNode!.querySelectorAll(MUSIC_MEASURE)
       );
 
       const currentIndex = allMeasures.indexOf(this);
@@ -269,10 +270,7 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
 
       const staves = Array.from(this.children).filter((el) =>
         isStaffNodeName(el.nodeName)
-      ) as (HTMLElement & {
-        group?: StaffGroupType | null;
-        groupId?: string | null;
-      })[];
+      ) as StaffElementBaseType[];
 
       const { groups, warnings } = resolveStaffGroups(
         staves.map((staff) => ({

@@ -24,10 +24,6 @@ afterEach(() => {
 });
 
 describe(MUSIC_TUPLET, () => {
-  it('registers as a custom element', () => {
-    expect(customElements.get(MUSIC_TUPLET)).toBeDefined();
-  });
-
   it('returns default ratio of "3" when no attribute set', () => {
     const element = document.createElement(MUSIC_TUPLET) as TupletElementType;
     document.body.appendChild(element);

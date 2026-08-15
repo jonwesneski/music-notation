@@ -9,10 +9,6 @@ afterEach(() => {
 });
 
 describe(MUSIC_MEASURE, () => {
-  it('registers as a custom element', () => {
-    expect(customElements.get(MUSIC_MEASURE)).toBeDefined();
-  });
-
   it('renders with default keySig, mode, and time', () => {
     const el = document.createElement(MUSIC_MEASURE) as any;
     document.body.appendChild(el);

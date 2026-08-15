@@ -14,10 +14,6 @@ afterEach(() => {
 });
 
 describe(MUSIC_COMPOSITION, () => {
-  it('registers as a custom element', () => {
-    expect(customElements.get(MUSIC_COMPOSITION)).toBeDefined();
-  });
-
   it('renders with default keySig, mode, and time', () => {
     const el = document.createElement(MUSIC_COMPOSITION) as any;
     document.body.appendChild(el);

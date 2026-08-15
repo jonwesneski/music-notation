@@ -11,20 +11,11 @@ afterEach(() => {
 });
 
 describe(MUSIC_CLEF, () => {
-  it('registers as a custom element', () => {
-    expect(customElements.get(MUSIC_CLEF)).toBeDefined();
-  });
-
-  it('defaults clef to treble when attribute is absent', () => {
+  it('standalone and attributes are absent', () => {
     const clefElement = document.createElement(MUSIC_CLEF) as ClefElementType;
     document.body.appendChild(clefElement);
 
     expect(clefElement.clef).toBe('treble');
-  });
-
-  it('renders standalone (without a staff parent) with a non-empty shadow DOM', () => {
-    const clefElement = document.createElement(MUSIC_CLEF) as ClefElementType;
-    document.body.appendChild(clefElement);
 
     expect(clefElement.shadowRoot?.innerHTML).not.toBe('');
     expect(clefElement.shadowRoot?.querySelector('svg')).not.toBeNull();

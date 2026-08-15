@@ -1,6 +1,9 @@
 import { getClefRenderData } from '../rules/clefRules';
 import { pairHairpins, resolveHairpinSegments } from '../rules/dynamicsRules';
-import type { NoteChordOrRestElementType } from '../types/elements';
+import type {
+  NoteChordOrRestElementType,
+  StaffElementBaseType,
+} from '../types/elements';
 import { createHairpinSvg } from '../utils';
 import {
   buildConnectorSvgs,
@@ -17,6 +20,7 @@ import {
   MUSIC_STAFF,
   MUSIC_STAFF_GUITAR_TAB,
   MUSIC_STAFF_VOCAL,
+  STAFF_TAGS,
   SVG_NS,
   isStaffNodeName,
 } from '../utils/consts';
@@ -107,10 +111,10 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
       }
       this.render();
       if (name === 'keysig' || name === 'mode' || name === 'time') {
-        Array.from(this.querySelectorAll('*'))
-          .filter((el) => isStaffNodeName(el.nodeName))
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- duck-typed call to avoid cross-module import
-          .forEach((staff) => (staff as any).refreshInheritedAttrs?.());
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- duck-typed call to avoid cross-module import
+        Array.from(this.querySelectorAll(STAFF_TAGS)).forEach((staff) =>
+          (staff as any).refreshInheritedAttrs?.()
+        );
       }
     }
 
@@ -220,12 +224,9 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
         return;
       }
 
-      const hasGroupedStaff = Array.from(this.querySelectorAll('*')).some(
-        (el) =>
-          isStaffNodeName(el.nodeName) &&
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- duck-typed call to avoid cross-module import
-          (el as any).group != null
-      );
+      const hasGroupedStaff = Array.from(
+        this.querySelectorAll<StaffElementBaseType>(STAFF_TAGS)
+      ).some((staff) => staff.group != null);
 
       wrapper.classList.toggle('has-group-connector', hasGroupedStaff);
     }
@@ -235,7 +236,7 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
     // #updateClefContinuity doesn't duplicate row-detection logic.
     #computeMeasureRows(): HTMLElement[][] {
       const measures = Array.from(
-        this.querySelectorAll('music-measure')
+        this.querySelectorAll(MUSIC_MEASURE)
       ) as HTMLElement[];
 
       // Snapshot all top values before any mutations. Reading layout after a
@@ -487,12 +488,10 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
       // Reset every staff's boundary flag before recomputing — a staff that
       // needed the flag last pass but no longer does (clef no longer
       // differs from its predecessor) must not keep showing a stale glyph.
-      Array.from(this.querySelectorAll('*'))
-        .filter((el) => isStaffNodeName(el.nodeName))
-        .forEach((staff) => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- duck-typed call to avoid cross-module import
-          (staff as any).clefChangeAtBoundary = false;
-        });
+      Array.from(this.querySelectorAll(STAFF_TAGS)).forEach((staff) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- duck-typed call to avoid cross-module import
+        (staff as any).clefChangeAtBoundary = false;
+      });
 
       const rows = this.#computeMeasureRows();
       const rowIndexByMeasure = new Map<HTMLElement, number>();
@@ -580,12 +579,10 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
     // signature) are treated as not comparable and skipped, same as the null
     // guard #updateClefContinuity uses for non-clef staves.
     #updateTimeSignatureContinuity() {
-      Array.from(this.querySelectorAll('*'))
-        .filter((el) => isStaffNodeName(el.nodeName))
-        .forEach((staff) => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- duck-typed call to avoid cross-module import
-          (staff as any).timeChangeAtBoundary = false;
-        });
+      Array.from(this.querySelectorAll(STAFF_TAGS)).forEach((staff) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- duck-typed call to avoid cross-module import
+        (staff as any).timeChangeAtBoundary = false;
+      });
 
       const measures = this.#computeMeasureRows().flat();
 

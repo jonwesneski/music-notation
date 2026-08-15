@@ -9,10 +9,6 @@ afterEach(() => {
 });
 
 describe(MUSIC_GUITAR_NOTE, () => {
-  it('registers as a custom element', () => {
-    expect(customElements.get(MUSIC_GUITAR_NOTE)).toBeDefined();
-  });
-
   it('renders with default fret, string, and duration', () => {
     const el = document.createElement(MUSIC_GUITAR_NOTE) as any;
     document.body.appendChild(el);

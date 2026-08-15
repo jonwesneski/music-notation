@@ -37,11 +37,6 @@ export const STAFF_TAGS = [
   MUSIC_STAFF_VOCAL,
 ].join(', ');
 
-// nodeName-based staff detection (DOM nodeName is always uppercase). Matches
-// the bare `music-staff` tag as well as suffixed staff tags like
-// `music-staff-vocal`/`music-staff-guitar-tab` — a plain
-// `nodeName.startsWith('MUSIC-STAFF-')` check misses `music-staff` itself
-// since it has no trailing hyphen.
 export const isStaffNodeName = (nodeName: string): boolean =>
   nodeName === MUSIC_STAFF_NODE || nodeName.startsWith('MUSIC-STAFF-');
 

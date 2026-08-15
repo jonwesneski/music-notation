@@ -3,7 +3,12 @@
  */
 import '../index';
 import { generateYCoordinates } from '../rules/theoryHelpers';
-import type { ClefElementType, NoteLetterOctave } from '../types/elements';
+import type {
+  ClefElementType,
+  NoteElementType,
+  NoteLetterOctave,
+  TupletElementType,
+} from '../types/elements';
 import type { ClefType } from '../types/theory';
 import {
   COMMON_ATTRIBUTES,
@@ -68,10 +73,6 @@ function renderNote(staff: any, value: NoteLetterOctave): HTMLElement {
 }
 
 describe(MUSIC_STAFF, () => {
-  it('registers as a custom element', () => {
-    expect(customElements.get(MUSIC_STAFF)).toBeDefined();
-  });
-
   it('defaults clef to treble when attribute is absent', () => {
     const element = document.createElement(MUSIC_STAFF) as any;
     document.body.appendChild(element);
@@ -160,21 +161,21 @@ describe(`${MUSIC_STAFF} clef changes`, () => {
   it('supports multiple clef markers producing multiple segments', () => {
     const staff = makeStaff('treble');
 
-    const note1 = document.createElement(MUSIC_NOTE) as any;
+    const note1 = document.createElement(MUSIC_NOTE) as NoteElementType;
     note1.setAttribute('duration', 'quarter');
     note1.setAttribute('note', 'C');
     note1.setAttribute('octave', '4');
 
     const clef1 = makeClefMarker('bass');
 
-    const note2 = document.createElement(MUSIC_NOTE) as any;
+    const note2 = document.createElement(MUSIC_NOTE) as NoteElementType;
     note2.setAttribute('duration', 'quarter');
     note2.setAttribute('note', 'C');
     note2.setAttribute('octave', '4');
 
     const clef2 = makeClefMarker('treble');
 
-    const note3 = document.createElement(MUSIC_NOTE) as any;
+    const note3 = document.createElement(MUSIC_NOTE) as NoteElementType;
     note3.setAttribute('duration', 'quarter');
     note3.setAttribute('note', 'C');
     note3.setAttribute('octave', '4');
@@ -190,7 +191,7 @@ describe(`${MUSIC_STAFF} clef changes`, () => {
     const staff = makeStaff('treble');
 
     const clefMarker = makeClefMarker('bass');
-    const note = document.createElement(MUSIC_NOTE) as any;
+    const note = document.createElement(MUSIC_NOTE) as NoteElementType;
     note.setAttribute('duration', 'quarter');
     note.setAttribute('note', 'C');
     note.setAttribute('octave', '4');
@@ -205,12 +206,12 @@ describe(`${MUSIC_STAFF} clef changes`, () => {
     const consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
     const staff = makeStaff('treble');
 
-    const tuplet = document.createElement(MUSIC_TUPLET) as any;
+    const tuplet = document.createElement(MUSIC_TUPLET) as TupletElementType;
     tuplet.setAttribute('ratio', '3');
     const clefMarker = makeClefMarker('bass');
     tuplet.appendChild(clefMarker);
     for (let i = 0; i < 3; i++) {
-      const note = document.createElement(MUSIC_NOTE) as any;
+      const note = document.createElement(MUSIC_NOTE) as NoteElementType;
       note.setAttribute('duration', 'eighth');
       note.setAttribute('note', 'C');
       note.setAttribute('octave', '4');
@@ -231,7 +232,7 @@ describe(`${MUSIC_STAFF} clef changes`, () => {
     const staff = makeStaff('treble');
     staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '1/4');
 
-    const note1 = document.createElement(MUSIC_NOTE) as any;
+    const note1 = document.createElement(MUSIC_NOTE) as NoteElementType;
     note1.setAttribute('duration', 'quarter');
     note1.setAttribute('note', 'C');
     note1.setAttribute('octave', '4');
@@ -239,7 +240,7 @@ describe(`${MUSIC_STAFF} clef changes`, () => {
     // This second note exceeds the 1/4 measure and gets truncated — the
     // marker anchored after it (afterElementIndex 1) must be dropped and
     // hidden too, since its anchor no longer exists in the rendered array.
-    const note2 = document.createElement(MUSIC_NOTE) as any;
+    const note2 = document.createElement(MUSIC_NOTE) as NoteElementType;
     note2.setAttribute('duration', 'quarter');
     note2.setAttribute('note', 'D');
     note2.setAttribute('octave', '4');
