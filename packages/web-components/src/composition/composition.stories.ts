@@ -80,7 +80,7 @@ export const MultipleMeasures: Story = {
   args: { keySig: 'C', mode: 'major', time: '4/4' },
 };
 
-export const TrebleAndBass: Story = {
+export const GrandStaff: Story = {
   args: { keySig: 'G', mode: 'major', time: '4/4' },
   render: (args) => html`
     <music-composition
@@ -132,6 +132,98 @@ export const TrebleAndBass: Story = {
         >
           <music-note note="A" duration="half"></music-note>
           <music-note note="E" duration="half"></music-note>
+        </music-staff>
+      </music-measure>
+      <music-measure>
+        <music-staff
+          clef="treble"
+          group="grand"
+          keySig=${args.keySig}
+          mode=${args.mode}
+          time=${args.time}
+        >
+          <music-note note="B" duration="quarter"></music-note>
+          <music-note note="D" duration="quarter"></music-note>
+          <music-note note="F#" duration="quarter"></music-note>
+          <music-note note="B" duration="quarter"></music-note>
+        </music-staff>
+        <music-staff
+          clef="bass"
+          keySig=${args.keySig}
+          mode=${args.mode}
+          time=${args.time}
+        >
+          <music-note note="B" duration="half"></music-note>
+          <music-note note="F#" duration="half"></music-note>
+        </music-staff>
+      </music-measure>
+      <music-measure>
+        <music-staff
+          clef="treble"
+          group="grand"
+          keySig=${args.keySig}
+          mode=${args.mode}
+          time=${args.time}
+        >
+          <music-note note="C" octave="5" duration="quarter"></music-note>
+          <music-note note="E" octave="5" duration="quarter"></music-note>
+          <music-note note="G" octave="5" duration="quarter"></music-note>
+          <music-note note="C" octave="5" duration="quarter"></music-note>
+        </music-staff>
+        <music-staff
+          clef="bass"
+          keySig=${args.keySig}
+          mode=${args.mode}
+          time=${args.time}
+        >
+          <music-note note="C" duration="half"></music-note>
+          <music-note note="G" duration="half"></music-note>
+        </music-staff>
+      </music-measure>
+      <music-measure>
+        <music-staff
+          clef="treble"
+          group="grand"
+          keySig=${args.keySig}
+          mode=${args.mode}
+          time=${args.time}
+        >
+          <music-note note="D" octave="5" duration="quarter"></music-note>
+          <music-note note="F#" octave="5" duration="quarter"></music-note>
+          <music-note note="A" octave="5" duration="quarter"></music-note>
+          <music-note note="D" octave="5" duration="quarter"></music-note>
+        </music-staff>
+        <music-staff
+          clef="bass"
+          keySig=${args.keySig}
+          mode=${args.mode}
+          time=${args.time}
+        >
+          <music-note note="D" duration="half"></music-note>
+          <music-note note="A" duration="half"></music-note>
+        </music-staff>
+      </music-measure>
+      <music-measure>
+        <music-staff
+          clef="treble"
+          group="grand"
+          keySig=${args.keySig}
+          mode=${args.mode}
+          time=${args.time}
+        >
+          <music-note note="E" octave="5" duration="quarter"></music-note>
+          <music-note note="G" octave="5" duration="quarter"></music-note>
+          <music-note note="B" octave="5" duration="quarter"></music-note>
+          <music-note note="E" octave="5" duration="quarter"></music-note>
+        </music-staff>
+        <music-staff
+          clef="bass"
+          keySig=${args.keySig}
+          mode=${args.mode}
+          time=${args.time}
+        >
+          <music-note note="E" duration="half"></music-note>
+          <music-note note="B" duration="half"></music-note>
         </music-staff>
       </music-measure>
     </music-composition>
