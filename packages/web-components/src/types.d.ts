@@ -61,6 +61,7 @@ declare module 'react' {
         clef?: ClefType;
       };
       'music-staff-guitar-tab': WebComponentProps & {
+        time?: TimeSignature;
         group?: StaffGroupType;
         'group-id'?: string;
       };

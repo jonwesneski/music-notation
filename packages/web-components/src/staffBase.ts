@@ -1,10 +1,20 @@
+import {
+  BeatsInMeasure,
+  BeatTypeInMeasure,
+  StaffGroupType,
+  TimeSignature,
+} from './types/theory';
 import { SVG_NS } from './utils';
 import {
   buildConnectorSvgs,
   collectNoteLikeElements,
   pairConnectors,
 } from './utils/connectorsBuilder';
-import { MUSIC_COMPOSITION } from './utils/consts';
+import {
+  COMMON_ATTRIBUTES,
+  MUSIC_COMPOSITION,
+  MUSIC_MEASURE,
+} from './utils/consts';
 import {
   STAFF_BOTTOM_MARGIN,
   STAFF_LINE_SPACING,
@@ -12,7 +22,6 @@ import {
   STAFF_WRAPPER_MIN_HEIGHT,
 } from './utils/notationDimensions';
 import { parseStaffGroup } from './utils/parsers';
-import { StaffGroupType } from './types/theory';
 
 // Use a runtime-safe fallback for environments without `HTMLElement` (SSR/Node).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- prevents errrors if loaded in SSR
@@ -32,6 +41,8 @@ export abstract class StaffElementBase extends _MaybeHTMLElement {
   #standaloneConnectorsOverlay: SVGSVGElement;
   #slotChangeHandler = (event: Event) => this.onHandleSlotChange(event);
 
+  protected effectiveTimeSig: [BeatsInMeasure, BeatTypeInMeasure];
+
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
@@ -48,6 +59,10 @@ export abstract class StaffElementBase extends _MaybeHTMLElement {
         this.onStaffResize();
       }
     });
+
+    this.effectiveTimeSig = this.convertTotimeInts(
+      this.resolveInheritedValue(COMMON_ATTRIBUTES.TIME_SIG, '4/4')
+    );
   }
 
   protected abstract onStaffResize(): void;
@@ -84,6 +99,37 @@ export abstract class StaffElementBase extends _MaybeHTMLElement {
     } else {
       this.setAttribute('group-id', value);
     }
+  }
+
+  // Resolves an inherited attribute value: this element's own attribute,
+  // else the closest ancestor <music-measure>'s, else the closest ancestor
+  // <music-composition>'s, else the given default. Generic across all staff
+  // types (keySig/mode on classical staves, time on every staff type).
+  protected resolveInheritedValue(
+    attributeName: string,
+    defaultValue: string
+  ): string {
+    return (
+      this.getAttribute(attributeName) ??
+      this.closest(MUSIC_MEASURE)?.getAttribute(attributeName) ??
+      this.closest(MUSIC_COMPOSITION)?.getAttribute(attributeName) ??
+      defaultValue
+    );
+  }
+
+  protected convertTotimeInts(
+    time: string
+  ): [BeatsInMeasure, BeatTypeInMeasure] {
+    const [beats, beatType] = time.split('/').map((n) => parseInt(n, 10));
+    return [beats as BeatsInMeasure, beatType as BeatTypeInMeasure];
+  }
+
+  get time(): TimeSignature {
+    return `${this.effectiveTimeSig[0]}/${this.effectiveTimeSig[1]}` as TimeSignature;
+  }
+
+  set time(value: TimeSignature) {
+    this.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, value);
   }
 
   protected render() {

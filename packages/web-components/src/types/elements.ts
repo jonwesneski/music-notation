@@ -9,11 +9,13 @@ import {
   GraceSlur,
   GraceType,
   HairpinRole,
+  Mode,
   Note,
   NoteLetter,
   Octave,
   StaffGroupType,
   StressType,
+  TimeSignature,
   TupletRatio,
 } from './theory';
 
@@ -138,6 +140,12 @@ export interface ITupletElement {
 export interface IStaffElementBase {
   group: StaffGroupType | null;
   groupId: string | null;
+  time: TimeSignature;
+}
+
+export interface IStaffElement extends IStaffElementBase {
+  keySig: Note;
+  mode: Mode;
 }
 
 export type NoteElementType = HTMLElement & INoteElement;
@@ -147,6 +155,7 @@ export type GuitarNoteElementType = HTMLElement & IGuitarNoteElement;
 export type TupletElementType = HTMLElement & ITupletElement;
 export type ClefElementType = HTMLElement & IClefElement;
 export type StaffElementBaseType = HTMLElement & IStaffElementBase;
+export type StaffElementType = HTMLElement & IStaffElement;
 export type NoteOrChordElementType = NoteElementType | ChordElementType;
 export type NoteChordOrRestElementType =
   | NoteElementType

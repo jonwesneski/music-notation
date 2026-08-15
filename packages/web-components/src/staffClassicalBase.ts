@@ -38,8 +38,6 @@ import {
   YCoordinates,
 } from './types/elements';
 import {
-  BeatsInMeasure,
-  BeatTypeInMeasure,
   ClefType,
   DurationType,
   Mode,
@@ -60,7 +58,6 @@ import {
   COMMON_ATTRIBUTES,
   MUSIC_CHORD_NODE,
   MUSIC_CLEF_NODE,
-  MUSIC_COMPOSITION,
   MUSIC_MEASURE,
   MUSIC_NOTE,
   MUSIC_NOTE_NODE,
@@ -113,7 +110,6 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
   }
 
   #mutationObservers: MutationObserver[];
-  #effectiveTimeSig: [BeatsInMeasure, BeatTypeInMeasure];
   #effectiveMode: Mode;
   #effectiveKeySig: Note;
   #describeContainer: SVGGElement;
@@ -204,34 +200,17 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
     super();
     this.#mutationObservers = [];
 
-    this.#effectiveTimeSig = this.#convertTotimeInts(
-      this.#resolveInheritedValue(COMMON_ATTRIBUTES.TIME_SIG, '4/4')
-    );
-    this.#effectiveMode = this.#resolveInheritedValue(
+    this.#effectiveMode = this.resolveInheritedValue(
       COMMON_ATTRIBUTES.MODE,
       'major'
     ) as Mode;
-    this.#effectiveKeySig = this.#resolveInheritedValue(
+    this.#effectiveKeySig = this.resolveInheritedValue(
       COMMON_ATTRIBUTES.KEY_SIG,
       'C'
     ) as Note;
 
     this.#describeContainer = document.createElementNS(SVG_NS, 'g');
     this.#beamsContainer = document.createElementNS(SVG_NS, 'svg');
-  }
-
-  #resolveInheritedValue(attributeName: string, defaultValue: string): string {
-    return (
-      this.getAttribute(attributeName) ??
-      this.closest(MUSIC_MEASURE)?.getAttribute(attributeName) ??
-      this.closest(MUSIC_COMPOSITION)?.getAttribute(attributeName) ??
-      defaultValue
-    );
-  }
-
-  #convertTotimeInts(time: string): [BeatsInMeasure, BeatTypeInMeasure] {
-    const [beats, beatType] = time.split('/').map((n) => parseInt(n, 10));
-    return [beats as BeatsInMeasure, beatType as BeatTypeInMeasure];
   }
 
   protected get staffLineCount(): number {
@@ -296,14 +275,6 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
     this.setAttribute(COMMON_ATTRIBUTES.MODE, value);
   }
 
-  get time(): string {
-    return `${this.#effectiveTimeSig[0]}/${this.#effectiveTimeSig[1]}`;
-  }
-
-  set time(value: string) {
-    this.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, value);
-  }
-
   abstract get yCoordinates(): YCoordinates;
 
   abstract get octaves(): Octave[];
@@ -317,14 +288,14 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
 
   protected onConnectedCallback() {
     // Re-resolve inherited attrs now that ancestors are reachable via closest()
-    this.#effectiveTimeSig = this.#convertTotimeInts(
-      this.#resolveInheritedValue(COMMON_ATTRIBUTES.TIME_SIG, '4/4')
+    this.effectiveTimeSig = this.convertTotimeInts(
+      this.resolveInheritedValue(COMMON_ATTRIBUTES.TIME_SIG, '4/4')
     );
-    this.#effectiveMode = this.#resolveInheritedValue(
+    this.#effectiveMode = this.resolveInheritedValue(
       COMMON_ATTRIBUTES.MODE,
       'major'
     ) as Mode;
-    this.#effectiveKeySig = this.#resolveInheritedValue(
+    this.#effectiveKeySig = this.resolveInheritedValue(
       COMMON_ATTRIBUTES.KEY_SIG,
       'C'
     ) as Note;
@@ -583,14 +554,14 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
   }
 
   refreshInheritedAttrs() {
-    this.#effectiveTimeSig = this.#convertTotimeInts(
-      this.#resolveInheritedValue(COMMON_ATTRIBUTES.TIME_SIG, '4/4')
+    this.effectiveTimeSig = this.convertTotimeInts(
+      this.resolveInheritedValue(COMMON_ATTRIBUTES.TIME_SIG, '4/4')
     );
-    this.#effectiveMode = this.#resolveInheritedValue(
+    this.#effectiveMode = this.resolveInheritedValue(
       COMMON_ATTRIBUTES.MODE,
       'major'
     ) as Mode;
-    this.#effectiveKeySig = this.#resolveInheritedValue(
+    this.#effectiveKeySig = this.resolveInheritedValue(
       COMMON_ATTRIBUTES.KEY_SIG,
       'C'
     ) as Note;
@@ -627,7 +598,7 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
     const isFirstMeasureOrStandalone = measureNumberStr === '1' || !measure;
 
     if (isFirstMeasureOrStandalone || this.#timeChangeAtBoundary) {
-      const timeSigSvg = createTimeSignatureSvg(...this.#effectiveTimeSig);
+      const timeSigSvg = createTimeSignatureSvg(...this.effectiveTimeSig);
       timeSigSvg.setAttribute(
         'transform',
         `translate(${xOffset}, ${TIME_SIG_Y_TRANSLATE})`
@@ -676,16 +647,16 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
       }
     } else {
       if (name === 'time') {
-        this.#effectiveTimeSig = this.#convertTotimeInts(
-          this.#resolveInheritedValue('time', '4/4')
+        this.effectiveTimeSig = this.convertTotimeInts(
+          this.resolveInheritedValue('time', '4/4')
         );
       } else if (name === 'mode') {
-        this.#effectiveMode = this.#resolveInheritedValue(
+        this.#effectiveMode = this.resolveInheritedValue(
           'mode',
           'major'
         ) as Mode;
       } else if (name === 'keysig') {
-        this.#effectiveKeySig = this.#resolveInheritedValue(
+        this.#effectiveKeySig = this.resolveInheritedValue(
           'keysig',
           'C'
         ) as Note;
@@ -744,7 +715,7 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
 
     const { allowedElementCount, error } = computeAllowedElementCount(
       elements,
-      this.#effectiveTimeSig,
+      this.effectiveTimeSig,
       this.#tupletsByIndex
     );
     if (error !== null) {
@@ -793,7 +764,7 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
 
     const { beamsBuilder, beamRenderer, stemDirections } = buildBeamsRenderer(
       elements,
-      this.#effectiveTimeSig,
+      this.effectiveTimeSig,
       noteStaffYCoords,
       chordStaffYCoords,
       this.#tupletsByIndex
@@ -1103,7 +1074,7 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
       `${STAFF_TRANSCRIPTION_HEIGHT}`
     );
 
-    const [beatsInMeasure, beatType] = this.#effectiveTimeSig;
+    const [beatsInMeasure, beatType] = this.effectiveTimeSig;
     const measureDuration = beatsInMeasure / beatType;
 
     const scaledNoteCount = computeTupletScaledNoteCount(

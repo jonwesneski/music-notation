@@ -917,7 +917,7 @@ test.describe(`${MUSIC_COMPOSITION} responsive layout`, () => {
     expect(visibility).toEqual([true, true, true]);
   });
 
-  test('time signature continuity check skips guitar tab staves without throwing and does not disturb the classical staff pair', async ({
+  test('time signature continuity check compares a guitar tab staff pair without throwing and does not disturb the classical staff pair', async ({
     page,
   }) => {
     await buildTimeSignatureComposition(page, ['4/4', '3/4', '4/4'], {
@@ -927,6 +927,24 @@ test.describe(`${MUSIC_COMPOSITION} responsive layout`, () => {
     const visibility = await getTimeSignatureVisibilityPerMeasure(page);
 
     expect(visibility).toEqual([true, true, true]);
+
+    const timeChangeAtBoundaryPerMeasure = await page.evaluate((measureTag) => {
+      const measures = Array.from(
+        document.querySelectorAll(measureTag)
+      ) as HTMLElement[];
+      return measures.map((m) => {
+        const staff = Array.from(m.children).find(
+          (el) => el.nodeName === 'MUSIC-STAFF'
+        ) as unknown as { timeChangeAtBoundary: boolean } | undefined;
+        return staff?.timeChangeAtBoundary ?? null;
+      });
+    }, MUSIC_MEASURE);
+
+    // Mirrors `visibility` above: the flag drives the glyph, so it should be
+    // false on the first measure (visibility comes from "first measure",
+    // not the boundary flag) and true on every later measure whose time
+    // differs from its predecessor.
+    expect(timeChangeAtBoundaryPerMeasure).toEqual([false, true, true]);
   });
 
   test('all measures share the same row when composition is inside a flex justify-center container (regression for 1-measure-per-row bug)', async ({

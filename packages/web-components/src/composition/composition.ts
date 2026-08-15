@@ -574,10 +574,10 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
     // A time signature is shown only on the first measure, or on a later
     // measure whose resolved time signature differs from the measure right
     // before it (including redefining the original signature after a change)
-    // — mirrors #updateClefContinuity's adjacent-pair comparison. Staves
-    // without a `time` getter (guitar tab, which doesn't display a time
-    // signature) are treated as not comparable and skipped, same as the null
-    // guard #updateClefContinuity uses for non-clef staves.
+    // — mirrors #updateClefContinuity's adjacent-pair comparison. Every staff
+    // type has a real `.time` (StaffElementBase), but `timeChangeAtBoundary`
+    // (the flag that actually shows the glyph) stays classical-only — guitar
+    // tab never renders a time signature, so it has nothing to flag.
     #updateTimeSignatureContinuity() {
       Array.from(this.querySelectorAll(STAFF_TAGS)).forEach((staff) => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any -- duck-typed call to avoid cross-module import
@@ -589,33 +589,22 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
       for (let i = 1; i < measures.length; i++) {
         const outgoingStaves = Array.from(measures[i - 1].children).filter(
           (el) => isStaffNodeName(el.nodeName)
-        ) as HTMLElement[];
+        ) as StaffElementBaseType[];
         const incomingStaves = Array.from(measures[i].children).filter((el) =>
           isStaffNodeName(el.nodeName)
-        ) as HTMLElement[];
+        ) as StaffElementBaseType[];
 
         const pairCount = Math.min(
           outgoingStaves.length,
           incomingStaves.length
         );
         for (let staffIndex = 0; staffIndex < pairCount; staffIndex++) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- duck-typed call to avoid cross-module import
-          const outgoingStaff = outgoingStaves[staffIndex] as any;
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- duck-typed call to avoid cross-module import
-          const incomingStaff = incomingStaves[staffIndex] as any;
-          const outgoingTime =
-            typeof outgoingStaff.time === 'string' ? outgoingStaff.time : null;
-          const incomingTime =
-            typeof incomingStaff.time === 'string' ? incomingStaff.time : null;
+          const outgoingStaff = outgoingStaves[staffIndex];
+          const incomingStaff = incomingStaves[staffIndex];
 
-          // null means "not time-signature-comparable" (e.g. guitar tab,
-          // which has no `time` concept) — skip the pair.
-          if (outgoingTime === null || incomingTime === null) {
-            continue;
-          }
-
-          if (outgoingTime !== incomingTime) {
-            incomingStaff.timeChangeAtBoundary = true;
+          if (outgoingStaff.time !== incomingStaff.time) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- duck-typed call to avoid cross-module import
+            (incomingStaff as any).timeChangeAtBoundary = true;
           }
         }
       }

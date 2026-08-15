@@ -178,10 +178,17 @@ Features land in one of two shapes; steps are tagged accordingly:
 12. `[B]` **Orchestration** — in `src/staffClassicalBase.ts`: add a container, register the
     event listener in `connectedCallback` / remove in `disconnectedCallback`, add `#renderX()`
     and wire it into the render pass. Ref: `#renderDynamics`.
-13. **Inherited-attr variant** — if the feature is instead an _inherited staff attribute_ (like
-    `keysig`/`mode`/`time`), the wiring differs: add to `COMMON_ATTRIBUTES`, to
-    `observedAttributes` in composition/measure/staffClassicalBase, add `#effectiveX` +
-    `#resolveInheritedValue` calls, and the descendant push loop in `composition.ts`.
+13. **Inherited-attr variant** — if the feature is instead an _inherited staff attribute_, the
+    wiring differs: add to `COMMON_ATTRIBUTES`, to `observedAttributes` (a static, per-concrete-class
+    member — there's no shared list), add an `#effectiveX` field + `resolveInheritedValue()` calls
+    (see Staff Class Hierarchy below), and the descendant push loop in `composition.ts`. Two
+    variants: `keysig`/`mode` are **classical-only** inherited attrs, still wired on
+    `StaffClassicalElementBase` exactly as before. `time` is different — it's inherited by
+    **every** staff type via `StaffElementBase` (see below), so a new attribute that should apply
+    universally (not just to classical staves) belongs there instead, following `time`'s pattern:
+    `StaffGuitarTabElement` adds its own `observedAttributes`/`attributeChangedCallback` override
+    that re-resolves the inherited base field, since each concrete class declares its own
+    `observedAttributes`.
 14. `[A][B]` **Stories (near-universal)** — add/extend colocated `<component>.stories.ts`
     (Type A → `note.stories.ts`; Type B → `staff` / `composition` stories), using option
     arrays from `../utils` and strong types from `../types/theory`. For both Type A and Type B see if you can extend an existing story rather than making more new stories. If the feature is small like adding 1 or 2 attributes and their total number of possible values are small consider extending existing stories; otherwise you can plan for new stories
@@ -306,16 +313,16 @@ type VoiceType = 'soprano' | 'mezzo' | 'alto' | 'tenor' | 'baritone' | 'bass';
 ## Staff Class Hierarchy
 
 ```
-StaffElementBase              (staffBase.ts)         — shadow DOM, staff lines, resize observer, template method lifecycle
-├── StaffClassicalElementBase (staffClassicalBase.ts) — key sig, time sig, note Y-coords, beam/note rendering, clef-segment resolution
+StaffElementBase              (staffBase.ts)         — shadow DOM, staff lines, resize observer, template method lifecycle, group/groupId, time (value + inheritance)
+├── StaffClassicalElementBase (staffClassicalBase.ts) — key sig, time sig glyph rendering, note Y-coords, beam/note rendering, clef-segment resolution
 │   ├── StaffElement          (staff/staff.ts)              — `clef` attribute (treble/bass), data from rules/clefRules.ts
 │   └── StaffVocalElement     (staffVocal/staffVocal.ts)     — vocal clef, 6 voice types, lyrics integration
-└── StaffGuitarTabElement     (staffGuitarTab/staffGuitarTab.ts) — 6-line tab staff, no music theory
+└── StaffGuitarTabElement     (staffGuitarTab/staffGuitarTab.ts) — 6-line tab staff, no music theory, but does have a real `time` (inherited via StaffElementBase; never rendered as a glyph)
 ```
 
 `StaffTrebleElement`/`StaffBassElement` (formerly separate classes) were merged into `StaffElement` — treble/bass are now just two values of the `clef` attribute, both backed by `rules/clefRules.ts`'s `CLEF_DEFINITIONS`/`getClefRenderData()`. A `<music-clef>` element (`clef/clef.ts`) placed in a staff's slotted content marks a mid-stream clef change: `StaffClassicalElementBase` tracks these as `#clefMarkers` (parallel to `#tupletsByIndex`, never merged into the note/chord/rest array) and resolves the active clef per note index via `#renderDataForIndex()` / `#activeClefAt()`. The marker occupies horizontal space (`CLEF_CHANGE_RESERVED_WIDTH_PX`) but no beat duration.
 
-`StaffElementBase` — abstract base that owns the shadow DOM, staff line construction, `staffContainer` (div), `transcribeContainer` (SVG), and `staffResizeObserver`. All three are `protected readonly` so subclasses can access them. Implements `connectedCallback` (builds staff lines, appends containers, wires `slotchange`, starts resize observer) and `disconnectedCallback`. Uses a template method pattern — subclasses implement:
+`StaffElementBase` — abstract base that owns the shadow DOM, staff line construction, `staffContainer` (div), `transcribeContainer` (SVG), and `staffResizeObserver`. All three are `protected readonly` so subclasses can access them. Implements `connectedCallback` (builds staff lines, appends containers, wires `slotchange`, starts resize observer) and `disconnectedCallback`. Also implements `IStaffElementBase` (`types/elements.ts`) — `group`/`groupId` (structural, non-rendering brace/bracket-connector attributes, see Grand Staff below) and `time` (beats/measure — a real, attribute-backed, inheriting value on **every** staff type, not just classical). `time` is backed by `protected effectiveTimeSig: [BeatsInMeasure, BeatTypeInMeasure]`, `protected resolveInheritedValue(attributeName, defaultValue)` (own attribute → closest `<music-measure>` → closest `<music-composition>` → default), and `protected convertTotimeInts(time)`. These use TypeScript's `protected` keyword (no `#`) rather than `#private` specifically so subclasses can access them directly — see the `#` vs `protected` note under Conventions. Rendering a time-signature _glyph_ is still classical-only (see `StaffClassicalElementBase` below); `StaffGuitarTabElement` has the value but never draws it. Uses a template method pattern — subclasses implement:
 
 - `get staffLineCount(): number` — number of staff lines (e.g. 5 for classical)
 - `onConnectedCallback()` — called after containers are appended; add clef/key/time SVG here
@@ -323,7 +330,7 @@ StaffElementBase              (staffBase.ts)         — shadow DOM, staff lines
 - `onStaffResize()` — called when staff container width changes
 - `onDisconnectedCallback()` — cleanup (e.g. disconnect mutation observers)
 
-`StaffClassicalElementBase` — thin orchestrator on top of `StaffElementBase`. Wires together the rules layer (`rules/accidentalRules.ts`, `rules/beamRules.ts`) and the SVG layer (`utils/svgCreator/`) to produce rendered staves. Owns key/time signature rendering, note Y-coordinate lookup, and resize-aware note spacing. Abstract methods subclasses must implement:
+`StaffClassicalElementBase` — thin orchestrator on top of `StaffElementBase`. Wires together the rules layer (`rules/accidentalRules.ts`, `rules/beamRules.ts`) and the SVG layer (`utils/svgCreator/`) to produce rendered staves. Owns key signature rendering, time signature **glyph** rendering (`#appendTimeSignatureSvgIfNecessary`, `timeChangeAtBoundary` — the _value_ itself is inherited from `StaffElementBase`), note Y-coordinate lookup, and resize-aware note spacing. Abstract methods subclasses must implement:
 
 - `get yCoordinates(): YCoordinates` — map of note+octave string to pixel Y
 - `get octaves(): Octave[]` — octave search order when no octave is specified
@@ -481,7 +488,7 @@ Integration tests for notes, chords, and rests live in their **component's own t
 
 ## Conventions
 
-- Use TypeScript `#` private fields for custom element internals
+- Use TypeScript `#` private fields for custom element internals. **Exception**: state a subclass needs direct access to must use plain TypeScript `protected` (no `#`) instead — ECMAScript `#private` fields are not inheritable at all, only accessible within the exact class body that declares them. `staffBase.ts` mixes both: `#lastStaffWidth`/`#standaloneConnectorsOverlay` are `#`-private (base-only), while `staffContainer`/`transcribeContainer`/`staffResizeObserver`/`effectiveTimeSig`/`resolveInheritedValue`/`convertTotimeInts` are `protected` (subclasses read/call them directly). When moving state from a subclass onto a shared base specifically so other subclasses can use it, drop the `#` — keeping it silently breaks the subclass that used to own it.
 - Guard all custom element registration with `typeof window !== 'undefined'`
 - Use `SVG_NS` in `src/utils/consts.ts` with `createElementNS()` for all SVG creation
 - CSS custom properties: `--flex-staff-basis`, `--flex-staff-minw` for layout overrides

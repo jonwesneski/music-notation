@@ -2,6 +2,7 @@
  * @jest-environment jsdom
  */
 import '../index';
+import type { StaffElementType } from '../types/elements';
 import {
   COMMON_ATTRIBUTES,
   MUSIC_COMPOSITION,
@@ -30,7 +31,7 @@ describe(`${MUSIC_COMPOSITION} attribute propagation`, () => {
   function makeTree(clef: 'treble' | 'bass' = 'treble'): {
     composition: any;
     measure: any;
-    staff: any;
+    staff: StaffElementType;
   } {
     const composition = document.createElement(MUSIC_COMPOSITION) as any;
     document.body.appendChild(composition);
@@ -38,7 +39,7 @@ describe(`${MUSIC_COMPOSITION} attribute propagation`, () => {
     const measure = document.createElement(MUSIC_MEASURE) as any;
     composition.appendChild(measure);
 
-    const staff = document.createElement(MUSIC_STAFF) as any;
+    const staff = document.createElement(MUSIC_STAFF) as StaffElementType;
     staff.setAttribute('clef', clef);
     measure.appendChild(staff);
 
@@ -106,7 +107,7 @@ describe(`${MUSIC_COMPOSITION} attribute propagation`, () => {
     measure.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'F');
     composition.appendChild(measure);
 
-    const staff = document.createElement(MUSIC_STAFF) as any;
+    const staff = document.createElement(MUSIC_STAFF) as StaffElementType;
     measure.appendChild(staff);
 
     expect(staff.keySig).toBe('F');
