@@ -8,7 +8,7 @@ import { PitchDragHandler } from './pitchDragHandler';
 
 // jsdom doesn't provide PointerEvent — polyfill it from MouseEvent.
 if (typeof globalThis.PointerEvent === 'undefined') {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- globalThis isn't typed with a PointerEvent property to assign
   (globalThis as any).PointerEvent = class PointerEvent extends MouseEvent {
     readonly pointerId: number;
     readonly pointerType: string;

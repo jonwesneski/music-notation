@@ -133,10 +133,6 @@ export interface ITupletElement {
   readonly flatElements: NoteChordOrRestElementType[];
 }
 
-// Attributes shared by every staff type (StaffElement, StaffVocalElement,
-// StaffGuitarTabElement) via the common StaffElementBase class — used where
-// code needs to read staff-common properties off a generically-queried
-// Element without importing the concrete staff classes.
 export interface IStaffElementBase {
   group: StaffGroupType | null;
   groupId: string | null;

@@ -18,31 +18,19 @@ export type StaffGroupResolution = {
   warnings: string[];
 };
 
-/**
- * Resolves which staves should be joined by a brace/bracket connector.
- *
- * - `group="grand"` always pairs positionally with the immediate next
- *   sibling — no shared identifier support, since a grand staff (piano/harp)
- *   is inherently 2 staves. `groupId` is ignored for these staves.
- *   - A grouped staff with no next sibling produces a warning, no span.
- *   - A grouped staff whose next sibling also declares its own `group`
- *     produces a warning, no span — ambiguous (the second staff is trying to
- *     start its own grouping before the first one completed). The next
- *     sibling's own attempt is still evaluated on its own turn, so one bad
- *     pairing doesn't cascade-fail the rest of the measure.
- * - `group="bracket"` supports two ways to declare membership:
- *   - **With `groupId` set**: every staff sharing that exact `groupId` value
- *     (and `group="bracket"`) must be contiguous; the resolved span covers
- *     the whole contiguous run, however many staves that is.
- *     - A run of length 1 (the id matched only one staff) produces a
- *       warning, no span.
- *     - The same `groupId` value reappearing later in a separate,
- *       non-contiguous run produces a warning for that second run, no span
- *       (almost always a copy-paste mistake).
- *   - **With no `groupId`**: falls back to the same positional
- *     pair-with-next-sibling behavior as `group="grand"`, so existing
- *     2-staff bracket usage keeps working unchanged.
- */
+// Resolves which staves should be joined by a brace/bracket connector. Kept
+// separate from measure.ts so it's unit-testable — jsdom's ResizeObserver
+// polyfill never fires, so measure.ts's actual render path only runs in
+// browser tests.
+//
+// group="grand" always pairs positionally with the immediate next sibling
+// (groupId is ignored) — a warning with no span is produced if there's no
+// next sibling, or if that sibling also declares its own group (ambiguous;
+// the sibling's own turn is still evaluated separately so one bad pairing
+// doesn't cascade). group="bracket" either shares a groupId across a
+// contiguous run (a run of 1 is a warning; the same groupId reappearing in a
+// second non-contiguous run is a warning for that second run), or with no
+// groupId falls back to the same positional pairing as group="grand".
 export function resolveStaffGroups(
   entries: StaffGroupEntry[]
 ): StaffGroupResolution {

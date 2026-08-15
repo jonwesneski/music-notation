@@ -119,7 +119,7 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
     }
 
     private render(): void {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- contructor creates it
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- constructor attaches the shadow root
       this.shadowRoot!.innerHTML = `
         <style>
           :host {
@@ -231,9 +231,8 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
       wrapper.classList.toggle('has-group-connector', hasGroupedStaff);
     }
 
-    // Groups measures into visual rows using the same top-diff-tolerance
-    // technique #updateDescribeVisibility already relied on — shared so
-    // #updateClefContinuity doesn't duplicate row-detection logic.
+    // Groups measures into visual rows by top-position (5px tolerance),
+    // shared by every method here that needs row boundaries.
     #computeMeasureRows(): HTMLElement[][] {
       const measures = Array.from(
         this.querySelectorAll(MUSIC_MEASURE)

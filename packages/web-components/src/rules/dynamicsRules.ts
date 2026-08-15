@@ -28,21 +28,12 @@ type OpenHairpinStart = {
   index: number;
 };
 
-/**
- * Walks a flat list of notes, chords, and rests and pairs each hairpin start
- * with its nearest matching end of the same kind. Unpaired starts are silently
- * dropped. Mirrors the pairConnectors() approach in connectorsBuilder.ts.
- *
- * Also computes each pair's rendered startX/endX, shrinking the span inward
- * when the start/end note itself carries a dynamic marking so the wedge
- * doesn't run under that text. errors collects a message for each problem
- * detected: the shrink inverting the span (endpoint collision), a note
- * strictly between start and end also carrying a dynamic (interim overlap),
- * or the start/end element actually being a rest (which should never happen —
- * see the defensive check in buildHairpinPair). In the endpoint-collision and
- * rest cases the bounds fall back to the raw note-edge positions so the
- * hairpin still renders.
- */
+// Walks a flat list of notes/chords/rests and pairs each hairpin start with
+// its nearest end of the same kind (unpaired starts are dropped); mirrors
+// pairConnectors() in connectorsBuilder.ts. Also computes each pair's
+// rendered startX/endX, shrinking inward past any dynamic-marking text at
+// the endpoints — on a resulting collision or interim-dynamic overlap it
+// falls back to the raw note-edge positions and records a message in errors.
 export function pairHairpins(
   elements: NoteChordOrRestElementType[],
   noteXPositions: ReadonlyMap<number, number>
@@ -203,17 +194,13 @@ export type HairpinSegment = {
 
 type ElementBounds = { left: number; right: number; top: number };
 
-/**
- * Given a cross-measure hairpin pair and the composition row geometry, returns
- * either one segment (same row) or two segments (cross-row split).
- *
- * Row detection uses the same 5 px tolerance as ties/slurs. When the pair spans
- * a system break:
- * - Segment 1 ends at the right row edge; for decrescendo it stays open there
- *   ("remains open at the end of a system").
- * - Segment 2 starts at the left row edge already open (openAtStart=true),
- *   signalling the dynamic change was in progress on the previous system.
- */
+// Given a cross-measure hairpin pair and the composition row geometry,
+// returns one segment (same row) or two segments (cross-row split), using
+// the same 5px row tolerance as ties/slurs. When the pair spans a system
+// break: segment 1 ends at the right row edge (stays open there for a
+// decrescendo); segment 2 starts at the left row edge already open
+// (openAtStart=true), signalling the change was in progress on the
+// previous system.
 export function resolveHairpinSegments(
   pair: HairpinPair,
   startBounds: ElementBounds,

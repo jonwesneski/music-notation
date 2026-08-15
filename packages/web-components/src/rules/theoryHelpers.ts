@@ -52,7 +52,7 @@ const enharmonicIndex: Partial<Record<Note, 0 | 1 | 2 | 3 | 4>> = {
   'D#': 4,
   'A#': 4,
 };
-// Just exporting for testing; do not use
+// Exported only for direct unit testing — call getChordNotes() otherwise.
 export const getNotes = (root: Note, semitones: number[]) => {
   const notes: Note[] = [root];
   const choiceIndex = enharmonicIndex[root] ?? 2;
@@ -75,51 +75,17 @@ export const getNotes = (root: Note, semitones: number[]) => {
   return notes;
 };
 
-/**
- * Generates Y coordinates for a staff range from highest to lowest note.
- * Uses only natural notes (C, B, A, G, F, E, D) with 5px increments per note.
- *
- * @param highestNote - The highest note in the range (e.g., 'C6')
- * @param lowestNote - The lowest note in the range (e.g., 'C4')
- * @param startingY - The Y coordinate for the highest note (defaults to 10)
- * @returns YCoordinates object mapping note names to pixel positions
- *
- * @example
- * const sopranoYCoords = generateYCoordinates('C6', 'C4');
- * // { C6: 10, B5: 15, A5: 20, ..., C4: 80 }
- *
- * // Line y-positioning
- * [
- *   // Above 1st line
- *   10,
- *   15,
- *   20,
- *   25,
- *
- *   30, // 1st line
- *   35,
- *   40,
- *   45,
- *   50,
- *   55,
- *   60,
- *   65,
- *   70,
- *   // Below last line
- *   75,
- *   80,
- * ]
- */
+// Walks natural notes only (C, B, A, G, F, E, D) from highestNote down to
+// lowestNote, assigning Y positions in Y_COORDINATE_INCREMENT steps starting
+// at startingY.
 export const generateYCoordinates = (
   highestNote: NoteLetterOctave,
   lowestNote: NoteLetterOctave,
   startingY = 10
 ): YCoordinates => {
-  // Parse note to extract letter and octave
   const parseNote = (
     note: NoteLetterOctave
   ): { letter: string; octave: number } => {
-    // Strip accidentals if present, keep only the letter and octave
     const match = note.match(/^([A-G])#?b?(\d)$/);
     if (!match) throw new Error(`Invalid note format: ${note}`);
     return { letter: match[1], octave: parseInt(match[2]) };
@@ -128,7 +94,6 @@ export const generateYCoordinates = (
   const highest = parseNote(highestNote);
   const lowest = parseNote(lowestNote);
 
-  // Build note sequence from highest to lowest in natural note order
   const noteOrder = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
   const sequence: Array<{ note: string; octave: number }> = [];
 
@@ -138,21 +103,17 @@ export const generateYCoordinates = (
   while (currentNote !== lowest.letter || currentOctave !== lowest.octave) {
     sequence.push({ note: currentNote, octave: currentOctave });
 
-    // Move down one diatonic step
     const currentIndex = noteOrder.indexOf(currentNote);
     if (currentIndex === 0) {
-      // C → B of previous octave
       currentNote = 'B';
       currentOctave--;
     } else {
-      // Move to previous note in sequence
       currentNote = noteOrder[currentIndex - 1];
     }
   }
 
   sequence.push({ note: lowest.letter, octave: lowest.octave });
 
-  // Convert sequence to Y coordinates
   const result: YCoordinates = {};
   let currentY = startingY;
 
@@ -173,11 +134,11 @@ export const generateKeySignatureYCoordinates = (
   const keySignatureYCoordinates: KeySignatureYCoordinates = {};
   for (const key in keyCountMap) {
     keySignatureYCoordinates[key as Note] = [];
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- it's okay
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- key came from iterating keyCountMap's own keys
     for (let i = 0; i < keyCountMap[key as Note]!; i++) {
       const yCoordinate = yCoordinates[accidentals[i]];
       if (yCoordinate) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- it's okay
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- just assigned above in this same loop
         keySignatureYCoordinates[key as Note]!.push(yCoordinate);
       } else {
         throw new Error(

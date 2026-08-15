@@ -4,7 +4,7 @@ import { NOTE_EVENTS } from './consts';
 type PitchDragState = {
   element: HTMLElement;
   elementIndex: number;
-  /** For chords: the index of the notehead within the chord being dragged. */
+  // For chords: the index of the notehead within the chord being dragged.
   chordNoteIndex: number | null;
   originalNote: NoteLetterOctave;
   currentNote: NoteLetterOctave;
@@ -22,19 +22,15 @@ export type PitchChangeDetail = {
   toNote: NoteLetterOctave;
 };
 
-/**
- * Handles vertical dragging of noteheads to change pitch.
- *
- * Hit-test: only activates when the pointerdown target is a `.head` or
- * `.head-hit-zone` SVG element inside a note/chord shadow DOM.
- *
- * Snaps to valid staff Y positions during drag. Shows a tooltip with the
- * note transition (e.g. "D4 → F4"). Dispatches `note-pitch-change` on drop.
- */
+// Handles vertical dragging of noteheads to change pitch. Activates only
+// when the pointerdown target is a `.head`/`.head-hit-zone` SVG element.
+// Snaps to valid staff Y positions during drag, shows a tooltip with the
+// note transition (e.g. "D4 → F4"), and dispatches `note-pitch-change` on
+// drop.
 export class PitchDragHandler {
   #hostElement: HTMLElement;
   #yCoordinates: YCoordinates;
-  /** Sorted array of [LetterOctave, yCoordinate] by ascending Y (top-to-bottom). */
+  // Sorted array of [LetterOctave, yCoordinate] by ascending Y (top-to-bottom).
   #sortedPositions: [NoteLetterOctave, number][];
   #dragState: PitchDragState | null = null;
   #onLivePreview:
@@ -64,7 +60,6 @@ export class PitchDragHandler {
     this.#yCoordinates = yCoordinates;
     this.#onLivePreview = onLivePreview ?? null;
 
-    // Build sorted positions from yCoordinates (ascending Y = top to bottom on screen)
     this.#sortedPositions = [];
     for (const [note, y] of Object.entries(yCoordinates)) {
       if (y !== undefined) {
@@ -81,12 +76,8 @@ export class PitchDragHandler {
     };
   }
 
-  /**
-   * Attempt to start a pitch drag. Call this from the staff's pointerdown
-   * handler after determining that the click target is a notehead.
-   *
-   * Returns true if a pitch drag was started, false otherwise.
-   */
+  // Call from the staff's pointerdown handler once the target is confirmed
+  // to be a notehead. Returns whether a drag actually started.
   tryStart(
     e: PointerEvent,
     element: HTMLElement,
@@ -103,7 +94,6 @@ export class PitchDragHandler {
       return false;
     }
 
-    // Cancelable event
     const dragStartEvent = new CustomEvent(NOTE_EVENTS.PITCH_DRAG_START, {
       bubbles: true,
       composed: true,
@@ -146,7 +136,6 @@ export class PitchDragHandler {
       return;
     }
 
-    // Restore original pitch via live preview
     const { elementIndex, originalNote, chordNoteIndex } = this.#dragState;
     if (this.#onLivePreview && this.#dragState.currentNote !== originalNote) {
       this.#onLivePreview(elementIndex, originalNote, chordNoteIndex);
@@ -200,7 +189,6 @@ export class PitchDragHandler {
       }
     }
 
-    // Position tooltip near pointer
     this.#dragState.tooltip.style.left = `${e.clientX + 16}px`;
     this.#dragState.tooltip.style.top = `${e.clientY - 12}px`;
   }
@@ -263,10 +251,8 @@ export class PitchDragHandler {
     this.#dragState = null;
   }
 
-  /**
-   * Snap a target Y coordinate to the nearest valid staff position.
-   * For chords, excludes positions already occupied by other notes in the chord.
-   */
+  // Snaps a target Y to the nearest valid staff position, excluding
+  // positions already occupied by other notes in the same chord.
   #snapToPosition(
     targetY: number,
     element: HTMLElement,
@@ -311,10 +297,7 @@ export class PitchDragHandler {
     return best;
   }
 
-  /**
-   * Resolve the current note (LetterOctave) for an element.
-   * For chords, resolves the specific note at chordNoteIndex.
-   */
+  // Resolves the note at chordNoteIndex when element is a chord, else the element's own note.
   #resolveNote(
     element: HTMLElement,
     chordNoteIndex: number | null
@@ -335,10 +318,6 @@ export class PitchDragHandler {
     );
   }
 
-  /**
-   * Resolve a note value string and octave attribute to a LetterOctave
-   * by looking it up in the yCoordinates map.
-   */
   #resolveLetterOctave(
     value: string,
     octave: string | null
@@ -390,13 +369,10 @@ export class PitchDragHandler {
     tooltip.textContent = from === to ? from : `${from} → ${to}`;
   }
 
-  /**
-   * Check if an SVG element is a notehead (hit zone or visible head).
-   * Used by the staff to determine whether a pointerdown should trigger
-   * pitch drag vs timing reorder.
-   */
+  // Checks whether an SVG element is a notehead (hit zone or visible head).
+  // Used by staffClassicalBase.ts's pointerdown dispatch to choose pitch
+  // drag vs timing reorder.
   static isNoteheadTarget(target: Element): boolean {
-    // Walk up through SVG hierarchy checking for head classes
     let current: Element | null = target;
     while (current) {
       if (

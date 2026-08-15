@@ -119,7 +119,7 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
         : '';
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-empty-function -- will handle later
+    // eslint-disable-next-line @typescript-eslint/no-empty-function -- no cleanup needed yet; still an empty stub (see CLAUDE.md Known Incomplete Areas)
     protected override onDisconnectedCallback(): void {}
 
     protected override onHandleSlotChange(event: Event): void {

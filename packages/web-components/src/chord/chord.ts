@@ -489,8 +489,7 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
           STAFF_Y_PADDING - NOTE_HEAD_Y_OFFSET_CORRECTION
         );
 
-        // Wrap in an SVG element for display
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- contructor creates it
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- constructor attaches the shadow root
         this.shadowRoot!.innerHTML = `
           <style>
             :host { display: inline-block; overflow: visible; }

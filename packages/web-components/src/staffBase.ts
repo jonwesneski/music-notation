@@ -23,12 +23,12 @@ import {
 } from './utils/notationDimensions';
 import { parseStaffGroup } from './utils/parsers';
 
-// Use a runtime-safe fallback for environments without `HTMLElement` (SSR/Node).
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- prevents errrors if loaded in SSR
+// Runtime-safe fallback for environments without `HTMLElement` (SSR/Node). Prevents errrors if loaded in SSR
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- globalThis.HTMLElement isn't typed as a class constructor
 export const _MaybeHTMLElement: any =
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- prevents errrors if loaded in SSR
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- globalThis.HTMLElement isn't typed as a class constructor
   typeof globalThis !== 'undefined' && (globalThis as any).HTMLElement
-    ? // eslint-disable-next-line @typescript-eslint/no-explicit-any -- prevents errrors if loaded in SSR
+    ? // eslint-disable-next-line @typescript-eslint/no-explicit-any -- globalThis.HTMLElement isn't typed as a class constructor
       (globalThis as any).HTMLElement
     : class {};
 
@@ -101,10 +101,6 @@ export abstract class StaffElementBase extends _MaybeHTMLElement {
     }
   }
 
-  // Resolves an inherited attribute value: this element's own attribute,
-  // else the closest ancestor <music-measure>'s, else the closest ancestor
-  // <music-composition>'s, else the given default. Generic across all staff
-  // types (keySig/mode on classical staves, time on every staff type).
   protected resolveInheritedValue(
     attributeName: string,
     defaultValue: string
@@ -133,7 +129,7 @@ export abstract class StaffElementBase extends _MaybeHTMLElement {
   }
 
   protected render() {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- contructor creates it
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- constructor attaches the shadow root
     this.shadowRoot!.innerHTML = `
       <style>
       :host {
@@ -179,7 +175,7 @@ export abstract class StaffElementBase extends _MaybeHTMLElement {
       </div>
     `;
 
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- won't be null
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- shadowRoot was just written to above in this method
     const wrapper = this.shadowRoot!.querySelector('.staff-wrapper');
     if (!wrapper) {
       return;

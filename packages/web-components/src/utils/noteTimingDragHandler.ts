@@ -14,16 +14,12 @@ export type NoteTimingChangeDetail = {
   toIndex: number;
 };
 
-/**
- * Handles drag-and-drop reordering of note/chord elements within a staff.
- *
- * Designed for the self-rendering architecture where each <music-note> and
- * <music-chord> renders its own SVG in its shadow DOM, positioned absolutely
- * via inline styles by the parent staff.
- *
- * On drop the handler either reorders the light DOM (unmanaged) or only
- * dispatches a `note-reorder` event (managed) so a framework can update state.
- */
+// Handles drag-and-drop reordering of note/chord elements within a staff.
+// Built for the self-rendering architecture where each <music-note>/
+// <music-chord> renders its own SVG in shadow DOM, positioned absolutely by
+// the parent staff. On drop it either reorders the light DOM directly
+// (unmanaged) or only dispatches `note-reorder` (managed) so a framework can
+// update state instead.
 export class NoteTimingDragHandler {
   #hostElement: HTMLElement;
   #wrapperElement: HTMLElement;
@@ -110,7 +106,6 @@ export class NoteTimingDragHandler {
       return;
     }
 
-    // Dispatch cancelable event
     const dragStartEvent = new CustomEvent(NOTE_EVENTS.DRAG_START, {
       bubbles: true,
       composed: true,
@@ -123,15 +118,12 @@ export class NoteTimingDragHandler {
 
     e.preventDefault();
 
-    // Create visual clone
     const rect = target.getBoundingClientRect();
     const clone = this.#createClone(target);
     document.body.appendChild(clone);
 
-    // Dim original
     target.style.opacity = '0.3';
 
-    // Prepare drop indicator
     this.#wrapperElement.appendChild(this.#dropIndicator);
     this.#dropIndicator.style.display = 'none';
 
@@ -161,11 +153,9 @@ export class NoteTimingDragHandler {
 
     const { clone, offsetX, offsetY } = this.#dragState;
 
-    // Move clone to follow pointer
     clone.style.left = `${e.clientX - offsetX}px`;
     clone.style.top = `${e.clientY - offsetY}px`;
 
-    // Compute drop index in wrapper-relative coordinates
     const wrapperRect = this.#wrapperElement.getBoundingClientRect();
     const pointerXInWrapper = e.clientX - wrapperRect.left;
     const dropIndex = this.#computeDropIndex(pointerXInWrapper);
@@ -248,10 +238,8 @@ export class NoteTimingDragHandler {
     this.#dragState = null;
   }
 
-  /**
-   * Walk up from the event target to find the slotted music-note or
-   * music-chord element that was clicked.
-   */
+  // Walks up from the event target (crossing shadow boundaries) to find the
+  // slotted note/chord element that was clicked.
   #findSlottedElement(
     target: Element,
     elements: HTMLElement[]
@@ -283,7 +271,6 @@ export class NoteTimingDragHandler {
       cursor: grabbing;
     `;
 
-    // Copy the rendered SVG from the element's shadow DOM
     const svg = element.shadowRoot?.querySelector('svg');
     if (svg) {
       const svgClone = svg.cloneNode(true) as SVGElement;

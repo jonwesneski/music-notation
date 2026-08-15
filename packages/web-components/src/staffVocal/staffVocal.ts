@@ -365,15 +365,12 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
       const transcribeRect = transcribeContainer.getBoundingClientRect();
       const baselineY = transcribeRect.bottom - staffRect.top;
 
-      // Render each lyrics verse
       let verseIndex = 1;
       for (const lyricEl of lyricsElements) {
-        // Get syllables from the lyrics element
         const syllablesText = lyricEl.textContent ?? '';
         const syllables = this.#parseLyricsText(syllablesText);
         const positions: LyricSyllablePosition[] = [];
 
-        // Position each syllable below its corresponding note
         syllables.forEach((syllable, sylIndex) => {
           if (sylIndex >= noteElements.length) {
             console.warn(
@@ -403,7 +400,6 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
         verseIndex++;
       }
 
-      // Trigger lyrics elements to re-render
       for (const lyricEl of lyricsElements) {
         lyricEl.updatePositions();
       }

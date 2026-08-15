@@ -107,7 +107,7 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
 
     connectedCallback(): void {
       this.render();
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- won't be null
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- a measure is always slotted into a parent
       this.#staffConnectorObserver.observe(this.parentElement!);
       this.addEventListener(
         STAFF_EVENTS.STAFF_MIN_WIDTH,
@@ -135,7 +135,7 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
     }
 
     private render(): void {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- contructor creates it
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- constructor attaches the shadow root
       this.shadowRoot!.innerHTML = `
         <style>
           :host {
@@ -201,10 +201,10 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
 
     #updateConnectorVisibility() {
       const staffConnector =
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- it does exist
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- render() always creates .staff-connector before this runs
         this.shadowRoot!.querySelector<HTMLElement>('.staff-connector')!;
       const allMeasures = Array.from(
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- it does exist
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- observer only runs while connected, so parentNode exists
         this.parentNode!.querySelectorAll(MUSIC_MEASURE)
       );
 

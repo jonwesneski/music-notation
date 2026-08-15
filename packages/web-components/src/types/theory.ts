@@ -196,7 +196,7 @@ export type ArticulationType =
 // Schoenberg stress family
 export type StressType = 'stressed' | 'unstressed';
 
-// Just a reminder: grace notes never consume beat budget
+// Grace notes never consume beat budget.
 export type GraceType = 'acciaccatura' | 'appoggiatura';
 
 export type GraceDuration = Extract<

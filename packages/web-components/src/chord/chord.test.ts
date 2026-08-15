@@ -396,9 +396,7 @@ describe(MUSIC_CHORD, () => {
       const gapOneAccidental = Math.abs(
         topNoteHeadCenterY - endY(oneAccidental)
       );
-      // The 2-accidental case's gap must not be larger than the 1-accidental
-      // case's — this is exactly the regression the user reported (chords
-      // with more accidentals showing a visibly bigger end-point gap).
+      // Adding a second accidental must not increase the end-point gap.
       expect(gapTwoAccidentals).toBeCloseTo(gapOneAccidental, 5);
     });
 
