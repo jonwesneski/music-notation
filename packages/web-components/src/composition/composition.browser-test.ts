@@ -441,6 +441,101 @@ test.describe(`${MUSIC_COMPOSITION} responsive layout`, () => {
     expect(after).toEqual([true, false, true, false]);
   });
 
+  test('empty measures keep their clef flush left and unscaled as they wrap across rows (regression: stale viewBox on note-less resize)', async ({
+    page,
+  }) => {
+    await page.evaluate(
+      ({ compositionTag, measureTag, staffTag }) => {
+        const host = document.getElementById('host');
+        if (host === null) {
+          throw new Error('host missing');
+        }
+        host.innerHTML = '';
+        host.style.width = '900px';
+        const composition = document.createElement(compositionTag);
+        for (let i = 0; i < 4; i++) {
+          const measure = document.createElement(measureTag);
+          const staff = document.createElement(staffTag);
+          staff.setAttribute('clef', 'treble');
+          measure.appendChild(staff);
+          composition.appendChild(measure);
+        }
+        host.appendChild(composition);
+      },
+      {
+        compositionTag: MUSIC_COMPOSITION,
+        measureTag: MUSIC_MEASURE,
+        staffTag: MUSIC_STAFF,
+      }
+    );
+    await waitForRedrawCycle(page);
+    await waitForRedrawCycle(page);
+
+    const readStaffGeometry = () =>
+      page.evaluate((staffTag) => {
+        const staves = Array.from(
+          document.querySelectorAll(staffTag)
+        ) as HTMLElement[];
+        return staves.map((staff) => {
+          if (staff.shadowRoot === null) {
+            throw new Error('staff not ready');
+          }
+          const transcribeContainer = staff.shadowRoot.querySelector(
+            '.transcribe-container'
+          ) as SVGSVGElement | null;
+          if (transcribeContainer === null) {
+            throw new Error('transcribe container missing');
+          }
+          const containerRect = transcribeContainer.getBoundingClientRect();
+          const viewBox = transcribeContainer.viewBox.baseVal;
+          const clef = staff.shadowRoot.querySelector(
+            '.describe-container .clef'
+          );
+          const clefRect = clef !== null ? clef.getBoundingClientRect() : null;
+          return {
+            containerWidth: containerRect.width,
+            viewBoxWidth: viewBox.width,
+            clefOffsetX:
+              clefRect !== null ? clefRect.left - containerRect.left : null,
+            clefWidth: clefRect !== null ? clefRect.width : null,
+          };
+        });
+      }, MUSIC_STAFF);
+
+    // At 900px only M1 (row 1) and M4 (alone in row 2, stretched to fill it)
+    // show a clef; that's expected — nothing has resized yet.
+    const wide = await readStaffGeometry();
+    expect(wide).toHaveLength(4);
+    for (const staff of wide) {
+      expect(staff.viewBoxWidth).toBeCloseTo(staff.containerWidth, 0);
+    }
+
+    // Narrow further so every measure wraps onto its own row — each becomes
+    // first (and only) in its row, so every staff now shows a clef. M1-M3's
+    // actual width shrinks from their original 300px flex-basis share, and
+    // M4's shrinks from the full 900px it was stretched to fill.
+    await resizeHost(page, 250);
+
+    const narrow = await readStaffGeometry();
+    expect(narrow).toHaveLength(4);
+    for (const staff of narrow) {
+      expect(staff.viewBoxWidth).toBeCloseTo(staff.containerWidth, 0);
+      expect(staff.clefOffsetX).not.toBeNull();
+      expect(staff.clefWidth).not.toBeNull();
+    }
+
+    // With viewBox tracking the container 1:1, the clef's fixed pixel
+    // offset (CLEF_X_OFFSET) renders unscaled — every staff should show the
+    // same left offset and the same glyph width, regardless of which row it
+    // wrapped to or how wide that staff used to be.
+    const offsets = narrow.map((s) => s.clefOffsetX as number);
+    const widths = narrow.map((s) => s.clefWidth as number);
+    for (let i = 1; i < offsets.length; i++) {
+      expect(Math.abs(offsets[i] - offsets[0])).toBeLessThan(1);
+      expect(Math.abs(widths[i] - widths[0])).toBeLessThan(1);
+    }
+  });
+
   test('key signature and clef visibility — only first staff in each row shows both, across resizes', async ({
     page,
   }) => {

@@ -1446,17 +1446,20 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
     return topY < 0 ? Math.ceil(-topY) + 2 : 0;
   }
 
-  // Respace notes on resize
+  // Respace notes on resize. Runs even when there are no notes/chords, since
+  // the describe area (clef/key/time signature) and the SVG viewBox still
+  // need to track the staff's current width — otherwise an empty staff's
+  // viewBox stays frozen at whatever width it had when it first connected,
+  // and the browser's default viewBox scaling silently mis-scales/repositions
+  // the clef on every subsequent resize.
   onStaffResize() {
-    if (this.#currentElements.length > 0) {
-      this.#spaceElements();
-      this.dispatchEvent(
-        new CustomEvent(STAFF_EVENTS.NOTES_POSITIONED, {
-          bubbles: true,
-          composed: true,
-        })
-      );
-      this.drawConnectorsWhenStandalone();
-    }
+    this.#spaceElements();
+    this.dispatchEvent(
+      new CustomEvent(STAFF_EVENTS.NOTES_POSITIONED, {
+        bubbles: true,
+        composed: true,
+      })
+    );
+    this.drawConnectorsWhenStandalone();
   }
 }
