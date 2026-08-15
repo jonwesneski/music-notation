@@ -94,6 +94,7 @@ export const generateYCoordinates = (
   const highest = parseNote(highestNote);
   const lowest = parseNote(lowestNote);
 
+  // Build note sequence from highest to lowest in natural note order
   const noteOrder = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
   const sequence: Array<{ note: string; octave: number }> = [];
 
@@ -103,11 +104,14 @@ export const generateYCoordinates = (
   while (currentNote !== lowest.letter || currentOctave !== lowest.octave) {
     sequence.push({ note: currentNote, octave: currentOctave });
 
+    // Move down one diatonic step
     const currentIndex = noteOrder.indexOf(currentNote);
     if (currentIndex === 0) {
+      // C → B of previous octave
       currentNote = 'B';
       currentOctave--;
     } else {
+      // Move to previous note in sequence
       currentNote = noteOrder[currentIndex - 1];
     }
   }

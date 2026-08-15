@@ -751,6 +751,42 @@ test.describe(`${MUSIC_COMPOSITION} responsive layout`, () => {
     expect(result.courtesyGlyphCount).toBe(0);
   });
 
+  test('a genuine clef boundary settles instead of perpetually rescheduling redraws (regression: reset-then-set two-pass assignment)', async ({
+    page,
+  }) => {
+    await buildTwoMeasureClefChange(page, 900);
+    await waitForRedrawCycle(page);
+    await waitForRedrawCycle(page);
+
+    const staffNotesPositionedCount = await page.evaluate(async () => {
+      let count = 0;
+      const host = document.getElementById('host');
+      if (host === null) {
+        throw new Error('host missing');
+      }
+      host.addEventListener('staff-notes-positioned', () => {
+        count++;
+      });
+
+      await new Promise<void>((resolve) => {
+        let frame = 0;
+        const tick = () => {
+          frame++;
+          if (frame >= 10) {
+            resolve();
+            return;
+          }
+          requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      });
+
+      return count;
+    });
+
+    expect(staffNotesPositionedCount).toBe(0);
+  });
+
   test('row-wrap clef change: outgoing staff gets a courtesy clef and incoming staff shows its clef despite not being first-in-row by default', async ({
     page,
   }) => {

@@ -484,14 +484,6 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
         overlay.removeChild(overlay.firstChild);
       }
 
-      // Reset every staff's boundary flag before recomputing — a staff that
-      // needed the flag last pass but no longer does (clef no longer
-      // differs from its predecessor) must not keep showing a stale glyph.
-      Array.from(this.querySelectorAll(STAFF_TAGS)).forEach((staff) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- duck-typed call to avoid cross-module import
-        (staff as any).clefChangeAtBoundary = false;
-      });
-
       const rows = this.#computeMeasureRows();
       const rowIndexByMeasure = new Map<HTMLElement, number>();
       rows.forEach((row, rowIndex) => {
@@ -501,6 +493,13 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
       });
       const measures = rows.flat();
       const rootRect = wrapper.getBoundingClientRect();
+
+      // Computed first, assigned once at the end — flipping a staff's flag
+      // false-then-true within one pass (rather than assigning its final
+      // value once) would fire the setter's re-render/dispatch twice per
+      // pass even when the net value is unchanged from the prior pass,
+      // which perpetually reschedules a redraw via staff-notes-positioned.
+      const staffsNeedingClefChangeFlag = new Set<HTMLElement>();
 
       for (let i = 1; i < measures.length; i++) {
         const outgoingMeasure = measures[i - 1];
@@ -539,7 +538,7 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
           }
 
           if (outgoingClef !== incomingClef) {
-            incomingStaff.clefChangeAtBoundary = true;
+            staffsNeedingClefChangeFlag.add(incomingStaff);
 
             if (!isRowWrap) {
               continue;
@@ -568,6 +567,15 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
           }
         }
       }
+
+      // Single assignment per staff, computed value vs. current — never a
+      // false-then-true round trip in the same pass (see comment above).
+      Array.from(this.querySelectorAll(STAFF_TAGS)).forEach((staff) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- duck-typed call to avoid cross-module import
+        (staff as any).clefChangeAtBoundary = staffsNeedingClefChangeFlag.has(
+          staff as HTMLElement
+        );
+      });
     }
 
     // A time signature is shown only on the first measure, or on a later
@@ -578,12 +586,12 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
     // (the flag that actually shows the glyph) stays classical-only — guitar
     // tab never renders a time signature, so it has nothing to flag.
     #updateTimeSignatureContinuity() {
-      Array.from(this.querySelectorAll(STAFF_TAGS)).forEach((staff) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- duck-typed call to avoid cross-module import
-        (staff as any).timeChangeAtBoundary = false;
-      });
-
       const measures = this.#computeMeasureRows().flat();
+
+      // Computed first, assigned once at the end — see #updateClefContinuity
+      // for why a reset-then-set two-pass assignment perpetually reschedules
+      // a redraw for any staff whose flag legitimately stays true.
+      const staffsNeedingTimeChangeFlag = new Set<StaffElementBaseType>();
 
       for (let i = 1; i < measures.length; i++) {
         const outgoingStaves = Array.from(measures[i - 1].children).filter(
@@ -602,11 +610,17 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
           const incomingStaff = incomingStaves[staffIndex];
 
           if (outgoingStaff.time !== incomingStaff.time) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- duck-typed call to avoid cross-module import
-            (incomingStaff as any).timeChangeAtBoundary = true;
+            staffsNeedingTimeChangeFlag.add(incomingStaff);
           }
         }
       }
+
+      Array.from(this.querySelectorAll(STAFF_TAGS)).forEach((staff) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- duck-typed call to avoid cross-module import
+        (staff as any).timeChangeAtBoundary = staffsNeedingTimeChangeFlag.has(
+          staff as StaffElementBaseType
+        );
+      });
     }
 
     #manageMeasureCount() {
