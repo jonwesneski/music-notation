@@ -37,12 +37,11 @@ import {
   TupletElementType,
   YCoordinates,
 } from './types/elements';
-import {
+import type {
   ClefType,
   DurationType,
   Mode,
   Note,
-  NoteLetter,
   Octave,
 } from './types/theory';
 import {
@@ -329,19 +328,21 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
 
     const host = this as unknown as HTMLElement;
     const getElements = () => this.#currentElements as unknown as HTMLElement[];
+    const getClefMarkers = () => this.#clefMarkers;
 
     this.#noteTimingDragHandler = new NoteTimingDragHandler(
       host,
       wrapper,
       getElements,
+      getClefMarkers,
       this.managed
     );
 
     this.#notePitchDragHandler = new PitchDragHandler(
       host,
-      this.yCoordinates,
-      (elementIndex, newNote, chordNoteIndex) => {
-        this.#onPitchLivePreview(elementIndex, newNote, chordNoteIndex);
+      (elementIndex) => this.#renderDataForIndex(elementIndex).yCoordinates,
+      (elementIndex, note, octave, chordNoteIndex) => {
+        this.#onPitchLivePreview(elementIndex, note, octave, chordNoteIndex);
       }
     );
 
@@ -477,7 +478,8 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
    */
   #onPitchLivePreview(
     elementIndex: number,
-    newNote: NoteLetterOctave,
+    note: Note,
+    octave: Octave,
     chordNoteIndex: number | null
   ) {
     const element = this.#currentElements[elementIndex];
@@ -485,18 +487,15 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
       return;
     }
 
-    const letter = newNote[0] as NoteLetter;
-    const octave = parseInt(newNote[1], 10) as Octave;
-
     if (element.nodeName === MUSIC_CHORD_NODE && chordNoteIndex !== null) {
       const noteElements = element.querySelectorAll(MUSIC_NOTE);
       const noteEl = noteElements[chordNoteIndex] as HTMLElement | undefined;
       if (noteEl) {
-        noteEl.setAttribute('note', letter);
+        noteEl.setAttribute('note', note);
         noteEl.setAttribute('octave', String(octave));
       }
     } else if (element.nodeName === MUSIC_NOTE_NODE) {
-      element.setAttribute('note', letter);
+      element.setAttribute('note', note);
       element.setAttribute('octave', String(octave));
     }
 

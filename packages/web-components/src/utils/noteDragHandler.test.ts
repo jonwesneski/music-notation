@@ -2,6 +2,7 @@
  * @jest-environment jsdom
  */
 
+import type { ClefElementType, ClefMarkerPlacement } from '../types/elements';
 import { NOTE_EVENTS, SVG_NS } from './consts';
 import { NoteTimingDragHandler } from './noteTimingDragHandler';
 
@@ -52,7 +53,11 @@ function makeNoteElement(left = '0px'): HTMLElement {
 }
 
 /** Scaffold: host element, wrapper, elements array, and handler. */
-function setup(opts?: { managed?: boolean; elementCount?: number }) {
+function setup(opts?: {
+  managed?: boolean;
+  elementCount?: number;
+  clefMarkers?: ClefMarkerPlacement[];
+}) {
   const managed = opts?.managed ?? false;
   const count = opts?.elementCount ?? 3;
 
@@ -68,15 +73,28 @@ function setup(opts?: { managed?: boolean; elementCount?: number }) {
     elements.push(el);
   }
 
+  const clefMarkers = opts?.clefMarkers ?? [];
+  for (const marker of clefMarkers) {
+    wrapper.appendChild(marker.element);
+  }
+
   const handler = new NoteTimingDragHandler(
     host,
     wrapper,
     () => elements,
+    () => clefMarkers,
     managed
   );
   handler.attach();
 
-  return { host, wrapper, elements, handler };
+  return { host, wrapper, elements, handler, clefMarkers };
+}
+
+/** Create a mock <music-clef> marker element. */
+function makeClefMarkerElement(): ClefElementType {
+  const el = document.createElement('div') as unknown as ClefElementType;
+  Object.defineProperty(el, 'nodeName', { value: 'MUSIC-CLEF' });
+  return el;
 }
 
 function pointerDown(
@@ -393,6 +411,43 @@ describe('NoteTimingDragHandler', () => {
         elements.includes(c as HTMLElement)
       );
       expect(children[children.length - 1]).toBe(elements[0]);
+    });
+
+    it('carries a clef marker along when the note it follows is dragged past it', () => {
+      const clefMarker = makeClefMarkerElement();
+      const { host, elements, clefMarkers } = setup({
+        managed: false,
+        // Marker sits right after element 0.
+        clefMarkers: [{ afterElementIndex: 0, element: clefMarker }],
+      });
+      const parent = elements[0].parentElement!;
+
+      // Drag element 0 past all other elements — the marker should move
+      // along with it, staying anchored immediately after element 0.
+      pointerDown(elements[0], { clientX: 5 });
+      pointerMove(host, 200);
+      pointerUp(host);
+
+      const children = [...parent.children];
+      const draggedIndex = children.indexOf(elements[0]);
+      expect(children[draggedIndex + 1]).toBe(clefMarkers[0].element);
+    });
+
+    it('leaves a clef marker at the start when anchored before the first note (afterElementIndex -1)', () => {
+      const clefMarker = makeClefMarkerElement();
+      const { host, elements, clefMarkers } = setup({
+        managed: false,
+        clefMarkers: [{ afterElementIndex: -1, element: clefMarker }],
+      });
+      const parent = elements[0].parentElement!;
+
+      // Drag element 1 past all other elements — the start-anchored marker
+      // should remain the first child.
+      pointerDown(elements[1], { clientX: 55 });
+      pointerMove(host, 200);
+      pointerUp(host);
+
+      expect(parent.firstChild).toBe(clefMarkers[0].element);
     });
   });
 

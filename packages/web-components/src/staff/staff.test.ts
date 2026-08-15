@@ -228,6 +228,39 @@ describe(`${MUSIC_STAFF} clef changes`, () => {
     consoleSpy.mockRestore();
   });
 
+  it('noteToYCoordinate with an elementIndex resolves the active segment (the same lookup PitchDragHandler uses)', () => {
+    // PitchDragHandler's Y-coordinate resolver (wired in #enableDrag) calls
+    // exactly this method with the dragged note's elementIndex — this locks
+    // in that a note past a clef marker resolves against the marker's
+    // clef, not the staff's own, so pitch dragging snaps to the right table.
+    const staff = makeStaff('treble');
+
+    const noteBefore = document.createElement(MUSIC_NOTE) as NoteElementType;
+    noteBefore.setAttribute('duration', 'quarter');
+    noteBefore.setAttribute('note', 'C');
+    noteBefore.setAttribute('octave', '4');
+
+    const clefMarker = makeClefMarker('bass');
+
+    // C3 exists in the bass range (E4-E2) but not the treble range (C6-C4).
+    const noteAfter = document.createElement(MUSIC_NOTE) as NoteElementType;
+    noteAfter.setAttribute('duration', 'quarter');
+    noteAfter.setAttribute('note', 'C');
+    noteAfter.setAttribute('octave', '3');
+
+    renderElements(staff, [noteBefore, clefMarker, noteAfter]);
+
+    const treble = generateYCoordinates(...CLEF_RANGES.treble);
+    const bass = generateYCoordinates(...CLEF_RANGES.bass);
+
+    expect(staff.noteToYCoordinate('C', 4, 0)).toBe(treble['C4']);
+    // Absent from the treble table entirely — resolving against the base
+    // (index-less) staff table would return 0, the "not found" sentinel.
+    expect(treble['C3']).toBeUndefined();
+    expect(staff.noteToYCoordinate('C', 3, 2)).toBe(bass['C3']);
+    expect(staff.noteToYCoordinate('C', 3, 2)).not.toBe(0);
+  });
+
   it('drops and hides a clef marker whose anchor note is truncated by measure overflow', () => {
     const staff = makeStaff('treble');
     staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '1/4');

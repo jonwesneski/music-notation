@@ -1,3 +1,4 @@
+import type { ClefMarkerPlacement } from '../types/elements';
 import { NOTE_EVENTS } from './consts';
 
 type DragState = {
@@ -24,6 +25,7 @@ export class NoteTimingDragHandler {
   #hostElement: HTMLElement;
   #wrapperElement: HTMLElement;
   #getSlottedElements: () => HTMLElement[];
+  #getClefMarkers: () => ClefMarkerPlacement[];
   #managed: boolean;
   #dragState: DragState | null = null;
   #dropIndicator: HTMLDivElement;
@@ -39,11 +41,13 @@ export class NoteTimingDragHandler {
     hostElement: HTMLElement,
     wrapperElement: HTMLElement,
     getSlottedElements: () => HTMLElement[],
+    getClefMarkers: () => ClefMarkerPlacement[],
     managed = false
   ) {
     this.#hostElement = hostElement;
     this.#wrapperElement = wrapperElement;
     this.#getSlottedElements = getSlottedElements;
+    this.#getClefMarkers = getClefMarkers;
     this.#managed = managed;
 
     this.#dropIndicator = document.createElement('div');
@@ -341,6 +345,19 @@ export class NoteTimingDragHandler {
       return;
     }
 
+    // Anchor each clef marker to the note it currently follows (by identity,
+    // not index) before the DOM move, so it can be re-anchored to the same
+    // note afterward — index-based afterElementIndex is meaningless mid-move
+    // since it's recomputed fresh from DOM order on the next slotchange.
+    const clefMarkers = this.#getClefMarkers();
+    const markerAnchors = clefMarkers.map((marker) => ({
+      element: marker.element,
+      anchorNote:
+        marker.afterElementIndex >= 0
+          ? elements[marker.afterElementIndex]
+          : null,
+    }));
+
     const adjustedToIndex = toIndex > fromIndex ? toIndex - 1 : toIndex;
     const remaining = elements.filter((_, i) => i !== fromIndex);
 
@@ -348,6 +365,14 @@ export class NoteTimingDragHandler {
       remaining[remaining.length - 1].after(dragged);
     } else {
       parent.insertBefore(dragged, remaining[adjustedToIndex]);
+    }
+
+    for (const { element, anchorNote } of markerAnchors) {
+      if (anchorNote) {
+        anchorNote.after(element);
+      } else {
+        parent.insertBefore(element, parent.firstChild);
+      }
     }
   }
 }

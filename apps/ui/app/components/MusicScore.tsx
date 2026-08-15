@@ -2,6 +2,7 @@ import '@one-step-at-a-time/web-components';
 import type {
   DurationType,
   Note,
+  Octave,
   PitchChangeDetail,
 } from '@one-step-at-a-time/web-components';
 import { useEffect, useRef, useState } from 'react';
@@ -10,22 +11,45 @@ type NoteItem = {
   id: string;
   type: 'note';
   value: Note;
+  octave: Octave | null;
   duration: DurationType;
 };
 type ChordItem = {
   id: string;
   type: 'chord';
   duration: DurationType;
-  notes: Note[];
+  notes: { value: Note; octave: Octave | null }[];
 };
 type StaffItem = NoteItem | ChordItem;
 
 const initialNotes: StaffItem[] = [
-  { id: 'c1', type: 'chord', duration: 'eighth', notes: ['A', 'E'] },
-  { id: 'c2', type: 'chord', duration: 'eighth', notes: ['A', 'E'] },
-  { id: 'n1', type: 'note', value: 'D', duration: 'quarter' },
-  { id: 'n2', type: 'note', value: 'F#' as Note, duration: 'quarter' },
-  { id: 'n3', type: 'note', value: 'B', duration: 'quarter' },
+  {
+    id: 'c1',
+    type: 'chord',
+    duration: 'eighth',
+    notes: [
+      { value: 'A', octave: 4 },
+      { value: 'E', octave: 4 },
+    ],
+  },
+  {
+    id: 'c2',
+    type: 'chord',
+    duration: 'eighth',
+    notes: [
+      { value: 'A', octave: 4 },
+      { value: 'E', octave: 4 },
+    ],
+  },
+  { id: 'n1', type: 'note', value: 'D', octave: 4, duration: 'quarter' },
+  {
+    id: 'n2',
+    type: 'note',
+    value: 'F#' as Note,
+    octave: 4,
+    duration: 'quarter',
+  },
+  { id: 'n3', type: 'note', value: 'B', octave: 4, duration: 'quarter' },
 ];
 
 export default function MusicScore() {
@@ -48,20 +72,19 @@ export default function MusicScore() {
     };
 
     const onPitchChange = (e: Event) => {
-      const { elementIndex, chordNoteIndex, toNote } = (e as CustomEvent)
-        .detail as PitchChangeDetail;
-      // todo: fixing typings on web components. I want note and chord type to support Note and Octave
-      const newValue = toNote as Note;
+      const { elementIndex, chordNoteIndex, toNote, toOctave } = (
+        e as CustomEvent
+      ).detail as PitchChangeDetail;
 
       setItems((prev) => {
         const next = [...prev];
         const item = next[elementIndex];
         if (item.type === 'chord' && chordNoteIndex !== null) {
           const updatedNotes = [...item.notes];
-          updatedNotes[chordNoteIndex] = newValue;
+          updatedNotes[chordNoteIndex] = { value: toNote, octave: toOctave };
           next[elementIndex] = { ...item, notes: updatedNotes };
         } else if (item.type === 'note') {
-          next[elementIndex] = { ...item, value: newValue };
+          next[elementIndex] = { ...item, value: toNote, octave: toOctave };
         }
         return next;
       });
@@ -83,13 +106,18 @@ export default function MusicScore() {
             item.type === 'chord' ? (
               <music-chord key={item.id} duration={item.duration}>
                 {item.notes.map((n, j) => (
-                  <music-note key={j} note={n}></music-note>
+                  <music-note
+                    key={j}
+                    note={n.value}
+                    octave={n.octave ?? undefined}
+                  ></music-note>
                 ))}
               </music-chord>
             ) : (
               <music-note
                 key={item.id}
                 note={item.value}
+                octave={item.octave ?? undefined}
                 duration={item.duration}
               ></music-note>
             )
