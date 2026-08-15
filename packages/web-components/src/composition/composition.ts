@@ -203,6 +203,7 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
         this.#redrawHairpins();
         this.#updateDescribeVisibility();
         this.#updateClefContinuity();
+        this.#updateTimeSignatureContinuity();
         this.#updateGroupConnectorSpaceReservation();
       });
     }
@@ -566,6 +567,58 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
             // repeat of the current one — that's the entire point of it.
             courtesyGroup.innerHTML = getClefRenderData(incomingClef).clefSvg;
             overlay.appendChild(courtesyGroup);
+          }
+        }
+      }
+    }
+
+    // A time signature is shown only on the first measure, or on a later
+    // measure whose resolved time signature differs from the measure right
+    // before it (including redefining the original signature after a change)
+    // — mirrors #updateClefContinuity's adjacent-pair comparison. Staves
+    // without a `time` getter (guitar tab, which doesn't display a time
+    // signature) are treated as not comparable and skipped, same as the null
+    // guard #updateClefContinuity uses for non-clef staves.
+    #updateTimeSignatureContinuity() {
+      Array.from(this.querySelectorAll('*'))
+        .filter((el) => isStaffNodeName(el.nodeName))
+        .forEach((staff) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- duck-typed call to avoid cross-module import
+          (staff as any).timeChangeAtBoundary = false;
+        });
+
+      const measures = this.#computeMeasureRows().flat();
+
+      for (let i = 1; i < measures.length; i++) {
+        const outgoingStaves = Array.from(measures[i - 1].children).filter(
+          (el) => isStaffNodeName(el.nodeName)
+        ) as HTMLElement[];
+        const incomingStaves = Array.from(measures[i].children).filter((el) =>
+          isStaffNodeName(el.nodeName)
+        ) as HTMLElement[];
+
+        const pairCount = Math.min(
+          outgoingStaves.length,
+          incomingStaves.length
+        );
+        for (let staffIndex = 0; staffIndex < pairCount; staffIndex++) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- duck-typed call to avoid cross-module import
+          const outgoingStaff = outgoingStaves[staffIndex] as any;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- duck-typed call to avoid cross-module import
+          const incomingStaff = incomingStaves[staffIndex] as any;
+          const outgoingTime =
+            typeof outgoingStaff.time === 'string' ? outgoingStaff.time : null;
+          const incomingTime =
+            typeof incomingStaff.time === 'string' ? incomingStaff.time : null;
+
+          // null means "not time-signature-comparable" (e.g. guitar tab,
+          // which has no `time` concept) — skip the pair.
+          if (outgoingTime === null || incomingTime === null) {
+            continue;
+          }
+
+          if (outgoingTime !== incomingTime) {
+            incomingStaff.timeChangeAtBoundary = true;
           }
         }
       }

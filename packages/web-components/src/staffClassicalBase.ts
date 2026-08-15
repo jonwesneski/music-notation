@@ -128,6 +128,7 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
   #describeEndX = 0;
   #showDescribe = true;
   #clefChangeAtBoundary = false;
+  #timeChangeAtBoundary = false;
   #tupletGroups: TupletGroup[] = [];
   #tupletsByIndex: Map<number, TupletElementType[]> = new Map();
   #clefMarkers: ClefMarkerPlacement[] = [];
@@ -181,6 +182,21 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
       return;
     }
     this.#clefChangeAtBoundary = value;
+    this.#refreshDescribe();
+  }
+
+  // Set by composition.ts when this staff's resolved time signature differs
+  // from the previous measure's — keeps the time signature glyph visible even
+  // though this isn't the first measure in the composition.
+  get timeChangeAtBoundary(): boolean {
+    return this.#timeChangeAtBoundary;
+  }
+
+  set timeChangeAtBoundary(value: boolean) {
+    if (this.#timeChangeAtBoundary === value) {
+      return;
+    }
+    this.#timeChangeAtBoundary = value;
     this.#refreshDescribe();
   }
 
@@ -608,18 +624,10 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
   #appendTimeSignatureSvgIfNecessary(parentSvg: SVGElement, xOffset: number) {
     const measure = this.closest(MUSIC_MEASURE);
     const measureNumberStr: string | null = measure?.getAttribute('number');
-    const firstMeasureOrNoCompositionTime =
-      measureNumberStr === '1' || !measure ? this.#effectiveTimeSig : null;
-    const timeChangeInMeasure =
-      !firstMeasureOrNoCompositionTime && measure && this.getAttribute('time')
-        ? this.#effectiveTimeSig
-        : null;
+    const isFirstMeasureOrStandalone = measureNumberStr === '1' || !measure;
 
-    if (firstMeasureOrNoCompositionTime || timeChangeInMeasure) {
-      const timeSigSvg = createTimeSignatureSvg(
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- will not be null
-        ...(firstMeasureOrNoCompositionTime ?? timeChangeInMeasure)!
-      );
+    if (isFirstMeasureOrStandalone || this.#timeChangeAtBoundary) {
+      const timeSigSvg = createTimeSignatureSvg(...this.#effectiveTimeSig);
       timeSigSvg.setAttribute(
         'transform',
         `translate(${xOffset}, ${TIME_SIG_Y_TRANSLATE})`

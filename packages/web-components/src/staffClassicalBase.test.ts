@@ -7,6 +7,7 @@ import type { Chord, Octave } from './types/theory';
 import {
   COMMON_ATTRIBUTES,
   MUSIC_CHORD,
+  MUSIC_MEASURE,
   MUSIC_NOTE,
   MUSIC_STAFF,
 } from './utils/consts';
@@ -228,6 +229,71 @@ describe('staffClassicalBase', () => {
       expect(
         staff.shadowRoot.querySelectorAll('.dynamic-marking')
       ).toHaveLength(0);
+    });
+  });
+
+  describe('time signature visibility', () => {
+    function hasTimeSignature(staff: any): boolean {
+      return staff.shadowRoot.querySelector('.time-signature') !== null;
+    }
+
+    it('shows the time signature on a standalone staff with no measure ancestor', () => {
+      const staff = document.createElement(MUSIC_STAFF) as any;
+      staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '3/4');
+      document.body.appendChild(staff);
+
+      expect(hasTimeSignature(staff)).toBe(true);
+    });
+
+    it('shows the time signature when its measure is number 1', () => {
+      const measure = document.createElement(MUSIC_MEASURE) as any;
+      measure.setAttribute('number', '1');
+      const staff = document.createElement(MUSIC_STAFF) as any;
+      staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
+      measure.appendChild(staff);
+      document.body.appendChild(measure);
+
+      expect(hasTimeSignature(staff)).toBe(true);
+    });
+
+    it('hides the time signature on a later measure when timeChangeAtBoundary is not set', () => {
+      const measure = document.createElement(MUSIC_MEASURE) as any;
+      measure.setAttribute('number', '2');
+      const staff = document.createElement(MUSIC_STAFF) as any;
+      staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
+      measure.appendChild(staff);
+      document.body.appendChild(measure);
+
+      expect(hasTimeSignature(staff)).toBe(false);
+    });
+
+    it('shows the time signature on a later measure once timeChangeAtBoundary is set', () => {
+      const measure = document.createElement(MUSIC_MEASURE) as any;
+      measure.setAttribute('number', '2');
+      const staff = document.createElement(MUSIC_STAFF) as any;
+      staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '3/4');
+      measure.appendChild(staff);
+      document.body.appendChild(measure);
+
+      staff.timeChangeAtBoundary = true;
+
+      expect(hasTimeSignature(staff)).toBe(true);
+    });
+
+    it('timeChangeAtBoundary getter/setter round-trips and is a no-op when set to the same value', () => {
+      const measure = document.createElement(MUSIC_MEASURE) as any;
+      measure.setAttribute('number', '2');
+      const staff = document.createElement(MUSIC_STAFF) as any;
+      measure.appendChild(staff);
+      document.body.appendChild(measure);
+
+      expect(staff.timeChangeAtBoundary).toBe(false);
+      staff.timeChangeAtBoundary = true;
+      expect(staff.timeChangeAtBoundary).toBe(true);
+      staff.timeChangeAtBoundary = true;
+      expect(staff.timeChangeAtBoundary).toBe(true);
+      staff.timeChangeAtBoundary = false;
+      expect(staff.timeChangeAtBoundary).toBe(false);
     });
   });
 });

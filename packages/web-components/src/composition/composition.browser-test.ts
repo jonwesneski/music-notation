@@ -11,6 +11,7 @@ import {
   MUSIC_MEASURE,
   MUSIC_NOTE,
   MUSIC_STAFF,
+  MUSIC_STAFF_GUITAR_TAB,
   MUSIC_STAFF_VOCAL,
 } from '../utils/consts';
 
@@ -799,6 +800,133 @@ test.describe(`${MUSIC_COMPOSITION} responsive layout`, () => {
     // clef. Bass and treble clef glyphs have distinct SVG viewBox dimensions.
     expect(result.courtesyGlyphHtml).toContain('744.09');
     expect(result.courtesyGlyphHtml).not.toContain('165.4 496.2');
+  });
+
+  async function buildTimeSignatureComposition(
+    page: import('@playwright/test').Page,
+    measureTimes: (string | null)[],
+    options?: { includeGuitarTab?: boolean }
+  ): Promise<void> {
+    await page.evaluate(
+      ({
+        compositionTag,
+        measureTag,
+        staffTag,
+        guitarTabTag,
+        noteTag,
+        measureTimes,
+        includeGuitarTab,
+      }) => {
+        const host = document.getElementById('host');
+        if (host === null) {
+          throw new Error('host missing');
+        }
+        host.innerHTML = '';
+        host.style.width = '900px';
+
+        const composition = document.createElement(compositionTag);
+
+        measureTimes.forEach((time) => {
+          const measure = document.createElement(measureTag);
+
+          const staff = document.createElement(staffTag);
+          staff.setAttribute('clef', 'treble');
+          if (time !== null) {
+            staff.setAttribute('time', time);
+          }
+          const note = document.createElement(noteTag);
+          note.setAttribute('note', 'C');
+          note.setAttribute('octave', '5');
+          note.setAttribute('duration', 'whole');
+          staff.appendChild(note);
+          measure.appendChild(staff);
+
+          if (includeGuitarTab) {
+            const tabStaff = document.createElement(guitarTabTag);
+            const tabNote = document.createElement(noteTag);
+            tabNote.setAttribute('note', 'C');
+            tabNote.setAttribute('octave', '4');
+            tabNote.setAttribute('duration', 'whole');
+            tabStaff.appendChild(tabNote);
+            measure.appendChild(tabStaff);
+          }
+
+          composition.appendChild(measure);
+        });
+
+        host.appendChild(composition);
+      },
+      {
+        compositionTag: MUSIC_COMPOSITION,
+        measureTag: MUSIC_MEASURE,
+        staffTag: MUSIC_STAFF,
+        guitarTabTag: MUSIC_STAFF_GUITAR_TAB,
+        noteTag: MUSIC_NOTE,
+        measureTimes,
+        includeGuitarTab: options?.includeGuitarTab ?? false,
+      }
+    );
+    await waitForRedrawCycle(page);
+    await waitForRedrawCycle(page);
+  }
+
+  async function getTimeSignatureVisibilityPerMeasure(
+    page: import('@playwright/test').Page
+  ): Promise<boolean[]> {
+    return page.evaluate((measureTag) => {
+      const measures = Array.from(
+        document.querySelectorAll(measureTag)
+      ) as HTMLElement[];
+      return measures.map((m) => {
+        const staff = Array.from(m.children).find(
+          (el) => el.nodeName === 'MUSIC-STAFF'
+        );
+        const timeSig = staff?.shadowRoot?.querySelector('.time-signature');
+        return timeSig !== null && timeSig !== undefined;
+      });
+    }, MUSIC_MEASURE);
+  }
+
+  test('time signature only renders on the first measure when the time signature never changes', async ({
+    page,
+  }) => {
+    await buildTimeSignatureComposition(page, ['4/4', '4/4', '4/4']);
+
+    const visibility = await getTimeSignatureVisibilityPerMeasure(page);
+
+    expect(visibility).toEqual([true, false, false]);
+  });
+
+  test('time signature renders again on a measure that changes it mid-composition', async ({
+    page,
+  }) => {
+    await buildTimeSignatureComposition(page, ['4/4', '4/4', '3/4']);
+
+    const visibility = await getTimeSignatureVisibilityPerMeasure(page);
+
+    expect(visibility).toEqual([true, false, true]);
+  });
+
+  test('time signature renders again when a measure redefines the original signature after a change', async ({
+    page,
+  }) => {
+    await buildTimeSignatureComposition(page, ['4/4', '3/4', '4/4']);
+
+    const visibility = await getTimeSignatureVisibilityPerMeasure(page);
+
+    expect(visibility).toEqual([true, true, true]);
+  });
+
+  test('time signature continuity check skips guitar tab staves without throwing and does not disturb the classical staff pair', async ({
+    page,
+  }) => {
+    await buildTimeSignatureComposition(page, ['4/4', '3/4', '4/4'], {
+      includeGuitarTab: true,
+    });
+
+    const visibility = await getTimeSignatureVisibilityPerMeasure(page);
+
+    expect(visibility).toEqual([true, true, true]);
   });
 
   test('all measures share the same row when composition is inside a flex justify-center container (regression for 1-measure-per-row bug)', async ({
