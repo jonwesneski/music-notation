@@ -54,6 +54,7 @@ import {
   createTimeSignatureSvg,
 } from './utils';
 import {
+  CLEF_EVENTS,
   COMMON_ATTRIBUTES,
   MUSIC_CHORD_NODE,
   MUSIC_CLEF_NODE,
@@ -143,6 +144,11 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
     this.#renderDynamics();
   };
   #boundNoteYChange = () => {
+    if (this.#currentElements.length > 0) {
+      this.#renderNotes(this.#currentElements);
+    }
+  };
+  #boundClefMarkerChange = () => {
     if (this.#currentElements.length > 0) {
       this.#renderNotes(this.#currentElements);
     }
@@ -311,6 +317,10 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
     this.addEventListener(
       NOTE_EVENTS.DYNAMIC_ATTRIBUTE_CHANGE,
       this.#boundRenderDynamics
+    );
+    this.addEventListener(
+      CLEF_EVENTS.ATTRIBUTE_CHANGE,
+      this.#boundClefMarkerChange
     );
   }
 
@@ -616,6 +626,10 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
     this.removeEventListener(
       NOTE_EVENTS.DYNAMIC_ATTRIBUTE_CHANGE,
       this.#boundRenderDynamics
+    );
+    this.removeEventListener(
+      CLEF_EVENTS.ATTRIBUTE_CHANGE,
+      this.#boundClefMarkerChange
     );
     try {
       this.#mutationObservers.forEach((m) => m.disconnect());

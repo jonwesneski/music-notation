@@ -3,7 +3,7 @@
  */
 import type { ClefElementType } from '../types/elements';
 import { CLEFS } from '../utils';
-import { MUSIC_CLEF } from '../utils/consts';
+import { CLEF_EVENTS, MUSIC_CLEF } from '../utils/consts';
 import './index';
 
 afterEach(() => {
@@ -44,5 +44,36 @@ describe(MUSIC_CLEF, () => {
 
     expect(clefElement.shadowRoot?.innerHTML).not.toBe(initialHtml);
     expect(clefElement.clef).toBe('bass');
+  });
+
+  it('dispatches a bubbling, composed attribute-change event when connected and the value changes', () => {
+    const clefElement = document.createElement(MUSIC_CLEF) as ClefElementType;
+    clefElement.setAttribute('clef', 'treble');
+    document.body.appendChild(clefElement);
+
+    const listener = jest.fn();
+    clefElement.addEventListener(CLEF_EVENTS.ATTRIBUTE_CHANGE, listener);
+
+    clefElement.setAttribute('clef', 'bass');
+
+    expect(listener).toHaveBeenCalledTimes(1);
+    const event = listener.mock.calls[0][0] as CustomEvent;
+    expect(event.bubbles).toBe(true);
+    expect(event.composed).toBe(true);
+  });
+
+  it('does not dispatch the attribute-change event when disconnected or unchanged', () => {
+    const clefElement = document.createElement(MUSIC_CLEF) as ClefElementType;
+    clefElement.setAttribute('clef', 'treble');
+
+    const listener = jest.fn();
+    clefElement.addEventListener(CLEF_EVENTS.ATTRIBUTE_CHANGE, listener);
+
+    clefElement.setAttribute('clef', 'bass');
+    expect(listener).not.toHaveBeenCalled();
+
+    document.body.appendChild(clefElement);
+    clefElement.setAttribute('clef', 'bass');
+    expect(listener).not.toHaveBeenCalled();
   });
 });

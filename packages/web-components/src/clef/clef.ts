@@ -1,7 +1,7 @@
 import { getClefRenderData } from '../rules/clefRules';
 import { IClefElement } from '../types/elements';
 import { ClefType } from '../types/theory';
-import { MUSIC_CLEF } from '../utils/consts';
+import { CLEF_EVENTS, MUSIC_CLEF } from '../utils/consts';
 import { parseClef } from '../utils/parsers';
 
 if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
@@ -36,6 +36,12 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
         return;
       }
       this.render();
+      this.dispatchEvent(
+        new CustomEvent(CLEF_EVENTS.ATTRIBUTE_CHANGE, {
+          bubbles: true,
+          composed: true,
+        })
+      );
     }
 
     private render(): void {

@@ -117,6 +117,7 @@ export interface IGuitarNoteElement {
   hammerOn: ConnectorRole | null;
   pullOff: ConnectorRole | null;
   slide: ConnectorRole | null;
+  // todo
   //bend: SOMETHING | null;
 }
 
@@ -142,6 +143,7 @@ export interface IStaffElementBase {
 export interface IStaffElement extends IStaffElementBase {
   keySig: Note;
   mode: Mode;
+  clef: ClefType;
 }
 
 export type NoteElementType = HTMLElement & INoteElement;

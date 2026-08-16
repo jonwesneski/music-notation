@@ -75,6 +75,10 @@ export const CHORD_EVENTS = {
   POINTERUP: 'chord-pointerup',
 } as const;
 
+export const CLEF_EVENTS = {
+  ATTRIBUTE_CHANGE: 'clef-attribute-change',
+} as const;
+
 export const STAFF_EVENTS = {
   NOTES_POSITIONED: 'staff-notes-positioned',
   STAFF_MIN_WIDTH: 'staff-min-width',

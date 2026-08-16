@@ -7,6 +7,7 @@ import type {
   ClefElementType,
   NoteElementType,
   NoteLetterOctave,
+  StaffElementType,
   TupletElementType,
 } from '../types/elements';
 import type { ClefType } from '../types/theory';
@@ -52,7 +53,7 @@ function expectedNoteTop(clef: ClefType, value: NoteLetterOctave): string {
 }
 
 function makeStaff(clef: ClefType = 'treble'): any {
-  const element = document.createElement(MUSIC_STAFF) as any;
+  const element = document.createElement(MUSIC_STAFF) as StaffElementType;
   element.setAttribute('clef', clef);
   element.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'C');
   element.setAttribute(COMMON_ATTRIBUTES.MODE, 'major');
@@ -62,7 +63,7 @@ function makeStaff(clef: ClefType = 'treble'): any {
 }
 
 function renderNote(staff: any, value: NoteLetterOctave): HTMLElement {
-  const note = document.createElement(MUSIC_NOTE) as any;
+  const note = document.createElement(MUSIC_NOTE) as NoteElementType;
   note.setAttribute('duration', 'quarter');
   note.setAttribute('note', value[0]);
   note.setAttribute('octave', value[1]);
@@ -74,7 +75,7 @@ function renderNote(staff: any, value: NoteLetterOctave): HTMLElement {
 
 describe(MUSIC_STAFF, () => {
   it('defaults clef to treble when attribute is absent', () => {
-    const element = document.createElement(MUSIC_STAFF) as any;
+    const element = document.createElement(MUSIC_STAFF) as StaffElementType;
     document.body.appendChild(element);
     expect(element.clef).toBe('treble');
   });
@@ -139,14 +140,14 @@ describe(`${MUSIC_STAFF} clef changes`, () => {
   it('notes before a marker use the staff clef; notes after use the marker clef', () => {
     const staff = makeStaff('treble');
 
-    const noteBefore = document.createElement(MUSIC_NOTE) as any;
+    const noteBefore = document.createElement(MUSIC_NOTE) as NoteElementType;
     noteBefore.setAttribute('duration', 'quarter');
     noteBefore.setAttribute('note', 'C');
     noteBefore.setAttribute('octave', '4');
 
     const clefMarker = makeClefMarker('bass');
 
-    const noteAfter = document.createElement(MUSIC_NOTE) as any;
+    const noteAfter = document.createElement(MUSIC_NOTE) as NoteElementType;
     noteAfter.setAttribute('duration', 'quarter');
     noteAfter.setAttribute('note', 'C');
     noteAfter.setAttribute('octave', '4');
@@ -156,6 +157,36 @@ describe(`${MUSIC_STAFF} clef changes`, () => {
     expect(noteBefore.style.top).toBe(expectedNoteTop('treble', 'C4'));
     expect(noteAfter.style.top).toBe(expectedNoteTop('bass', 'C4'));
     expect(noteBefore.style.top).not.toBe(noteAfter.style.top);
+  });
+
+  it('mutating an already-slotted marker clef attribute relayouts notes after it, without a new slotchange', () => {
+    const staff = makeStaff('treble');
+
+    const noteBefore = document.createElement(MUSIC_NOTE) as NoteElementType;
+    noteBefore.setAttribute('duration', 'quarter');
+    noteBefore.setAttribute('note', 'C');
+    noteBefore.setAttribute('octave', '4');
+
+    const clefMarker = makeClefMarker('bass');
+
+    const noteAfter = document.createElement(MUSIC_NOTE) as NoteElementType;
+    noteAfter.setAttribute('duration', 'quarter');
+    noteAfter.setAttribute('note', 'C');
+    noteAfter.setAttribute('octave', '4');
+
+    // The marker must actually be connected to the document (as a real
+    // light-DOM child of the staff, mirroring real usage) for its own
+    // attributeChangedCallback to fire and dispatch the change event —
+    // the mocked slot.assignedElements() below only fakes slot content.
+    staff.appendChild(clefMarker);
+
+    renderElements(staff, [noteBefore, clefMarker, noteAfter]);
+    expect(noteAfter.style.top).toBe(expectedNoteTop('bass', 'C4'));
+
+    clefMarker.setAttribute('clef', 'treble');
+
+    expect(noteAfter.style.top).toBe(expectedNoteTop('treble', 'C4'));
+    expect(noteBefore.style.top).toBe(expectedNoteTop('treble', 'C4'));
   });
 
   it('supports multiple clef markers producing multiple segments', () => {
