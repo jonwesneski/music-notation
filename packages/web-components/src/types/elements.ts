@@ -138,6 +138,8 @@ export interface IStaffElementBase {
   group: StaffGroupType | null;
   groupId: string | null;
   time: TimeSignature;
+  readonly staffHeight: number;
+  readonly staffLineCount: number;
 }
 
 export interface IStaffElement extends IStaffElementBase {

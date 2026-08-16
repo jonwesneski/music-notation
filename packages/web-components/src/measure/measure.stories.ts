@@ -79,40 +79,7 @@ export const TrebleOnly: Story = {
   args: { number: 1, keySig: 'C', mode: 'major', time: '4/4' },
 };
 
-export const TrebleAndBass: Story = {
-  args: { number: 1, keySig: 'C', mode: 'major', time: '4/4' },
-  render: (args) => html`
-    <music-measure
-      number=${args.number}
-      keySig=${args.keySig}
-      mode=${args.mode}
-      time=${args.time}
-    >
-      <music-staff
-        clef="treble"
-        keySig=${args.keySig}
-        mode=${args.mode}
-        time=${args.time}
-      >
-        <music-note note="C" duration="quarter"></music-note>
-        <music-note note="E" duration="quarter"></music-note>
-        <music-note note="G" duration="quarter"></music-note>
-        <music-note note="C" duration="quarter"></music-note>
-      </music-staff>
-      <music-staff
-        clef="bass"
-        keySig=${args.keySig}
-        mode=${args.mode}
-        time=${args.time}
-      >
-        <music-note note="C" duration="half"></music-note>
-        <music-note note="G" duration="half"></music-note>
-      </music-staff>
-    </music-measure>
-  `,
-};
-
-export const GrandStaffBrace: Story = {
+export const GrandStaff: Story = {
   args: { number: 1, keySig: 'C', mode: 'major', time: '4/4' },
   render: (args) => html`
     <music-measure
@@ -254,6 +221,7 @@ export const WithGuitarTab: Story = {
     >
       <music-staff
         clef="treble"
+        group="bracket"
         keySig=${args.keySig}
         mode=${args.mode}
         time=${args.time}
@@ -285,37 +253,6 @@ export const WithGuitarTab: Story = {
           duration="quarter"
         ></music-guitar-note>
       </music-staff-guitar-tab>
-    </music-measure>
-  `,
-};
-
-export const TwoPianosOneMeasure: Story = {
-  render: () => html`
-    <music-measure number="1" keySig="C" mode="major" time="4/4">
-      <music-staff
-        clef="treble"
-        group="grand"
-        keySig="C"
-        mode="major"
-        time="4/4"
-      >
-        <music-note note="C" octave="5" duration="whole"></music-note>
-      </music-staff>
-      <music-staff clef="bass" keySig="C" mode="major" time="4/4">
-        <music-note note="C" octave="3" duration="whole"></music-note>
-      </music-staff>
-      <music-staff
-        clef="treble"
-        group="grand"
-        keySig="C"
-        mode="major"
-        time="4/4"
-      >
-        <music-note note="G" octave="5" duration="whole"></music-note>
-      </music-staff>
-      <music-staff clef="bass" keySig="C" mode="major" time="4/4">
-        <music-note note="G" octave="3" duration="whole"></music-note>
-      </music-staff>
     </music-measure>
   `,
 };

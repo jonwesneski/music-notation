@@ -153,7 +153,7 @@ export abstract class StaffElementBase extends _MaybeHTMLElement {
           inset: 0;
           top: -1px;
           width: 100%;
-          height: ${this.#staffHeight}px;
+          height: ${this.staffHeight}px;
           display: block;
           border-top: 1px solid currentColor;
           border-right: 1px solid currentColor;
@@ -201,11 +201,11 @@ export abstract class StaffElementBase extends _MaybeHTMLElement {
     }
   }
 
-  get #staffHeight() {
+  get staffHeight(): number {
     return (this.staffLineCount - 1) * STAFF_LINE_SPACING;
   }
 
-  protected abstract get staffLineCount(): number;
+  abstract get staffLineCount(): number;
 
   /** Override in subclasses to inject additional CSS into the shadow DOM style block. */
   protected get additionalStyles(): string {

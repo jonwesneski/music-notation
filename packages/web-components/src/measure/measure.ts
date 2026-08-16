@@ -18,20 +18,26 @@ import {
   BRACKET_WIDTH_PX,
   EMPTY_MEASURE_FLEX_BASIS_PX,
   STAFF_BOTTOM_MARGIN,
-  STAFF_HEIGHT,
   STAFF_LINE_START,
 } from '../utils/notationDimensions';
 
 // Per-staff vertical footprint within a measure's stacked staff children,
 // used both by the plain full-measure barline (#updateConnectorVisibility)
 // and group connectors (brace/bracket) to size/position their vertical
-// span. Tied to the real staff geometry, plus small empirically-measured
-// nudges (+2 / -2) closing visible gaps the clean derivation alone
-// didn't fully account for. CONNECTOR_TOP_PX remains a separate,
-// still-empirical top-offset constant.
-const STAFF_SLOT_HEIGHT_PX = STAFF_HEIGHT + 2;
+// span. A staff's own slot height is derived from its actual rendered
+// height (staffSlotHeightPx) rather than assumed uniform, since staff types
+// differ (e.g. a 6-line guitar-tab staff vs. a 5-line classical staff) —
+// tied to the real staff geometry, plus a small empirically-measured +2
+// nudge closing a visible gap the clean derivation alone didn't fully
+// account for. STAFF_SLOT_GAP_PX (the fixed gap between staves) and
+// CONNECTOR_TOP_PX (a separate, still-empirical top-offset constant) don't
+// depend on staff height and stay as plain constants.
 const STAFF_SLOT_GAP_PX = STAFF_BOTTOM_MARGIN + STAFF_LINE_START - 2;
 const CONNECTOR_TOP_PX = 51;
+
+function staffSlotHeightPx(staff: StaffElementBaseType): number {
+  return staff.staffHeight + 2;
+}
 
 if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
   class MeasureElement extends HTMLElement {
@@ -220,11 +226,12 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
       );
 
       const currentIndex = allMeasures.indexOf(this);
-      const total = Array.from(allMeasures[currentIndex].children).filter((n) =>
-        isStaffNodeName(n.nodeName)
-      ).length;
+      const staves = Array.from(allMeasures[currentIndex].children).filter(
+        (n) => isStaffNodeName(n.nodeName)
+      ) as StaffElementBaseType[];
       const connectorHeight =
-        STAFF_SLOT_HEIGHT_PX * total + STAFF_SLOT_GAP_PX * (total - 1);
+        staves.reduce((sum, staff) => sum + staffSlotHeightPx(staff), 0) +
+        STAFF_SLOT_GAP_PX * (staves.length - 1);
       staffConnector.style.height = `${connectorHeight}px`;
 
       const isFirstInRow = this.#isFirstInRow(allMeasures, currentIndex);
@@ -295,17 +302,23 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
 
       for (const { index, count, group } of groups) {
         const isGrandStaff = group === 'grand';
-        const bracketExtraHeight = isGrandStaff
-          ? 0
-          : BRACKET_EXTRA_HEIGHT_PX / 2;
+        const bracketExtraHeight = isGrandStaff ? 0 : BRACKET_EXTRA_HEIGHT_PX;
+        const precedingStavesHeight = staves
+          .slice(0, index)
+          .reduce(
+            (sum, staff) => sum + staffSlotHeightPx(staff) + STAFF_SLOT_GAP_PX,
+            0
+          );
         const spanHeight =
-          STAFF_SLOT_HEIGHT_PX * count +
+          staves
+            .slice(index, index + count)
+            .reduce((sum, staff) => sum + staffSlotHeightPx(staff), 0) +
           STAFF_SLOT_GAP_PX * (count - 1) +
           bracketExtraHeight;
         const topOffset =
           CONNECTOR_TOP_PX +
-          index * (STAFF_SLOT_HEIGHT_PX + STAFF_SLOT_GAP_PX) -
-          (isGrandStaff ? 0 : BRACKET_TOP_OFFSET_PX + bracketExtraHeight);
+          precedingStavesHeight -
+          (isGrandStaff ? 0 : BRACKET_TOP_OFFSET_PX + bracketExtraHeight / 2);
 
         const glyph = isGrandStaff
           ? createBraceSvg(spanHeight)
