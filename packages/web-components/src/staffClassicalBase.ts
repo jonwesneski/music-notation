@@ -106,6 +106,8 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
       COMMON_ATTRIBUTES.TIME_SIG,
       'editable',
       'managed',
+      'group',
+      'group-id',
     ];
   }
 
@@ -644,6 +646,11 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
     newValue: string | null
   ): void {
     if (oldValue === newValue) {
+      return;
+    }
+
+    if (name === 'group' || name === 'group-id') {
+      this.dispatchGroupAttributeChange();
       return;
     }
 

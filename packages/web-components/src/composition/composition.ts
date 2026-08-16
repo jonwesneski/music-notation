@@ -20,6 +20,7 @@ import {
   MUSIC_STAFF,
   MUSIC_STAFF_GUITAR_TAB,
   MUSIC_STAFF_VOCAL,
+  STAFF_EVENTS,
   STAFF_TAGS,
   SVG_NS,
   isStaffNodeName,
@@ -99,6 +100,10 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
       this.removeEventListener('staff-notes-positioned', this.#boundRedraw);
       this.removeEventListener('connector-attribute-change', this.#boundRedraw);
       this.removeEventListener('dynamic-attribute-change', this.#boundRedraw);
+      this.removeEventListener(
+        STAFF_EVENTS.GROUP_ATTRIBUTE_CHANGE,
+        this.#boundRedraw
+      );
     }
 
     attributeChangedCallback(
@@ -193,6 +198,10 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
       this.addEventListener('staff-notes-positioned', this.#boundRedraw);
       this.addEventListener('connector-attribute-change', this.#boundRedraw);
       this.addEventListener('dynamic-attribute-change', this.#boundRedraw);
+      this.addEventListener(
+        STAFF_EVENTS.GROUP_ATTRIBUTE_CHANGE,
+        this.#boundRedraw
+      );
     }
 
     #scheduleRedraw() {

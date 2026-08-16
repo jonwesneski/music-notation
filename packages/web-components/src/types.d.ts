@@ -20,11 +20,15 @@ import type {
   Voice,
 } from './types/theory';
 
-type WebComponentProps = {
+type WebComponentNoChildrenProps = {
   key?: React.Key;
   ref?: React.Ref<HTMLElement>;
   children?: React.ReactNode;
   className?: string;
+};
+
+type WebComponentProps = WebComponentNoChildrenProps & {
+  children?: React.ReactNode;
 };
 
 declare module 'react' {
@@ -57,9 +61,6 @@ declare module 'react' {
         'group-id'?: string;
         onClick?: React.MouseEventHandler<HTMLElement>;
       };
-      'music-clef': WebComponentProps & {
-        clef?: ClefType;
-      };
       'music-staff-guitar-tab': WebComponentProps & {
         time?: TimeSignature;
         group?: StaffGroupType;
@@ -78,7 +79,10 @@ declare module 'react' {
       'music-lyrics': WebComponentProps & {
         verse?: string;
       };
-      'music-rest': WebComponentProps & {
+      'music-clef': WebComponentNoChildrenProps & {
+        clef?: ClefType;
+      };
+      'music-rest': WebComponentNoChildrenProps & {
         duration?: DurationType;
         onClick?: (e: MouseEvent) => void;
         onPointerDown?: (e: PointerEvent) => void;
@@ -115,7 +119,7 @@ declare module 'react' {
         onPointerDown?: (e: PointerEvent) => void;
         onPointerUp?: (e: PointerEvent) => void;
       };
-      'music-note': WebComponentProps & {
+      'music-note': WebComponentNoChildrenProps & {
         note?: Note;
         duration?: DurationType;
         octave?: Octave;
@@ -146,7 +150,7 @@ declare module 'react' {
         // Custom events (note-click, note-pointerdown, note-pointerup) require
         // useRef + addEventListener in React — they are not auto-wired by prop name.
       };
-      'music-guitar-note': WebComponentProps & {
+      'music-guitar-note': WebComponentNoChildrenProps & {
         fret?: GuitarFret;
         string?: number;
         duration?: DurationType;

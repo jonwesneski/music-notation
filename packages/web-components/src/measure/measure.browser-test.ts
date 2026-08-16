@@ -663,4 +663,118 @@ test.describe(`${MUSIC_MEASURE} group connectors`, () => {
     // row. This is the specific regression this fix targets.
     expect(wideRows[0]).toEqual([1, 0, 0]);
   });
+
+  test('setting `group` on an already-connected staff immediately draws a connector, without a resize', async ({
+    page,
+  }) => {
+    await buildMeasureWithStaves(page, [null, null]);
+    expect(await readGroupConnectorGlyphs(page)).toHaveLength(0);
+
+    await page.evaluate((staffTag) => {
+      const staff = document.querySelector(staffTag);
+      staff?.setAttribute('group', 'grand');
+    }, MUSIC_STAFF);
+
+    const glyphs = await readGroupConnectorGlyphs(page);
+    expect(glyphs).toHaveLength(1);
+    expect(glyphs[0].className).toContain('brace');
+  });
+
+  test('clearing `group` on an already-connected staff immediately removes its connector, without a resize', async ({
+    page,
+  }) => {
+    await buildMeasureWithStaves(page, ['grand', null]);
+    expect(await readGroupConnectorGlyphs(page)).toHaveLength(1);
+
+    await page.evaluate((staffTag) => {
+      const staff = document.querySelector(staffTag);
+      staff?.removeAttribute('group');
+    }, MUSIC_STAFF);
+
+    expect(await readGroupConnectorGlyphs(page)).toHaveLength(0);
+  });
+
+  test('changing `group-id` to merge two independent bracket spans immediately redraws a single bracket, without a resize', async ({
+    page,
+  }) => {
+    // Two independent 2-staff brackets, each already scoped by its own
+    // `group-id` at creation time (a valid starting layout).
+    await page.evaluate(
+      ({ compositionTag, measureTag, staffTag, noteTag }) => {
+        const host = document.getElementById('host');
+        if (host === null) {
+          throw new Error('host missing');
+        }
+        host.innerHTML = '';
+        host.style.width = '900px';
+        const composition = document.createElement(compositionTag);
+        const measure = document.createElement(measureTag);
+        for (const groupId of ['pair-a', 'pair-a', 'pair-b', 'pair-b']) {
+          const staff = document.createElement(staffTag);
+          staff.setAttribute('group', 'bracket');
+          staff.setAttribute('group-id', groupId);
+          const note = document.createElement(noteTag);
+          note.setAttribute('note', 'C');
+          note.setAttribute('octave', '4');
+          note.setAttribute('duration', 'whole');
+          staff.appendChild(note);
+          measure.appendChild(staff);
+        }
+        composition.appendChild(measure);
+        host.appendChild(composition);
+      },
+      {
+        compositionTag: MUSIC_COMPOSITION,
+        measureTag: MUSIC_MEASURE,
+        staffTag: MUSIC_STAFF,
+        noteTag: MUSIC_NOTE,
+      }
+    );
+    await waitForRedrawCycle(page);
+    await waitForRedrawCycle(page);
+    expect(await readGroupConnectorGlyphs(page)).toHaveLength(2);
+
+    await page.evaluate(
+      ({ staffTag }) => {
+        const staves = Array.from(document.querySelectorAll(staffTag));
+        staves.forEach((staff) => staff.setAttribute('group-id', 'merged'));
+      },
+      { staffTag: MUSIC_STAFF }
+    );
+
+    const glyphs = await readGroupConnectorGlyphs(page);
+    expect(glyphs).toHaveLength(1);
+    expect(glyphs[0].className).toContain('bracket');
+  });
+
+  test('composition reserves left padding immediately when `group` is set on an already-connected staff, without a resize', async ({
+    page,
+  }) => {
+    await buildMeasureWithStaves(page, [null, null]);
+    const before = await page.evaluate((compositionTag) => {
+      const composition = document.querySelector(compositionTag);
+      return (
+        composition?.shadowRoot
+          ?.querySelector('.composition-wrapper')
+          ?.classList.contains('has-group-connector') ?? false
+      );
+    }, MUSIC_COMPOSITION);
+    expect(before).toBe(false);
+
+    await page.evaluate((staffTag) => {
+      const staff = document.querySelector(staffTag);
+      staff?.setAttribute('group', 'grand');
+    }, MUSIC_STAFF);
+    await waitForRedrawCycle(page);
+
+    const after = await page.evaluate((compositionTag) => {
+      const composition = document.querySelector(compositionTag);
+      return (
+        composition?.shadowRoot
+          ?.querySelector('.composition-wrapper')
+          ?.classList.contains('has-group-connector') ?? false
+      );
+    }, MUSIC_COMPOSITION);
+    expect(after).toBe(true);
+  });
 });

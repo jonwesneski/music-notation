@@ -82,6 +82,7 @@ export const CLEF_EVENTS = {
 export const STAFF_EVENTS = {
   NOTES_POSITIONED: 'staff-notes-positioned',
   STAFF_MIN_WIDTH: 'staff-min-width',
+  GROUP_ATTRIBUTE_CHANGE: 'staff-group-attribute-change',
 } as const;
 
 export const COMMON_ATTRIBUTES = {

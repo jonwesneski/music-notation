@@ -14,6 +14,7 @@ import {
   COMMON_ATTRIBUTES,
   MUSIC_COMPOSITION,
   MUSIC_MEASURE,
+  STAFF_EVENTS,
 } from './utils/consts';
 import {
   STAFF_BOTTOM_MARGIN,
@@ -67,11 +68,6 @@ export abstract class StaffElementBase extends _MaybeHTMLElement {
 
   protected abstract onStaffResize(): void;
 
-  // Structural, non-rendering attribute — read directly by <music-measure> to
-  // decide whether this staff and its immediate next sibling should be
-  // joined by a brace/bracket connector. Purely a plain attribute (no
-  // observedAttributes/attributeChangedCallback wiring needed here) since
-  // the staff itself never renders anything differently based on `group`.
   get group(): StaffGroupType | null {
     return parseStaffGroup(this.getAttribute('group'));
   }
@@ -84,11 +80,6 @@ export abstract class StaffElementBase extends _MaybeHTMLElement {
     }
   }
 
-  // Shared identifier joining this staff with other `group="bracket"`
-  // staves into one multi-staff bracket connector (e.g. a 4-staff SATB
-  // choir) — see `rules/staffGroupRules.ts`. Meaningless on `group="grand"`
-  // staves, which always pair with just their immediate next sibling.
-  // Plain string passthrough, same non-reactive rationale as `group` above.
   get groupId(): string | null {
     return this.getAttribute('group-id');
   }
@@ -99,6 +90,18 @@ export abstract class StaffElementBase extends _MaybeHTMLElement {
     } else {
       this.setAttribute('group-id', value);
     }
+  }
+
+  protected dispatchGroupAttributeChange(): void {
+    if (!this.isConnected) {
+      return;
+    }
+    this.dispatchEvent(
+      new CustomEvent(STAFF_EVENTS.GROUP_ATTRIBUTE_CHANGE, {
+        bubbles: true,
+        composed: true,
+      })
+    );
   }
 
   protected resolveInheritedValue(

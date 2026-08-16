@@ -71,7 +71,7 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
     }
 
     static get observedAttributes(): string[] {
-      return [COMMON_ATTRIBUTES.TIME_SIG];
+      return [COMMON_ATTRIBUTES.TIME_SIG, 'group', 'group-id'];
     }
 
     // No time-signature glyph to render (tab notation doesn't show one), so
@@ -89,6 +89,8 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
         this.effectiveTimeSig = this.convertTotimeInts(
           this.resolveInheritedValue(COMMON_ATTRIBUTES.TIME_SIG, '4/4')
         );
+      } else if (name === 'group' || name === 'group-id') {
+        this.dispatchGroupAttributeChange();
       }
     }
 

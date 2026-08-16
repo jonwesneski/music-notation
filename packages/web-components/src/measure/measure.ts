@@ -53,6 +53,7 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
       const flexGrow = minWidthToFlexGrow(maxMinWidth);
       this.style.flex = `${flexGrow} 1 ${maxMinWidth}px`;
     };
+    #boundUpdateConnectorVisibility: () => void;
 
     constructor() {
       super();
@@ -65,8 +66,10 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
         this.keySig = composition.getAttribute('keysig') ?? 'C';
       }
 
+      this.#boundUpdateConnectorVisibility =
+        this.#updateConnectorVisibility.bind(this);
       this.#staffConnectorObserver = new ResizeObserver(
-        this.#updateConnectorVisibility.bind(this)
+        this.#boundUpdateConnectorVisibility
       );
     }
 
@@ -113,6 +116,10 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
         STAFF_EVENTS.STAFF_MIN_WIDTH,
         this.#onStaffMinWidth
       );
+      this.addEventListener(
+        STAFF_EVENTS.GROUP_ATTRIBUTE_CHANGE,
+        this.#boundUpdateConnectorVisibility
+      );
     }
 
     disconnectedCallback(): void {
@@ -120,6 +127,10 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
       this.removeEventListener(
         STAFF_EVENTS.STAFF_MIN_WIDTH,
         this.#onStaffMinWidth
+      );
+      this.removeEventListener(
+        STAFF_EVENTS.GROUP_ATTRIBUTE_CHANGE,
+        this.#boundUpdateConnectorVisibility
       );
       this.#staffMinWidths.clear();
     }
