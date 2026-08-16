@@ -220,7 +220,7 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
     this.#beamsContainer = document.createElementNS(SVG_NS, 'svg');
   }
 
-  protected get staffLineCount(): number {
+  get staffLineCount(): number {
     return 5;
   }
 

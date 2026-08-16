@@ -140,6 +140,7 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
           }
 
           .composition-wrapper.has-group-connector {
+            box-sizing: border-box;
             padding-left: ${Math.max(
               BRACE_WIDTH_PX + BRACE_STAFF_GAP_PX,
               BRACKET_WIDTH_PX

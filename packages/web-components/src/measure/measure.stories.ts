@@ -75,45 +75,7 @@ export default meta;
 
 type Story = StoryObj;
 
-export const TrebleOnly: Story = {
-  args: { number: 1, keySig: 'C', mode: 'major', time: '4/4' },
-};
-
-export const GrandStaff: Story = {
-  args: { number: 1, keySig: 'C', mode: 'major', time: '4/4' },
-  render: (args) => html`
-    <music-measure
-      number=${args.number}
-      keySig=${args.keySig}
-      mode=${args.mode}
-      time=${args.time}
-    >
-      <music-staff
-        clef="treble"
-        group="grand"
-        keySig=${args.keySig}
-        mode=${args.mode}
-        time=${args.time}
-      >
-        <music-note note="C" duration="quarter"></music-note>
-        <music-note note="E" duration="quarter"></music-note>
-        <music-note note="G" duration="quarter"></music-note>
-        <music-note note="C" duration="quarter"></music-note>
-      </music-staff>
-      <music-staff
-        clef="bass"
-        keySig=${args.keySig}
-        mode=${args.mode}
-        time=${args.time}
-      >
-        <music-note note="C" duration="half"></music-note>
-        <music-note note="G" duration="half"></music-note>
-      </music-staff>
-    </music-measure>
-  `,
-};
-
-export const TwoGrandStavesInOneMeasure: Story = {
+export const GrandStaves: Story = {
   render: () => html`
     <music-measure number="1" keySig="C" mode="major" time="4/4">
       <music-staff
@@ -144,7 +106,7 @@ export const TwoGrandStavesInOneMeasure: Story = {
   `,
 };
 
-export const PartBracket: Story = {
+export const GroupBracketWithoutGroupId: Story = {
   render: () => html`
     <music-measure number="1" keySig="C" mode="major" time="4/4">
       <music-staff
@@ -163,7 +125,7 @@ export const PartBracket: Story = {
   `,
 };
 
-export const SatbChoirBracket: Story = {
+export const GroupBracket: Story = {
   render: () => html`
     <music-measure number="1" keySig="C" mode="major" time="4/4">
       <music-staff
@@ -210,7 +172,7 @@ export const SatbChoirBracket: Story = {
   `,
 };
 
-export const WithGuitarTab: Story = {
+export const GroupBracketWithGuitarTab: Story = {
   args: { number: 1, keySig: 'C', mode: 'major', time: '4/4' },
   render: (args) => html`
     <music-measure

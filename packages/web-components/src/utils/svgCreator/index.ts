@@ -4,7 +4,6 @@ export {
   type ArticulationMarksProps,
 } from './articulations';
 export { BeamsBuilder, type NoteYPosition } from './beams';
-export { createBraceSvg, createBracketSvg } from './brace';
 export { createChordSvg } from './chord';
 export {
   createCurveSvg,
@@ -36,5 +35,6 @@ export {
 } from './note';
 export { createRestSvg, REST_Y_SVG_CENTER, type RestProps } from './rest';
 export { createSharpSvg } from './sharp';
+export { createBraceSvg, createBracketSvg } from './staffGroup';
 export { createTimeSignatureSvg } from './timeSignature';
 export { createTupletBracketSvg } from './tuplet';

@@ -58,7 +58,7 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
       this.#describeContainer = document.createElementNS(SVG_NS, 'g');
     }
 
-    protected override get staffLineCount(): number {
+    get staffLineCount(): number {
       return 6;
     }
 
