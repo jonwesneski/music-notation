@@ -318,7 +318,8 @@ test.describe(`${MUSIC_MEASURE} group connectors`, () => {
   async function buildMeasuresWithStaves(
     page: Page,
     measures: (string | null)[][],
-    hostWidth = 900
+    hostWidth = 900,
+    standalone = false
   ): Promise<void> {
     await page.evaluate(
       ({
@@ -328,6 +329,7 @@ test.describe(`${MUSIC_MEASURE} group connectors`, () => {
         noteTag,
         measures,
         hostWidth,
+        standalone,
       }) => {
         const host = document.getElementById('host');
         if (host === null) {
@@ -335,7 +337,12 @@ test.describe(`${MUSIC_MEASURE} group connectors`, () => {
         }
         host.innerHTML = '';
         host.style.width = `${hostWidth}px`;
-        const composition = document.createElement(compositionTag);
+        // Standalone skips the <music-composition> wrapper entirely, so
+        // measures attach directly to #host — this is what exercises a bare
+        // <music-measure> the way measure.stories.ts's GrandStaves story does.
+        const measureParent = standalone
+          ? host
+          : document.createElement(compositionTag);
 
         for (const staffGroups of measures) {
           const measure = document.createElement(measureTag);
@@ -351,10 +358,12 @@ test.describe(`${MUSIC_MEASURE} group connectors`, () => {
             staff.appendChild(note);
             measure.appendChild(staff);
           }
-          composition.appendChild(measure);
+          measureParent.appendChild(measure);
         }
 
-        host.appendChild(composition);
+        if (!standalone) {
+          host.appendChild(measureParent);
+        }
       },
       {
         compositionTag: MUSIC_COMPOSITION,
@@ -363,6 +372,7 @@ test.describe(`${MUSIC_MEASURE} group connectors`, () => {
         noteTag: MUSIC_NOTE,
         measures,
         hostWidth,
+        standalone,
       }
     );
     await waitForRedrawCycle(page);
@@ -569,28 +579,60 @@ test.describe(`${MUSIC_MEASURE} group connectors`, () => {
     );
   });
 
-  test('composition reserves left padding only when a grouped staff is present', async ({
+  test('a grouped measure reserves left margin for its group connector', async ({
     page,
   }) => {
     await buildMeasureWithStaves(page, ['grand', null]);
-    const withGroup = await page.evaluate((compositionTag) => {
-      const composition = document.querySelector(compositionTag);
-      const wrapper = composition?.shadowRoot?.querySelector(
-        '.composition-wrapper'
-      );
-      return wrapper?.classList.contains('has-group-connector') ?? false;
-    }, MUSIC_COMPOSITION);
-    expect(withGroup).toBe(true);
+    const withGroup = await page.evaluate((measureTag) => {
+      const measure = document.querySelector(measureTag) as HTMLElement | null;
+      return {
+        hasClass: measure?.classList.contains('has-group-connector') ?? false,
+        marginLeft: measure
+          ? parseFloat(getComputedStyle(measure).marginLeft)
+          : null,
+      };
+    }, MUSIC_MEASURE);
+    expect(withGroup.hasClass).toBe(true);
+    expect(withGroup.marginLeft).toBeGreaterThan(0);
 
     await buildMeasureWithStaves(page, [null, null]);
-    const withoutGroup = await page.evaluate((compositionTag) => {
-      const composition = document.querySelector(compositionTag);
-      const wrapper = composition?.shadowRoot?.querySelector(
-        '.composition-wrapper'
-      );
-      return wrapper?.classList.contains('has-group-connector') ?? false;
-    }, MUSIC_COMPOSITION);
+    const withoutGroup = await page.evaluate((measureTag) => {
+      const measure = document.querySelector(measureTag) as HTMLElement | null;
+      return measure?.classList.contains('has-group-connector') ?? false;
+    }, MUSIC_MEASURE);
     expect(withoutGroup).toBe(false);
+  });
+
+  test('a standalone grand-staff measure (no <music-composition> ancestor) reserves its own left margin and its brace is not clipped', async ({
+    page,
+  }) => {
+    await buildMeasuresWithStaves(page, [['grand', null]], 900, true);
+
+    const result = await page.evaluate(
+      ({ measureTag }) => {
+        const measure = document.querySelector(
+          measureTag
+        ) as HTMLElement | null;
+        const brace = measure?.shadowRoot?.querySelector(
+          '.group-connectors svg.brace'
+        );
+        return {
+          hasClass: measure?.classList.contains('has-group-connector') ?? false,
+          marginLeft: measure
+            ? parseFloat(getComputedStyle(measure).marginLeft)
+            : null,
+          braceLeft: brace?.getBoundingClientRect().left ?? null,
+        };
+      },
+      { measureTag: MUSIC_MEASURE }
+    );
+
+    expect(result.hasClass).toBe(true);
+    expect(result.marginLeft).toBeGreaterThan(0);
+    expect(result.braceLeft).not.toBeNull();
+    // The brace's negative `left` offset must land within the reserved
+    // margin, not spill past the measure's own left edge / the viewport.
+    expect(result.braceLeft as number).toBeGreaterThanOrEqual(0);
   });
 
   test('multiple measures sharing a row render the group connector only on the first measure of that row', async ({
@@ -747,18 +789,14 @@ test.describe(`${MUSIC_MEASURE} group connectors`, () => {
     expect(glyphs[0].className).toContain('bracket');
   });
 
-  test('composition reserves left padding immediately when `group` is set on an already-connected staff, without a resize', async ({
+  test('a measure reserves left margin immediately when `group` is set on an already-connected staff, without a resize', async ({
     page,
   }) => {
     await buildMeasureWithStaves(page, [null, null]);
-    const before = await page.evaluate((compositionTag) => {
-      const composition = document.querySelector(compositionTag);
-      return (
-        composition?.shadowRoot
-          ?.querySelector('.composition-wrapper')
-          ?.classList.contains('has-group-connector') ?? false
-      );
-    }, MUSIC_COMPOSITION);
+    const before = await page.evaluate((measureTag) => {
+      const measure = document.querySelector(measureTag);
+      return measure?.classList.contains('has-group-connector') ?? false;
+    }, MUSIC_MEASURE);
     expect(before).toBe(false);
 
     await page.evaluate((staffTag) => {
@@ -767,14 +805,10 @@ test.describe(`${MUSIC_MEASURE} group connectors`, () => {
     }, MUSIC_STAFF);
     await waitForRedrawCycle(page);
 
-    const after = await page.evaluate((compositionTag) => {
-      const composition = document.querySelector(compositionTag);
-      return (
-        composition?.shadowRoot
-          ?.querySelector('.composition-wrapper')
-          ?.classList.contains('has-group-connector') ?? false
-      );
-    }, MUSIC_COMPOSITION);
+    const after = await page.evaluate((measureTag) => {
+      const measure = document.querySelector(measureTag);
+      return measure?.classList.contains('has-group-connector') ?? false;
+    }, MUSIC_MEASURE);
     expect(after).toBe(true);
   });
 });

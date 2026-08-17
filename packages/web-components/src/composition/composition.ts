@@ -26,9 +26,6 @@ import {
   isStaffNodeName,
 } from '../utils/consts';
 import {
-  BRACE_STAFF_GAP_PX,
-  BRACE_WIDTH_PX,
-  BRACKET_WIDTH_PX,
   COURTESY_CLEF_MARGIN_RIGHT_PX,
   COURTESY_CLEF_SCALE,
   DYNAMICS_BASELINE_Y,
@@ -139,14 +136,6 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
             margin: 0 auto;
           }
 
-          .composition-wrapper.has-group-connector {
-            box-sizing: border-box;
-            padding-left: ${Math.max(
-              BRACE_WIDTH_PX + BRACE_STAFF_GAP_PX,
-              BRACKET_WIDTH_PX
-            )}px;
-          }
-
           .composition-grid {
             position: relative;
             display: flex;
@@ -218,27 +207,7 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
         this.#updateDescribeVisibility();
         this.#updateClefContinuity();
         this.#updateTimeSignatureContinuity();
-        this.#updateGroupConnectorSpaceReservation();
       });
-    }
-
-    // A brace/bracket connector (see measure.ts's #renderGroupConnectors)
-    // extends left of a measure's own x=0 — reserve room for it on the
-    // composition wrapper only when at least one staff actually declares
-    // `group`, so compositions without any grouped staves don't waste space.
-    #updateGroupConnectorSpaceReservation() {
-      const wrapper = this.shadowRoot?.querySelector<HTMLElement>(
-        '.composition-wrapper'
-      );
-      if (!wrapper) {
-        return;
-      }
-
-      const hasGroupedStaff = Array.from(
-        this.querySelectorAll<StaffElementBaseType>(STAFF_TAGS)
-      ).some((staff) => staff.group != null);
-
-      wrapper.classList.toggle('has-group-connector', hasGroupedStaff);
     }
 
     // Groups measures into visual rows by top-position (5px tolerance),

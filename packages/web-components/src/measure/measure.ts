@@ -163,6 +163,13 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
             position: relative;
           }
 
+          :host(.has-group-connector) {
+            margin-left: ${Math.max(
+              BRACE_WIDTH_PX + BRACE_STAFF_GAP_PX,
+              BRACKET_WIDTH_PX
+            )}px;
+          }
+
           .staff-connector {
             position: absolute;
             left: 0;
@@ -283,6 +290,7 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
       }
 
       if (!isFirstInRow) {
+        this.classList.remove('has-group-connector');
         return;
       }
 
@@ -299,6 +307,14 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
       for (const warning of warnings) {
         console.warn(`[music-measure] ${warning}`);
       }
+
+      // A brace/bracket glyph is drawn with a negative `left` (see below),
+      // poking out past this measure's own box — this class reserves that
+      // space via `margin-left` (see the :host(.has-group-connector) rule
+      // above) so the glyph isn't clipped by / doesn't overlap whatever
+      // sits to this measure's left, whether standalone or inside a
+      // <music-composition>.
+      this.classList.toggle('has-group-connector', groups.length > 0);
 
       for (const { index, count, group } of groups) {
         const isGrandStaff = group === 'grand';
