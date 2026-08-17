@@ -1,23 +1,35 @@
+import {
+  BeatsInMeasure,
+  BeatTypeInMeasure,
+  StaffGroupType,
+  TimeSignature,
+} from './types/theory';
 import { SVG_NS } from './utils';
 import {
   buildConnectorSvgs,
   collectNoteLikeElements,
   pairConnectors,
 } from './utils/connectorsBuilder';
-import { MUSIC_COMPOSITION } from './utils/consts';
+import {
+  COMMON_ATTRIBUTES,
+  MUSIC_COMPOSITION,
+  MUSIC_MEASURE,
+  STAFF_EVENTS,
+} from './utils/consts';
 import {
   STAFF_BOTTOM_MARGIN,
   STAFF_LINE_SPACING,
   STAFF_LINE_START,
   STAFF_WRAPPER_MIN_HEIGHT,
 } from './utils/notationDimensions';
+import { parseStaffGroup } from './utils/parsers';
 
-// Use a runtime-safe fallback for environments without `HTMLElement` (SSR/Node).
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- prevents errrors if loaded in SSR
+// Runtime-safe fallback for environments without `HTMLElement` (SSR/Node). Prevents errrors if loaded in SSR
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- globalThis.HTMLElement isn't typed as a class constructor
 export const _MaybeHTMLElement: any =
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- prevents errrors if loaded in SSR
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- globalThis.HTMLElement isn't typed as a class constructor
   typeof globalThis !== 'undefined' && (globalThis as any).HTMLElement
-    ? // eslint-disable-next-line @typescript-eslint/no-explicit-any -- prevents errrors if loaded in SSR
+    ? // eslint-disable-next-line @typescript-eslint/no-explicit-any -- globalThis.HTMLElement isn't typed as a class constructor
       (globalThis as any).HTMLElement
     : class {};
 
@@ -29,6 +41,8 @@ export abstract class StaffElementBase extends _MaybeHTMLElement {
   protected readonly transcribeContainer: SVGSVGElement;
   #standaloneConnectorsOverlay: SVGSVGElement;
   #slotChangeHandler = (event: Event) => this.onHandleSlotChange(event);
+
+  protected effectiveTimeSig: [BeatsInMeasure, BeatTypeInMeasure];
 
   constructor() {
     super();
@@ -46,12 +60,79 @@ export abstract class StaffElementBase extends _MaybeHTMLElement {
         this.onStaffResize();
       }
     });
+
+    this.effectiveTimeSig = this.convertTotimeInts(
+      this.resolveInheritedValue(COMMON_ATTRIBUTES.TIME_SIG, '4/4')
+    );
   }
 
   protected abstract onStaffResize(): void;
 
+  get group(): StaffGroupType | null {
+    return parseStaffGroup(this.getAttribute('group'));
+  }
+
+  set group(value: StaffGroupType | null) {
+    if (value === null) {
+      this.removeAttribute('group');
+    } else {
+      this.setAttribute('group', value);
+    }
+  }
+
+  get groupId(): string | null {
+    return this.getAttribute('group-id');
+  }
+
+  set groupId(value: string | null) {
+    if (value === null) {
+      this.removeAttribute('group-id');
+    } else {
+      this.setAttribute('group-id', value);
+    }
+  }
+
+  protected dispatchGroupAttributeChange(): void {
+    if (!this.isConnected) {
+      return;
+    }
+    this.dispatchEvent(
+      new CustomEvent(STAFF_EVENTS.GROUP_ATTRIBUTE_CHANGE, {
+        bubbles: true,
+        composed: true,
+      })
+    );
+  }
+
+  protected resolveInheritedValue(
+    attributeName: string,
+    defaultValue: string
+  ): string {
+    return (
+      this.getAttribute(attributeName) ??
+      this.closest(MUSIC_MEASURE)?.getAttribute(attributeName) ??
+      this.closest(MUSIC_COMPOSITION)?.getAttribute(attributeName) ??
+      defaultValue
+    );
+  }
+
+  protected convertTotimeInts(
+    time: string
+  ): [BeatsInMeasure, BeatTypeInMeasure] {
+    const [beats, beatType] = time.split('/').map((n) => parseInt(n, 10));
+    return [beats as BeatsInMeasure, beatType as BeatTypeInMeasure];
+  }
+
+  get time(): TimeSignature {
+    return `${this.effectiveTimeSig[0]}/${this.effectiveTimeSig[1]}` as TimeSignature;
+  }
+
+  set time(value: TimeSignature) {
+    this.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, value);
+  }
+
   protected render() {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- contructor creates it
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- constructor attaches the shadow root
     this.shadowRoot!.innerHTML = `
       <style>
       :host {
@@ -72,7 +153,7 @@ export abstract class StaffElementBase extends _MaybeHTMLElement {
           inset: 0;
           top: -1px;
           width: 100%;
-          height: ${this.#staffHeight}px;
+          height: ${this.staffHeight}px;
           display: block;
           border-top: 1px solid currentColor;
           border-right: 1px solid currentColor;
@@ -97,7 +178,7 @@ export abstract class StaffElementBase extends _MaybeHTMLElement {
       </div>
     `;
 
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- won't be null
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- shadowRoot was just written to above in this method
     const wrapper = this.shadowRoot!.querySelector('.staff-wrapper');
     if (!wrapper) {
       return;
@@ -120,11 +201,11 @@ export abstract class StaffElementBase extends _MaybeHTMLElement {
     }
   }
 
-  get #staffHeight() {
+  get staffHeight(): number {
     return (this.staffLineCount - 1) * STAFF_LINE_SPACING;
   }
 
-  protected abstract get staffLineCount(): number;
+  abstract get staffLineCount(): number;
 
   /** Override in subclasses to inject additional CSS into the shadow DOM style block. */
   protected get additionalStyles(): string {

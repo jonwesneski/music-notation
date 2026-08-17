@@ -10,8 +10,8 @@ import {
   MUSIC_LYRICS,
   MUSIC_MEASURE,
   MUSIC_NOTE,
-  MUSIC_STAFF_BASS,
-  MUSIC_STAFF_TREBLE,
+  MUSIC_STAFF,
+  MUSIC_STAFF_GUITAR_TAB,
   MUSIC_STAFF_VOCAL,
 } from '../utils/consts';
 
@@ -59,7 +59,7 @@ test.describe(`${MUSIC_COMPOSITION} responsive layout`, () => {
       {
         compositionTag: MUSIC_COMPOSITION,
         measureTag: MUSIC_MEASURE,
-        staffTag: MUSIC_STAFF_TREBLE,
+        staffTag: MUSIC_STAFF,
         noteTag: MUSIC_NOTE,
       }
     );
@@ -184,7 +184,7 @@ test.describe(`${MUSIC_COMPOSITION} responsive layout`, () => {
       {
         compositionTag: MUSIC_COMPOSITION,
         measureTag: MUSIC_MEASURE,
-        staffTag: MUSIC_STAFF_TREBLE,
+        staffTag: MUSIC_STAFF,
         noteTag: MUSIC_NOTE,
       }
     );
@@ -223,7 +223,7 @@ test.describe(`${MUSIC_COMPOSITION} responsive layout`, () => {
         treble.appendChild(c);
         treble.appendChild(d);
       },
-      { staffTag: MUSIC_STAFF_TREBLE, noteTag: MUSIC_NOTE }
+      { staffTag: MUSIC_STAFF, noteTag: MUSIC_NOTE }
     );
     await waitForRedrawCycle(page);
     await waitForRedrawCycle(page);
@@ -305,7 +305,7 @@ test.describe(`${MUSIC_COMPOSITION} responsive layout`, () => {
         {
           compositionTag: MUSIC_COMPOSITION,
           measureTag: MUSIC_MEASURE,
-          staffTag: MUSIC_STAFF_TREBLE,
+          staffTag: MUSIC_STAFF,
         }
       );
 
@@ -374,7 +374,7 @@ test.describe(`${MUSIC_COMPOSITION} responsive layout`, () => {
       {
         compositionTag: MUSIC_COMPOSITION,
         measureTag: MUSIC_MEASURE,
-        staffTag: MUSIC_STAFF_TREBLE,
+        staffTag: MUSIC_STAFF,
       }
     );
 
@@ -410,7 +410,7 @@ test.describe(`${MUSIC_COMPOSITION} responsive layout`, () => {
       {
         compositionTag: MUSIC_COMPOSITION,
         measureTag: MUSIC_MEASURE,
-        staffTag: MUSIC_STAFF_TREBLE,
+        staffTag: MUSIC_STAFF,
       }
     );
     await waitForRedrawCycle(page);
@@ -421,8 +421,10 @@ test.describe(`${MUSIC_COMPOSITION} responsive layout`, () => {
           document.querySelectorAll(measureTag)
         ) as HTMLElement[];
         return measures.map((measure) => {
-          const staff = Array.from(measure.children).find((el) =>
-            el.nodeName.startsWith('MUSIC-STAFF-')
+          const staff = Array.from(measure.children).find(
+            (el) =>
+              el.nodeName === 'MUSIC-STAFF' ||
+              el.nodeName.startsWith('MUSIC-STAFF-')
           );
           return staff
             ? (staff as unknown as { showDescribe: boolean }).showDescribe
@@ -438,6 +440,101 @@ test.describe(`${MUSIC_COMPOSITION} responsive layout`, () => {
 
     const after = await readShowClefsPerMeasure();
     expect(after).toEqual([true, false, true, false]);
+  });
+
+  test('empty measures keep their clef flush left and unscaled as they wrap across rows (regression: stale viewBox on note-less resize)', async ({
+    page,
+  }) => {
+    await page.evaluate(
+      ({ compositionTag, measureTag, staffTag }) => {
+        const host = document.getElementById('host');
+        if (host === null) {
+          throw new Error('host missing');
+        }
+        host.innerHTML = '';
+        host.style.width = '900px';
+        const composition = document.createElement(compositionTag);
+        for (let i = 0; i < 4; i++) {
+          const measure = document.createElement(measureTag);
+          const staff = document.createElement(staffTag);
+          staff.setAttribute('clef', 'treble');
+          measure.appendChild(staff);
+          composition.appendChild(measure);
+        }
+        host.appendChild(composition);
+      },
+      {
+        compositionTag: MUSIC_COMPOSITION,
+        measureTag: MUSIC_MEASURE,
+        staffTag: MUSIC_STAFF,
+      }
+    );
+    await waitForRedrawCycle(page);
+    await waitForRedrawCycle(page);
+
+    const readStaffGeometry = () =>
+      page.evaluate((staffTag) => {
+        const staves = Array.from(
+          document.querySelectorAll(staffTag)
+        ) as HTMLElement[];
+        return staves.map((staff) => {
+          if (staff.shadowRoot === null) {
+            throw new Error('staff not ready');
+          }
+          const transcribeContainer = staff.shadowRoot.querySelector(
+            '.transcribe-container'
+          ) as SVGSVGElement | null;
+          if (transcribeContainer === null) {
+            throw new Error('transcribe container missing');
+          }
+          const containerRect = transcribeContainer.getBoundingClientRect();
+          const viewBox = transcribeContainer.viewBox.baseVal;
+          const clef = staff.shadowRoot.querySelector(
+            '.describe-container .clef'
+          );
+          const clefRect = clef !== null ? clef.getBoundingClientRect() : null;
+          return {
+            containerWidth: containerRect.width,
+            viewBoxWidth: viewBox.width,
+            clefOffsetX:
+              clefRect !== null ? clefRect.left - containerRect.left : null,
+            clefWidth: clefRect !== null ? clefRect.width : null,
+          };
+        });
+      }, MUSIC_STAFF);
+
+    // At 900px only M1 (row 1) and M4 (alone in row 2, stretched to fill it)
+    // show a clef; that's expected — nothing has resized yet.
+    const wide = await readStaffGeometry();
+    expect(wide).toHaveLength(4);
+    for (const staff of wide) {
+      expect(staff.viewBoxWidth).toBeCloseTo(staff.containerWidth, 0);
+    }
+
+    // Narrow further so every measure wraps onto its own row — each becomes
+    // first (and only) in its row, so every staff now shows a clef. M1-M3's
+    // actual width shrinks from their original 300px flex-basis share, and
+    // M4's shrinks from the full 900px it was stretched to fill.
+    await resizeHost(page, 250);
+
+    const narrow = await readStaffGeometry();
+    expect(narrow).toHaveLength(4);
+    for (const staff of narrow) {
+      expect(staff.viewBoxWidth).toBeCloseTo(staff.containerWidth, 0);
+      expect(staff.clefOffsetX).not.toBeNull();
+      expect(staff.clefWidth).not.toBeNull();
+    }
+
+    // With viewBox tracking the container 1:1, the clef's fixed pixel
+    // offset (CLEF_X_OFFSET) renders unscaled — every staff should show the
+    // same left offset and the same glyph width, regardless of which row it
+    // wrapped to or how wide that staff used to be.
+    const offsets = narrow.map((s) => s.clefOffsetX as number);
+    const widths = narrow.map((s) => s.clefWidth as number);
+    for (let i = 1; i < offsets.length; i++) {
+      expect(Math.abs(offsets[i] - offsets[0])).toBeLessThan(1);
+      expect(Math.abs(widths[i] - widths[0])).toBeLessThan(1);
+    }
   });
 
   test('key signature and clef visibility — only first staff in each row shows both, across resizes', async ({
@@ -478,7 +575,7 @@ test.describe(`${MUSIC_COMPOSITION} responsive layout`, () => {
       {
         compositionTag: MUSIC_COMPOSITION,
         measureTag: MUSIC_MEASURE,
-        staffTag: MUSIC_STAFF_TREBLE,
+        staffTag: MUSIC_STAFF,
         noteTag: MUSIC_NOTE,
         keySigAttr: COMMON_ATTRIBUTES.KEY_SIG,
         modeAttr: COMMON_ATTRIBUTES.MODE,
@@ -535,7 +632,7 @@ test.describe(`${MUSIC_COMPOSITION} responsive layout`, () => {
         {
           compositionTag: MUSIC_COMPOSITION,
           measureTag: MUSIC_MEASURE,
-          staffTag: MUSIC_STAFF_TREBLE,
+          staffTag: MUSIC_STAFF,
         }
       );
 
@@ -565,6 +662,327 @@ test.describe(`${MUSIC_COMPOSITION} responsive layout`, () => {
     }
   });
 
+  async function buildTwoMeasureClefChange(
+    page: import('@playwright/test').Page,
+    hostWidth: number
+  ): Promise<void> {
+    await page.evaluate(
+      ({ compositionTag, measureTag, staffTag, noteTag, hostWidth }) => {
+        const host = document.getElementById('host');
+        if (host === null) {
+          throw new Error('host missing');
+        }
+        host.innerHTML = '';
+        host.style.width = `${hostWidth}px`;
+
+        const composition = document.createElement(compositionTag);
+
+        const m1 = document.createElement(measureTag);
+        const m1Staff = document.createElement(staffTag);
+        m1Staff.setAttribute('clef', 'treble');
+        const m1Note = document.createElement(noteTag);
+        m1Note.setAttribute('note', 'C');
+        m1Note.setAttribute('octave', '5');
+        m1Note.setAttribute('duration', 'whole');
+        m1Staff.appendChild(m1Note);
+        m1.appendChild(m1Staff);
+
+        const m2 = document.createElement(measureTag);
+        const m2Staff = document.createElement(staffTag);
+        m2Staff.setAttribute('clef', 'bass');
+        const m2Note = document.createElement(noteTag);
+        m2Note.setAttribute('note', 'C');
+        m2Note.setAttribute('octave', '3');
+        m2Note.setAttribute('duration', 'whole');
+        m2Staff.appendChild(m2Note);
+        m2.appendChild(m2Staff);
+
+        composition.appendChild(m1);
+        composition.appendChild(m2);
+        host.appendChild(composition);
+      },
+      {
+        compositionTag: MUSIC_COMPOSITION,
+        measureTag: MUSIC_MEASURE,
+        staffTag: MUSIC_STAFF,
+        noteTag: MUSIC_NOTE,
+        hostWidth,
+      }
+    );
+    await waitForRedrawCycle(page);
+    await waitForRedrawCycle(page);
+  }
+
+  test('mid-row measure-boundary clef change: second measure shows its clef even though not first-in-row, and no courtesy clef is drawn', async ({
+    page,
+  }) => {
+    // Wide enough that both measures land on the same row.
+    await buildTwoMeasureClefChange(page, 900);
+
+    const result = await page.evaluate(
+      ({ measureTag, overlaySelector }) => {
+        const measures = Array.from(
+          document.querySelectorAll(measureTag)
+        ) as HTMLElement[];
+        const tops = measures.map((m) =>
+          Math.round(m.getBoundingClientRect().top)
+        );
+        const staves = measures.map(
+          (m) =>
+            Array.from(m.children).find(
+              (el) =>
+                el.nodeName === 'MUSIC-STAFF' ||
+                el.nodeName.startsWith('MUSIC-STAFF-')
+            ) as unknown as { clefChangeAtBoundary: boolean } | undefined
+        );
+        const composition = document.querySelector('music-composition');
+        const overlay = composition?.shadowRoot?.querySelector(overlaySelector);
+        return {
+          sameRow: Math.abs(tops[1] - tops[0]) <= 5,
+          secondClefChangeAtBoundary: staves[1]?.clefChangeAtBoundary ?? null,
+          courtesyGlyphCount: overlay?.children.length ?? -1,
+        };
+      },
+      { measureTag: MUSIC_MEASURE, overlaySelector: '.courtesy-clef-overlay' }
+    );
+
+    expect(result.sameRow).toBe(true);
+    expect(result.secondClefChangeAtBoundary).toBe(true);
+    expect(result.courtesyGlyphCount).toBe(0);
+  });
+
+  test('a genuine clef boundary settles instead of perpetually rescheduling redraws (regression: reset-then-set two-pass assignment)', async ({
+    page,
+  }) => {
+    await buildTwoMeasureClefChange(page, 900);
+    await waitForRedrawCycle(page);
+    await waitForRedrawCycle(page);
+
+    const staffNotesPositionedCount = await page.evaluate(async () => {
+      let count = 0;
+      const host = document.getElementById('host');
+      if (host === null) {
+        throw new Error('host missing');
+      }
+      host.addEventListener('staff-notes-positioned', () => {
+        count++;
+      });
+
+      await new Promise<void>((resolve) => {
+        let frame = 0;
+        const tick = () => {
+          frame++;
+          if (frame >= 10) {
+            resolve();
+            return;
+          }
+          requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      });
+
+      return count;
+    });
+
+    expect(staffNotesPositionedCount).toBe(0);
+  });
+
+  test('row-wrap clef change: outgoing staff gets a courtesy clef and incoming staff shows its clef despite not being first-in-row by default', async ({
+    page,
+  }) => {
+    // Narrower than 2 measures' combined 100px CSS min-width, forcing each
+    // measure onto its own row.
+    await buildTwoMeasureClefChange(page, 150);
+
+    const result = await page.evaluate(
+      ({ measureTag, overlaySelector }) => {
+        const measures = Array.from(
+          document.querySelectorAll(measureTag)
+        ) as HTMLElement[];
+        const tops = measures.map((m) =>
+          Math.round(m.getBoundingClientRect().top)
+        );
+        const staves = measures.map(
+          (m) =>
+            Array.from(m.children).find(
+              (el) =>
+                el.nodeName === 'MUSIC-STAFF' ||
+                el.nodeName.startsWith('MUSIC-STAFF-')
+            ) as unknown as { clefChangeAtBoundary: boolean } | undefined
+        );
+        const composition = document.querySelector('music-composition');
+        const overlay = composition?.shadowRoot?.querySelector(overlaySelector);
+        return {
+          differentRows: Math.abs(tops[1] - tops[0]) > 5,
+          secondClefChangeAtBoundary: staves[1]?.clefChangeAtBoundary ?? null,
+          courtesyGlyphCount: overlay?.children.length ?? -1,
+          // Bass and treble clef SVGs have distinct viewBox dimensions
+          // (createBassClefSvg vs createTrebleClefSvg) — used below to
+          // confirm the courtesy glyph previews the UPCOMING (bass) clef,
+          // not a repeat of the outgoing (treble) one.
+          courtesyGlyphHtml: overlay?.innerHTML ?? '',
+        };
+      },
+      { measureTag: MUSIC_MEASURE, overlaySelector: '.courtesy-clef-overlay' }
+    );
+
+    expect(result.differentRows).toBe(true);
+    // Second measure is first-in-its-row anyway, so this flag doesn't change
+    // its visibility here — but it must still be set consistently.
+    expect(result.secondClefChangeAtBoundary).toBe(true);
+    expect(result.courtesyGlyphCount).toBe(1);
+    // The courtesy clef must preview the incoming (bass) clef, not repeat
+    // the outgoing (treble) one — this is the entire point of a courtesy
+    // clef. Bass and treble clef glyphs have distinct SVG viewBox dimensions.
+    expect(result.courtesyGlyphHtml).toContain('744.09');
+    expect(result.courtesyGlyphHtml).not.toContain('165.4 496.2');
+  });
+
+  async function buildTimeSignatureComposition(
+    page: import('@playwright/test').Page,
+    measureTimes: (string | null)[],
+    options?: { includeGuitarTab?: boolean }
+  ): Promise<void> {
+    await page.evaluate(
+      ({
+        compositionTag,
+        measureTag,
+        staffTag,
+        guitarTabTag,
+        noteTag,
+        measureTimes,
+        includeGuitarTab,
+      }) => {
+        const host = document.getElementById('host');
+        if (host === null) {
+          throw new Error('host missing');
+        }
+        host.innerHTML = '';
+        host.style.width = '900px';
+
+        const composition = document.createElement(compositionTag);
+
+        measureTimes.forEach((time) => {
+          const measure = document.createElement(measureTag);
+
+          const staff = document.createElement(staffTag);
+          staff.setAttribute('clef', 'treble');
+          if (time !== null) {
+            staff.setAttribute('time', time);
+          }
+          const note = document.createElement(noteTag);
+          note.setAttribute('note', 'C');
+          note.setAttribute('octave', '5');
+          note.setAttribute('duration', 'whole');
+          staff.appendChild(note);
+          measure.appendChild(staff);
+
+          if (includeGuitarTab) {
+            const tabStaff = document.createElement(guitarTabTag);
+            const tabNote = document.createElement(noteTag);
+            tabNote.setAttribute('note', 'C');
+            tabNote.setAttribute('octave', '4');
+            tabNote.setAttribute('duration', 'whole');
+            tabStaff.appendChild(tabNote);
+            measure.appendChild(tabStaff);
+          }
+
+          composition.appendChild(measure);
+        });
+
+        host.appendChild(composition);
+      },
+      {
+        compositionTag: MUSIC_COMPOSITION,
+        measureTag: MUSIC_MEASURE,
+        staffTag: MUSIC_STAFF,
+        guitarTabTag: MUSIC_STAFF_GUITAR_TAB,
+        noteTag: MUSIC_NOTE,
+        measureTimes,
+        includeGuitarTab: options?.includeGuitarTab ?? false,
+      }
+    );
+    await waitForRedrawCycle(page);
+    await waitForRedrawCycle(page);
+  }
+
+  async function getTimeSignatureVisibilityPerMeasure(
+    page: import('@playwright/test').Page
+  ): Promise<boolean[]> {
+    return page.evaluate((measureTag) => {
+      const measures = Array.from(
+        document.querySelectorAll(measureTag)
+      ) as HTMLElement[];
+      return measures.map((m) => {
+        const staff = Array.from(m.children).find(
+          (el) => el.nodeName === 'MUSIC-STAFF'
+        );
+        const timeSig = staff?.shadowRoot?.querySelector('.time-signature');
+        return timeSig !== null && timeSig !== undefined;
+      });
+    }, MUSIC_MEASURE);
+  }
+
+  test('time signature only renders on the first measure when the time signature never changes', async ({
+    page,
+  }) => {
+    await buildTimeSignatureComposition(page, ['4/4', '4/4', '4/4']);
+
+    const visibility = await getTimeSignatureVisibilityPerMeasure(page);
+
+    expect(visibility).toEqual([true, false, false]);
+  });
+
+  test('time signature renders again on a measure that changes it mid-composition', async ({
+    page,
+  }) => {
+    await buildTimeSignatureComposition(page, ['4/4', '4/4', '3/4']);
+
+    const visibility = await getTimeSignatureVisibilityPerMeasure(page);
+
+    expect(visibility).toEqual([true, false, true]);
+  });
+
+  test('time signature renders again when a measure redefines the original signature after a change', async ({
+    page,
+  }) => {
+    await buildTimeSignatureComposition(page, ['4/4', '3/4', '4/4']);
+
+    const visibility = await getTimeSignatureVisibilityPerMeasure(page);
+
+    expect(visibility).toEqual([true, true, true]);
+  });
+
+  test('time signature continuity check compares a guitar tab staff pair without throwing and does not disturb the classical staff pair', async ({
+    page,
+  }) => {
+    await buildTimeSignatureComposition(page, ['4/4', '3/4', '4/4'], {
+      includeGuitarTab: true,
+    });
+
+    const visibility = await getTimeSignatureVisibilityPerMeasure(page);
+
+    expect(visibility).toEqual([true, true, true]);
+
+    const timeChangeAtBoundaryPerMeasure = await page.evaluate((measureTag) => {
+      const measures = Array.from(
+        document.querySelectorAll(measureTag)
+      ) as HTMLElement[];
+      return measures.map((m) => {
+        const staff = Array.from(m.children).find(
+          (el) => el.nodeName === 'MUSIC-STAFF'
+        ) as unknown as { timeChangeAtBoundary: boolean } | undefined;
+        return staff?.timeChangeAtBoundary ?? null;
+      });
+    }, MUSIC_MEASURE);
+
+    // Mirrors `visibility` above: the flag drives the glyph, so it should be
+    // false on the first measure (visibility comes from "first measure",
+    // not the boundary flag) and true on every later measure whose time
+    // differs from its predecessor.
+    expect(timeChangeAtBoundaryPerMeasure).toEqual([false, true, true]);
+  });
+
   test('all measures share the same row when composition is inside a flex justify-center container (regression for 1-measure-per-row bug)', async ({
     page,
   }) => {
@@ -576,8 +994,7 @@ test.describe(`${MUSIC_COMPOSITION} responsive layout`, () => {
       ({
         compositionTag,
         measureTag,
-        staffTrebleTag,
-        staffBassTag,
+        staffTag,
         staffVocalTag,
         noteTag,
         lyricsTag,
@@ -601,14 +1018,16 @@ test.describe(`${MUSIC_COMPOSITION} responsive layout`, () => {
 
         // Measure 1: treble (4 quarter notes) + bass (1 note)
         const m1 = document.createElement(measureTag);
-        const m1Treble = document.createElement(staffTrebleTag);
+        const m1Treble = document.createElement(staffTag);
+        m1Treble.setAttribute('clef', 'treble');
         for (const v of ['C4', 'D4', 'E4', 'F4']) {
           const note = document.createElement(noteTag);
           note.setAttribute('note', v);
           note.setAttribute('duration', 'quarter');
           m1Treble.appendChild(note);
         }
-        const m1Bass = document.createElement(staffBassTag);
+        const m1Bass = document.createElement(staffTag);
+        m1Bass.setAttribute('clef', 'bass');
         const m1BassNote = document.createElement(noteTag);
         m1BassNote.setAttribute('note', 'A');
         m1BassNote.setAttribute('duration', 'quarter');
@@ -618,14 +1037,16 @@ test.describe(`${MUSIC_COMPOSITION} responsive layout`, () => {
 
         // Measure 2: treble (2 notes) + bass (2 notes) + vocal with 2 lyric verses
         const m2 = document.createElement(measureTag);
-        const m2Treble = document.createElement(staffTrebleTag);
+        const m2Treble = document.createElement(staffTag);
+        m2Treble.setAttribute('clef', 'treble');
         for (const v of ['A', 'D']) {
           const note = document.createElement(noteTag);
           note.setAttribute('note', v);
           note.setAttribute('duration', 'eighth');
           m2Treble.appendChild(note);
         }
-        const m2Bass = document.createElement(staffBassTag);
+        const m2Bass = document.createElement(staffTag);
+        m2Bass.setAttribute('clef', 'bass');
         for (const v of ['A', 'A']) {
           const note = document.createElement(noteTag);
           note.setAttribute('note', v);
@@ -664,14 +1085,16 @@ test.describe(`${MUSIC_COMPOSITION} responsive layout`, () => {
 
         // Measure 3: treble (4 quarter notes) + bass (1 note)
         const m3 = document.createElement(measureTag);
-        const m3Treble = document.createElement(staffTrebleTag);
+        const m3Treble = document.createElement(staffTag);
+        m3Treble.setAttribute('clef', 'treble');
         for (const v of ['A', 'A', 'A', 'A']) {
           const note = document.createElement(noteTag);
           note.setAttribute('note', v);
           note.setAttribute('duration', 'quarter');
           m3Treble.appendChild(note);
         }
-        const m3Bass = document.createElement(staffBassTag);
+        const m3Bass = document.createElement(staffTag);
+        m3Bass.setAttribute('clef', 'bass');
         const m3BassNote = document.createElement(noteTag);
         m3BassNote.setAttribute('note', 'A');
         m3BassNote.setAttribute('duration', 'quarter');
@@ -687,8 +1110,7 @@ test.describe(`${MUSIC_COMPOSITION} responsive layout`, () => {
       {
         compositionTag: MUSIC_COMPOSITION,
         measureTag: MUSIC_MEASURE,
-        staffTrebleTag: MUSIC_STAFF_TREBLE,
-        staffBassTag: MUSIC_STAFF_BASS,
+        staffTag: MUSIC_STAFF,
         staffVocalTag: MUSIC_STAFF_VOCAL,
         noteTag: MUSIC_NOTE,
         lyricsTag: MUSIC_LYRICS,
@@ -763,7 +1185,7 @@ test.describe(`${MUSIC_COMPOSITION} responsive layout`, () => {
       {
         compositionTag: MUSIC_COMPOSITION,
         measureTag: MUSIC_MEASURE,
-        staffTag: MUSIC_STAFF_TREBLE,
+        staffTag: MUSIC_STAFF,
         noteTag: MUSIC_NOTE,
       }
     );
@@ -872,7 +1294,7 @@ test.describe(`${MUSIC_COMPOSITION} responsive layout`, () => {
       {
         compositionTag: MUSIC_COMPOSITION,
         measureTag: MUSIC_MEASURE,
-        staffTag: MUSIC_STAFF_TREBLE,
+        staffTag: MUSIC_STAFF,
         noteTag: MUSIC_NOTE,
       }
     );
@@ -1063,7 +1485,7 @@ test.describe(`${MUSIC_COMPOSITION} responsive layout`, () => {
       {
         compositionTag: MUSIC_COMPOSITION,
         measureTag: MUSIC_MEASURE,
-        staffTag: MUSIC_STAFF_TREBLE,
+        staffTag: MUSIC_STAFF,
         noteTag: MUSIC_NOTE,
       }
     );
@@ -1152,7 +1574,7 @@ test.describe(`${MUSIC_COMPOSITION} responsive layout`, () => {
       {
         compositionTag: MUSIC_COMPOSITION,
         measureTag: MUSIC_MEASURE,
-        staffTag: MUSIC_STAFF_TREBLE,
+        staffTag: MUSIC_STAFF,
         noteTag: MUSIC_NOTE,
       }
     );
@@ -1191,7 +1613,7 @@ test.describe(`${MUSIC_COMPOSITION} responsive layout`, () => {
         '.composition-wrapper'
       );
       const staffs = Array.from(
-        document.querySelectorAll('music-staff-treble')
+        document.querySelectorAll('music-staff')
       ) as HTMLElement[];
       if (wrapper === null || staffs.length !== 2) {
         throw new Error('staves not ready');
@@ -1300,7 +1722,7 @@ test.describe(`${MUSIC_COMPOSITION} responsive layout`, () => {
       {
         compositionTag: MUSIC_COMPOSITION,
         measureTag: MUSIC_MEASURE,
-        staffTag: MUSIC_STAFF_TREBLE,
+        staffTag: MUSIC_STAFF,
         noteTag: MUSIC_NOTE,
       }
     );
@@ -1338,7 +1760,7 @@ test.describe(`${MUSIC_COMPOSITION} responsive layout`, () => {
       const firstNoteOfStaff2 = staff2.children[0] as HTMLElement;
       lastNoteOfStaff1.setAttribute('crescendo', 'start');
       firstNoteOfStaff2.setAttribute('crescendo', 'end');
-    }, MUSIC_STAFF_TREBLE);
+    }, MUSIC_STAFF);
     await waitForRedrawCycle(page);
 
     // Staves are on separate rows (200px host), so the new hairpin renders as

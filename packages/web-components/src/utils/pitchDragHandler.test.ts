@@ -8,7 +8,7 @@ import { PitchDragHandler } from './pitchDragHandler';
 
 // jsdom doesn't provide PointerEvent — polyfill it from MouseEvent.
 if (typeof globalThis.PointerEvent === 'undefined') {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- globalThis isn't typed with a PointerEvent property to assign
   (globalThis as any).PointerEvent = class PointerEvent extends MouseEvent {
     readonly pointerId: number;
     readonly pointerType: string;
@@ -101,7 +101,10 @@ function makeChordElement(notes: string[], duration = 'eighth'): HTMLElement {
   return el;
 }
 
-function setup(opts?: { elements?: HTMLElement[] }) {
+function setup(opts?: {
+  elements?: HTMLElement[];
+  resolveYCoordinates?: (elementIndex: number) => YCoordinates;
+}) {
   const host = document.createElement('div');
   document.body.appendChild(host);
 
@@ -115,7 +118,11 @@ function setup(opts?: { elements?: HTMLElement[] }) {
   }
 
   const livePreviewMock = jest.fn();
-  const handler = new PitchDragHandler(host, yCoordinates, livePreviewMock);
+  const handler = new PitchDragHandler(
+    host,
+    opts?.resolveYCoordinates ?? (() => yCoordinates),
+    livePreviewMock
+  );
 
   return { host, elements, handler, livePreviewMock };
 }
@@ -256,9 +263,9 @@ describe('PitchDragHandler', () => {
       const lastCall =
         livePreviewMock.mock.calls[livePreviewMock.mock.calls.length - 1];
       expect(lastCall[0]).toBe(0); // elementIndex
-      expect(lastCall[2]).toBe(null); // chordNoteIndex
-      // The new note should be a higher pitch than D4
-      expect(lastCall[1]).not.toBe('D4');
+      expect(lastCall[3]).toBe(null); // chordNoteIndex
+      // The new note+octave should differ from D4
+      expect(`${lastCall[1]}${lastCall[2]}`).not.toBe('D4');
     });
 
     it('does not call livePreview when staying at same pitch', () => {
@@ -287,8 +294,9 @@ describe('PitchDragHandler', () => {
 
       expect(changeHandler).toHaveBeenCalledTimes(1);
       const detail = changeHandler.mock.calls[0][0].detail;
-      expect(detail.fromNote).toBe('D4');
-      expect(detail.toNote).not.toBe('D4');
+      expect(detail.fromNote).toBe('D');
+      expect(detail.fromOctave).toBe(4);
+      expect(`${detail.toNote}${detail.toOctave}`).not.toBe('D4');
       expect(detail.elementIndex).toBe(0);
       expect(detail.chordNoteIndex).toBe(null);
     });
@@ -318,7 +326,7 @@ describe('PitchDragHandler', () => {
       document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
 
       // Should restore original note
-      expect(livePreviewMock).toHaveBeenCalledWith(0, 'D4', null);
+      expect(livePreviewMock).toHaveBeenCalledWith(0, 'D', 4, null);
       expect(handler.isDragging).toBe(false);
     });
 
@@ -353,7 +361,7 @@ describe('PitchDragHandler', () => {
       livePreviewMock.mockClear();
       handler.cancelDrag();
 
-      expect(livePreviewMock).toHaveBeenCalledWith(0, 'D4', null);
+      expect(livePreviewMock).toHaveBeenCalledWith(0, 'D', 4, null);
     });
   });
 
@@ -410,6 +418,48 @@ describe('PitchDragHandler', () => {
     });
   });
 
+  describe('per-element clef segment resolution', () => {
+    it('resolves yCoordinates using elementIndex, not a fixed table', () => {
+      // Simulates a treble-to-bass clef change after index 0: index 0 uses
+      // the treble table (no C3), index 1 uses a bass table where C3 exists.
+      const bassYCoordinates: YCoordinates = { ...yCoordinates, C3: 90 };
+      const resolveYCoordinates = jest.fn((elementIndex: number) =>
+        elementIndex === 0 ? yCoordinates : bassYCoordinates
+      );
+
+      const noteAtIndex0 = makeNoteElement('D');
+      const noteAtIndex1 = makeNoteElement('C');
+      noteAtIndex1.setAttribute('octave', '3');
+      const { handler } = setup({
+        elements: [noteAtIndex0, noteAtIndex1],
+        resolveYCoordinates,
+      });
+
+      // C3 is absent from the treble table — dragging fails if the handler
+      // ignores elementIndex and always resolves the segment-0 table.
+      const e = pointerDown(noteAtIndex1, { clientY: 90 });
+      const started = handler.tryStart(e, noteAtIndex1, 1, null);
+
+      expect(started).toBe(true);
+      expect(resolveYCoordinates).toHaveBeenCalledWith(1);
+    });
+
+    it('fails to start a drag for a note absent from its segment table', () => {
+      const resolveYCoordinates = () => yCoordinates;
+      const noteAtIndex1 = makeNoteElement('C');
+      noteAtIndex1.setAttribute('octave', '3'); // not in yCoordinates
+      const { handler } = setup({
+        elements: [noteAtIndex1],
+        resolveYCoordinates,
+      });
+
+      const e = pointerDown(noteAtIndex1);
+      const started = handler.tryStart(e, noteAtIndex1, 0, null);
+
+      expect(started).toBe(false);
+    });
+  });
+
   describe('chord support', () => {
     it('starts pitch drag for a specific chord note', () => {
       const chord = makeChordElement(['A', 'E']);
@@ -440,9 +490,9 @@ describe('PitchDragHandler', () => {
       // The handler should skip A4 since it's occupied by chord note 0
       // and snap to the nearest non-occupied position instead
       if (livePreviewMock.mock.calls.length > 0) {
-        const lastNote =
-          livePreviewMock.mock.calls[livePreviewMock.mock.calls.length - 1][1];
-        expect(lastNote).not.toBe('A4');
+        const lastCall =
+          livePreviewMock.mock.calls[livePreviewMock.mock.calls.length - 1];
+        expect(`${lastCall[1]}${lastCall[2]}`).not.toBe('A4');
       }
     });
   });

@@ -9,7 +9,8 @@
 Elements are designed to be used **in isolation or composed together**. You do not need the full hierarchy to use any given element. **"Standalone" means an element is used without its usual parent element** — e.g. a staff without a `<music-composition>`, or a note without a staff:
 
 - `<music-note>` and `<music-chord>` can be used standalone, outside any staff, measure, or composition
-- `<music-staff-treble>`, `<music-staff-bass>`, `<music-staff-guitar-tab>`, and `<music-staff-vocal>` can be used without a `<music-measure>` or `<music-composition>`
+- `<music-staff>`, `<music-staff-guitar-tab>`, and `<music-staff-vocal>` can be used without a `<music-measure>` or `<music-composition>`
+- `<music-clef>` can be used standalone (renders just its glyph) or inside a `<music-staff>`'s note stream to mark a mid-piece clef change
 - `<music-measure>` can be used without a `<music-composition>`
 
 Some features may be unavailable or degraded when elements are used outside their normal parent context (for example, attribute inheritance from parent elements won't apply, and layout-driven sizing from minimum-width events requires a `<music-measure>` parent). The goal is to keep that list of exceptions small.
@@ -19,11 +20,11 @@ Some features may be unavailable or degraded when elements are used outside thei
 ```
 <music-composition>          — composition.ts
   └─ <music-measure>         — measure/measure.ts
-      ├─ <music-staff-treble>   — staffTreble/staffTreble.ts
-      ├─ <music-staff-bass>     — staffBass/staffBass.ts
+      ├─ <music-staff clef="treble"|"bass">   — staff/staff.ts
       │   ├─ <music-note>        — note/note.ts
-      │   └─ <music-chord>       — chord/chord.ts
-      │       └─ <music-note>    (children)
+      │   ├─ <music-chord>       — chord/chord.ts
+      │   │   └─ <music-note>    (children)
+      │   └─ <music-clef>        — clef/clef.ts (mid-stream clef change; zero beat-duration)
       ├─ <music-staff-guitar-tab>  — staffGuitarTab/staffGuitarTab.ts
       └─ <music-staff-vocal>  — staffVocal/staffVocal.ts
           └─ <music-lyrics>    — staffVocal/lyrics.ts
@@ -47,13 +48,15 @@ one-step-at-a-time/
 │           ├── note/
 │           ├── chord/
 │           ├── guitarNote/
-│           ├── staffTreble/
-│           ├── staffBass/
+│           ├── staff/            # Clef-driven staff (`clef` attribute: treble/bass) — merged former staffTreble/staffBass
+│           ├── clef/             # <music-clef> — mid-stream clef change marker (standalone or in a staff)
 │           ├── staffGuitarTab/   # Incomplete — Y-coords not yet mapped
 │           ├── staffVocal/
 │           ├── rules/            # Music theory / domain computation (pure functions)
 │           │   ├── accidentalRules.ts
 │           │   ├── beamRules.ts
+│           │   ├── clefRules.ts           # Per-clef Y-coord/octave/key-sig data + SVG glyph (CLEF_DEFINITIONS, getClefRenderData)
+│           │   ├── staffGroupRules.ts     # Brace/bracket pairing + validation (resolveStaffGroupPairs) — pure, unit-testable
 │           │   ├── staffWidth.ts          # Measure min-width calculation
 │           │   ├── theoryConsts.ts        # Duration/semitone lookup maps
 │           │   ├── theoryHelpers.ts       # Chord/note computation
@@ -175,12 +178,19 @@ Features land in one of two shapes; steps are tagged accordingly:
 12. `[B]` **Orchestration** — in `src/staffClassicalBase.ts`: add a container, register the
     event listener in `connectedCallback` / remove in `disconnectedCallback`, add `#renderX()`
     and wire it into the render pass. Ref: `#renderDynamics`.
-13. **Inherited-attr variant** — if the feature is instead an _inherited staff attribute_ (like
-    `keysig`/`mode`/`time`), the wiring differs: add to `COMMON_ATTRIBUTES`, to
-    `observedAttributes` in composition/measure/staffClassicalBase, add `#effectiveX` +
-    `#resolveInheritedValue` calls, and the descendant push loop in `composition.ts`.
+13. **Inherited-attr variant** — if the feature is instead an _inherited staff attribute_, the
+    wiring differs: add to `COMMON_ATTRIBUTES`, to `observedAttributes` (a static, per-concrete-class
+    member — there's no shared list), add an `#effectiveX` field + `resolveInheritedValue()` calls
+    (see Staff Class Hierarchy below), and the descendant push loop in `composition.ts`. Two
+    variants: `keysig`/`mode` are **classical-only** inherited attrs, still wired on
+    `StaffClassicalElementBase` exactly as before. `time` is different — it's inherited by
+    **every** staff type via `StaffElementBase` (see below), so a new attribute that should apply
+    universally (not just to classical staves) belongs there instead, following `time`'s pattern:
+    `StaffGuitarTabElement` adds its own `observedAttributes`/`attributeChangedCallback` override
+    that re-resolves the inherited base field, since each concrete class declares its own
+    `observedAttributes`.
 14. `[A][B]` **Stories (near-universal)** — add/extend colocated `<component>.stories.ts`
-    (Type A → `note.stories.ts`; Type B → `staffTreble` / `composition` stories), using option
+    (Type A → `note.stories.ts`; Type B → `staff` / `composition` stories), using option
     arrays from `../utils` and strong types from `../types/theory`. For both Type A and Type B see if you can extend an existing story rather than making more new stories. If the feature is small like adding 1 or 2 attributes and their total number of possible values are small consider extending existing stories; otherwise you can plan for new stories
 15. `[A][B]` **Tests (near-universal; tiers are conditional)** — Type A: `note.test.ts` +
     `chord.test.ts`. Type B: new `rules/<feature>Rules.test.ts` + `staffClassicalBase.test.ts`.
@@ -239,11 +249,12 @@ On each redraw cycle the following happen in order:
 1. **Note x-spacing** — each staff's `StaffResizeObserver` (on the staff container element) calls `onStaffResize()`, which re-spaces notes proportionally to the new container width and re-emits `STAFF_EVENTS.NOTES_POSITIONED`.
 2. **Beams** — redrawn as part of `#renderNotes()` / `onStaffResize()` inside each staff.
 3. **Connectors** — `#redrawConnectors()` in `composition.ts` redraws the vertical bar lines that group staves in a measure.
-4. **Clef visibility** — `#updateClefVisibility()` in `composition.ts` runs in the **same `requestAnimationFrame`** as connectors, immediately after. It snapshots all measure `getBoundingClientRect().top` values in one pass (before any DOM writes), then compares each to the previous to determine which measure is first in its row (tolerance 5 px), and sets `showClef` (a JS property, not an HTML attribute) on each child staff accordingly. Connectors are absolutely-positioned SVG and do not affect document flow, so no layout settling is needed between the two operations. Staves default to `showClef = true`, so standalone staves always show the clef.
+4. **Describe (clef/key/time) visibility** — `#updateDescribeVisibility()` in `composition.ts` runs in the **same `requestAnimationFrame`** as connectors, immediately after. It groups measures into visual rows (`#computeMeasureRows()`, tolerance 5 px on `getBoundingClientRect().top`, snapshotted in one pass before any DOM writes) and sets `showDescribe` (a JS property, not an HTML attribute) on each child staff — `true` for the first measure in each row, `false` otherwise. Connectors are absolutely-positioned SVG and do not affect document flow, so no layout settling is needed between the two operations. Staves default to `showDescribe = true`, so standalone staves always show the clef.
+5. **Clef continuity at measure boundaries** — `#updateClefContinuity()` runs right after, reusing the same `#computeMeasureRows()` output. It compares every pair of **adjacent measures** (not just row-boundary pairs — a measure-boundary clef change is just two neighboring `<music-staff>` instances with different `clef` attributes, and can happen mid-row) via each staff's `effectiveStartClef`/`effectiveEndClef` getters (derived from `StaffClassicalElementBase`'s clef-segment machinery — the same one that resolves mid-stream `<music-clef>` markers). When a pair differs: the incoming staff's `clefChangeAtBoundary` property is set so its clef glyph still renders even though `showDescribe` is false (mirrors the existing mid-composition time-signature-change precedent); if the pair also happens to fall exactly at a row wrap, a small courtesy clef preview (scaled by `COURTESY_CLEF_SCALE`) is additionally drawn near the right edge of the outgoing staff, in a separate `.courtesy-clef-overlay` SVG.
 
 **Why `:host { display: block; width: 100% }` on `<music-composition>` matters**: `display: block` alone is not sufficient when the element is placed inside a flex or grid container (e.g. `justify-content: center`). Without an explicit `width`, the element sizes to its max-content as a flex item. For a `flex-wrap: wrap` flex container, browsers compute max-content as the width of the widest single child — so the composition becomes only as wide as its widest measure, causing all other measures to wrap to separate rows. `width: 100%` ensures the composition fills the full parent width in all layout contexts (block, flex, grid), so the `ResizeObserver` fires reliably and measures can share rows as intended. The `.composition-wrapper` inside the shadow DOM has `margin: 0 auto` to center its 900px-capped content when the host is wider than 900px.
 
-**Invariant to maintain**: any change that affects which measure is "first in a row" (resize, dynamic measure insertion/removal) must eventually trigger `#scheduleRedraw()` so `#updateClefVisibility()` re-runs.
+**Invariant to maintain**: any change that affects which measure is "first in a row" (resize, dynamic measure insertion/removal) must eventually trigger `#scheduleRedraw()` so `#updateDescribeVisibility()` and `#updateClefContinuity()` re-run.
 
 #### Responsive Layout Rules
 
@@ -302,15 +313,16 @@ type VoiceType = 'soprano' | 'mezzo' | 'alto' | 'tenor' | 'baritone' | 'bass';
 ## Staff Class Hierarchy
 
 ```
-StaffElementBase              (staffBase.ts)         — shadow DOM, staff lines, resize observer, template method lifecycle
-├── StaffClassicalElementBase (staffClassicalBase.ts) — key sig, time sig, note Y-coords, beam/note rendering
-│   ├── StaffTrebleElement    (staffTreble/staffTreble.ts)   — treble clef, Y-coord map, key sig Y-coords
-│   ├── StaffBassElement      (staffBass/staffBass.ts)       — bass clef, Y-coord map, key sig Y-coords
+StaffElementBase              (staffBase.ts)         — shadow DOM, staff lines, resize observer, template method lifecycle, group/groupId, time (value + inheritance)
+├── StaffClassicalElementBase (staffClassicalBase.ts) — key sig, time sig glyph rendering, note Y-coords, beam/note rendering, clef-segment resolution
+│   ├── StaffElement          (staff/staff.ts)              — `clef` attribute (treble/bass), data from rules/clefRules.ts
 │   └── StaffVocalElement     (staffVocal/staffVocal.ts)     — vocal clef, 6 voice types, lyrics integration
-└── StaffGuitarTabElement     (staffGuitarTab/staffGuitarTab.ts) — 6-line tab staff, no music theory
+└── StaffGuitarTabElement     (staffGuitarTab/staffGuitarTab.ts) — 6-line tab staff, no music theory, but does have a real `time` (inherited via StaffElementBase; never rendered as a glyph)
 ```
 
-`StaffElementBase` — abstract base that owns the shadow DOM, staff line construction, `staffContainer` (div), `transcribeContainer` (SVG), and `staffResizeObserver`. All three are `protected readonly` so subclasses can access them. Implements `connectedCallback` (builds staff lines, appends containers, wires `slotchange`, starts resize observer) and `disconnectedCallback`. Uses a template method pattern — subclasses implement:
+`StaffTrebleElement`/`StaffBassElement` (formerly separate classes) were merged into `StaffElement` — treble/bass are now just two values of the `clef` attribute, both backed by `rules/clefRules.ts`'s `CLEF_DEFINITIONS`/`getClefRenderData()`. A `<music-clef>` element (`clef/clef.ts`) placed in a staff's slotted content marks a mid-stream clef change: `StaffClassicalElementBase` tracks these as `#clefMarkers` (parallel to `#tupletsByIndex`, never merged into the note/chord/rest array) and resolves the active clef per note index via `#renderDataForIndex()` / `#activeClefAt()`. The marker occupies horizontal space (`CLEF_CHANGE_RESERVED_WIDTH_PX`) but no beat duration.
+
+`StaffElementBase` — abstract base that owns the shadow DOM, staff line construction, `staffContainer` (div), `transcribeContainer` (SVG), and `staffResizeObserver`. All three are `protected readonly` so subclasses can access them. Implements `connectedCallback` (builds staff lines, appends containers, wires `slotchange`, starts resize observer) and `disconnectedCallback`. Also implements `IStaffElementBase` (`types/elements.ts`) — `group`/`groupId` (structural, non-rendering brace/bracket-connector attributes, see Grand Staff below) and `time` (beats/measure — a real, attribute-backed, inheriting value on **every** staff type, not just classical). `time` is backed by `protected effectiveTimeSig: [BeatsInMeasure, BeatTypeInMeasure]`, `protected resolveInheritedValue(attributeName, defaultValue)` (own attribute → closest `<music-measure>` → closest `<music-composition>` → default), and `protected convertTotimeInts(time)`. These use TypeScript's `protected` keyword (no `#`) rather than `#private` specifically so subclasses can access them directly — see the `#` vs `protected` note under Conventions. Rendering a time-signature _glyph_ is still classical-only (see `StaffClassicalElementBase` below); `StaffGuitarTabElement` has the value but never draws it. Uses a template method pattern — subclasses implement:
 
 - `get staffLineCount(): number` — number of staff lines (e.g. 5 for classical)
 - `onConnectedCallback()` — called after containers are appended; add clef/key/time SVG here
@@ -318,7 +330,7 @@ StaffElementBase              (staffBase.ts)         — shadow DOM, staff lines
 - `onStaffResize()` — called when staff container width changes
 - `onDisconnectedCallback()` — cleanup (e.g. disconnect mutation observers)
 
-`StaffClassicalElementBase` — thin orchestrator on top of `StaffElementBase`. Wires together the rules layer (`rules/accidentalRules.ts`, `rules/beamRules.ts`) and the SVG layer (`utils/svgCreator/`) to produce rendered staves. Owns key/time signature rendering, note Y-coordinate lookup, and resize-aware note spacing. Abstract methods subclasses must implement:
+`StaffClassicalElementBase` — thin orchestrator on top of `StaffElementBase`. Wires together the rules layer (`rules/accidentalRules.ts`, `rules/beamRules.ts`) and the SVG layer (`utils/svgCreator/`) to produce rendered staves. Owns key signature rendering, time signature **glyph** rendering (`#appendTimeSignatureSvgIfNecessary`, `timeChangeAtBoundary` — the _value_ itself is inherited from `StaffElementBase`), note Y-coordinate lookup, and resize-aware note spacing. Abstract methods subclasses must implement:
 
 - `get yCoordinates(): YCoordinates` — map of note+octave string to pixel Y
 - `get octaves(): Octave[]` — octave search order when no octave is specified
@@ -337,7 +349,7 @@ Rendering flow (classical staves):
 
 ## Drag Handlers (`utils/`)
 
-Editable staves (`<music-staff-treble editable>`) support two drag interactions, coordinated by a single `pointerdown` listener in `StaffClassicalElementBase`. The listener uses `e.composedPath()[0]` to hit-test the SVG target:
+Editable staves (`<music-staff clef="treble" editable>`) support two drag interactions, coordinated by a single `pointerdown` listener in `StaffClassicalElementBase`. The listener uses `e.composedPath()[0]` to hit-test the SVG target:
 
 - **Notehead hit** (`.head` or `.head-hit-zone` class) → **PitchDragHandler** (vertical)
 - **Everything else** (stem, flag, body) → **NoteTimingDragHandler** (horizontal)
@@ -346,22 +358,35 @@ Editable staves (`<music-staff-treble editable>`) support two drag interactions,
 
 Horizontal drag-and-drop to reorder notes/chords in time. Creates a fixed-position clone that follows the pointer and a dashed drop indicator between elements. Two modes controlled by the `managed` attribute:
 
-- **Unmanaged**: reorders light DOM children directly on drop.
-- **Managed**: only dispatches `note-reorder` event with `{ fromIndex, toIndex }` — the framework (e.g. React) updates state.
+- **Unmanaged**: reorders light DOM children directly on drop. `#reorderLightDom()` also carries along any `<music-clef>` marker (via a `getClefMarkers` accessor, mirroring `getSlottedElements`) whose position sits between the dragged note's old and new index, re-inserting each marker immediately after the same note it was anchored to (or as the first child, for a marker anchored at `afterElementIndex === -1`) so it stays correctly anchored once `#clefMarkers` is recomputed from DOM order on the next `slotchange`.
+- **Managed**: only dispatches `note-reorder` event with `{ fromIndex, toIndex }` — the framework (e.g. React) updates state. Clef markers are not moved in this mode; the consuming framework is responsible for keeping marker placement consistent with its own reordered state.
 
 Events: `note-drag-start` (cancelable), `note-reorder`, `note-drag-end`.
 
 ### PitchDragHandler (`pitchDragHandler.ts`)
 
-Vertical drag on noteheads to change pitch. Snaps to valid staff Y positions from the staff's `yCoordinates` map. Shows a tooltip with the note transition (e.g. "D4 → F4"). For chords, drags a single notehead and prevents snapping to a pitch already occupied by another note in the chord.
+Vertical drag on noteheads to change pitch. Takes a `resolveYCoordinates: (elementIndex: number) => YCoordinates` resolver rather than a static map — `#enableDrag()` wires it to `#renderDataForIndex(elementIndex).yCoordinates`, the same clef-segment-aware lookup `noteToYCoordinate` uses, so a note dragged after a mid-stream `<music-clef>` marker snaps against that marker's clef table instead of the staff's own. The resolver is called once per `tryStart()`, since the dragged note's clef segment doesn't change mid-drag. Shows a tooltip with the note transition (e.g. "D4 → F4"). For chords, drags a single notehead and prevents snapping to a pitch already occupied by another note in the chord.
 
-During drag, calls a live preview callback that updates the element's `value` attribute and triggers a full `#renderNotes()` re-render (stem direction, beams, Y positioning all recalculate). On drop, dispatches `note-pitch-change` with `PitchChangeDetail: { element, elementIndex, chordNoteIndex, fromNote, toNote }` where notes are `LetterOctave` (e.g. "F5").
+During drag, calls a live preview callback `(elementIndex, note, octave, chordNoteIndex) => void` that sets the element's `note`/`octave` attributes separately and triggers a full `#renderNotes()` re-render (stem direction, beams, Y positioning all recalculate). On drop, dispatches `note-pitch-change` with `PitchChangeDetail: { element, elementIndex, chordNoteIndex, fromNote, fromOctave, toNote, toOctave }` — `note`/`octave` are always passed as separate fields (`Note`/`Octave`), never combined into one string, matching `music-note`'s own independent `note`/`octave` attributes. Internally the handler still keys its Y-coordinate lookup/snap table by a combined `NoteLetterOctave` string (since that's the table's own key shape), splitting into `note`/`octave` only at these two external boundaries.
 
-**Important**: note values must include the octave digit (e.g. "C6" not "C") so that `noteToYCoordinate` resolves to the correct staff position. Without the octave, it falls back to the octave search order and may pick the wrong octave.
+**Important**: internal Y-coordinate lookups require the octave digit (e.g. "C6" not "C") to resolve to the correct staff position — without it, `noteToYCoordinate` falls back to the octave search order and may pick the wrong octave. This is purely an internal lookup-key detail; `PitchChangeDetail` and the live-preview callback are unaffected since they already carry octave as its own field.
 
 ### SVG Hit Zones
 
 Each note SVG includes a transparent `head-hit-zone` ellipse (1.5× the notehead size) rendered behind the visible `.head` ellipse. This enlarged invisible target makes noteheads easier to click for pitch dragging. Both classes are checked by `PitchDragHandler.isNoteheadTarget()`.
+
+## Grand Staff / Part Connectors
+
+A grand staff (piano/harp: two staves, one instrument) is just two `<music-staff>` siblings inside one `<music-measure>` — no dedicated wrapper component, matching this library's composable-elements philosophy. `<music-measure>` already draws a plain vertical barline (`.staff-connector`) through every staff it contains, unconditionally, regardless of instrument grouping — that part is untouched.
+
+A brace or bracket is an **additional** decoration, drawn further left, spanning only a subset of staves:
+
+- `StaffElementBase#group` (getter/setter, values `'grand' | 'bracket'`, backed by the `group` attribute) marks a staff as wanting a connector. `group="grand"` membership is always **implicit**: a grand staff pairs with its immediate next sibling — no shared identifier needed, and therefore always joins exactly two staves (matches the piano/harp use case it exists for). `group="bracket"` supports two ways to declare membership — see `StaffElementBase#groupId` below.
+- `StaffElementBase#groupId` (getter/setter, plain string, backed by the `group-id` attribute) is an optional shared identifier for `group="bracket"` staves that lets a bracket span more than two staves (e.g. a 4-staff SATB choir): every staff carrying the same `group-id` value joins one bracket, however many that is. Staves sharing a `group-id` must be contiguous siblings. Leave `group-id` unset for a plain 2-staff bracket — it falls back to the same implicit pair-with-next-sibling behavior as `group="grand"`. Meaningless on `group="grand"` staves (ignored).
+- `rules/staffGroupRules.ts`'s `resolveStaffGroups(entries: { group, groupId }[])` is the pure resolution/validation function — kept separate from `measure.ts` specifically so it's unit-testable, since jsdom's `ResizeObserver` polyfill (`jest.setup.ts`) is a no-op that never fires, meaning `measure.ts`'s actual rendering path only ever runs in real-browser `*.browser-test.ts` tests. It warns and skips (without cascading past the offending span) when: a grouped staff has no next sibling, its next sibling also declares its own `group`, a `group-id` matches only one staff, or a `group-id` reappears in a second, non-contiguous run.
+- `measure.ts`'s `#renderGroupConnectors()` turns each resolved span into a positioned `createBraceSvg()`/`createBracketSvg()` glyph (`utils/svgCreator/brace.ts`) in a `.group-connectors` overlay, re-run alongside the existing resize-driven `#updateConnectorVisibility()` pass (same trigger as the plain barline). A span's height scales with however many staves it covers (`STAFF_SLOT_HEIGHT_PX * count + STAFF_SLOT_GAP_PX * (count - 1)`), so both glyph renderers must support an arbitrary span, not just a fixed 2-staff gap. A brace/bracket is a system-start decoration, like the clef/key/time signature (see `showDescribe` under Responsive Layout above): `#renderGroupConnectors()` only draws for the first measure of each visual row (`#isFirstInRow()`, the same 5px top-diff comparison `#updateConnectorVisibility()` already used for the plain barline), clearing any glyph on every other measure in the row even if their own staves also declare `group`.
+- Since the brace/bracket glyph is drawn with a negative `left` (poking out past the measure's own box, see above), `measure.ts`'s `#renderGroupConnectors()` also toggles a `.has-group-connector` class on the `<music-measure>` host itself whenever it resolves at least one group for the current (first-in-row) measure. A `:host(.has-group-connector)` rule reserves that space via `margin-left` (the same `max(BRACE_WIDTH_PX + BRACE_STAFF_GAP_PX, BRACKET_WIDTH_PX)` sizing). Because this lives on the measure rather than on `composition.ts`, it applies identically whether or not a `<music-composition>` ancestor is present — a standalone `<music-measure>` with a grouped staff reserves its own space, and a composition gets it for free per-row rather than needing its own separate, whole-composition-wide reservation.
+- **Reactivity**: `group`/`group-id` changes on an already-connected staff are picked up immediately, not just on resize. Each concrete staff subclass observes `group`/`group-id` and, on change, calls `StaffElementBase#dispatchGroupAttributeChange()` (`staffBase.ts`), which dispatches a bubbling/composed `STAFF_EVENTS.GROUP_ATTRIBUTE_CHANGE` custom event (same dispatch shape as `CLEF_EVENTS.ATTRIBUTE_CHANGE`/`NOTE_EVENTS.DYNAMIC_ATTRIBUTE_CHANGE`). `measure.ts` listens for it directly to re-run `#updateConnectorVisibility()`/`#renderGroupConnectors()` (which also re-toggles `.has-group-connector`); `composition.ts` listens for it in `#observeForRedraws()` to re-run `#scheduleRedraw()`, whose downstream row/describe recalculation lets each measure's own reservation take effect. The staff's own shadow DOM still never renders differently based on `group`/`group-id` — this is purely a notify-ancestors path.
 
 ## Known Incomplete Areas
 
@@ -369,6 +394,8 @@ Each note SVG includes a transparent `head-hit-zone` ellipse (1.5× the notehead
 - **Chord value parsing**: Parsing a chord name from the `value` attribute into constituent notes is partially implemented
 - **Accidentals during pitch drag**: Pitch drag snaps to natural staff positions only; accidental changes (sharp/flat) need a separate mechanism
 - **Standalone degraded features**: Some capabilities (minimum-width-driven flex layout, attribute inheritance) require a parent `<music-measure>` or `<music-composition>` and will be silently absent when elements are used in isolation. Ledger lines (both main-note and grace-note) require a staff-provided Y position, and grace-note accidentals fall back to suffix-driven rendering (no key-signature suppression) outside a staff
+- **Clef support**: only `treble` and `bass` have data in `rules/clefRules.ts`'s `CLEF_DEFINITIONS` today (`ClefType` is intentionally kept to those two rather than a wider, partially-backed union — see the `// TODO` above its declaration in `types/theory.ts`). Adding alto/tenor is a two-part change: a `ClefDefinition` entry plus a new clef glyph in `utils/svgCreator/clefs.ts`.
+- **SMuFL glyph extraction (transition in progress)**: the repo carries SMuFL infrastructure for deriving notation glyphs from a real engraving font instead of hand-computing bezier shapes — `README.md`'s "Drawing" section, `download-smufl-font.sh`, and the downloaded `smufl/Bravura.otf` + `smufl/bravura_metadata.json` assets. So far only the brace and bracket glyphs (`createBraceSvg()` / `createBracketSvg()` in `utils/svgCreator/brace.ts`) have actually been pulled from it, and by hand via one-off scripts rather than a repeatable pipeline reading `bravura_metadata.json`. Every other `svgCreator/` glyph (clefs, accidentals, noteheads, etc.) is still hand-drawn. Prefer extracting from the SMuFL font/metadata already in the repo over hand-computing new glyphs going forward; brace.ts's source comments deliberately avoid naming SMuFL/Bravura directly — this entry is the canonical place for that context.
 
 ## Build & Test
 
@@ -382,7 +409,7 @@ Each note SVG includes a transparent `head-hit-zone` ellipse (1.5× the notehead
 Story files are colocated with their component using the `<component>.stories.ts` naming convention (e.g. `src/note/note.stories.ts`). The exception is feature-level utilities: `src/utils/svgCreator/beams.stories.ts`.
 
 **Existing story files:**
-`chord`, `composition`, `measure`, `note`, `rest`, `staffBass`, `staffGuitarTab`, `staffTreble`, `staffVocal`, `utils/svgCreator/beams`
+`chord`, `clef`, `composition`, `measure`, `note`, `rest`, `staff`, `staffGuitarTab`, `staffVocal`, `utils/svgCreator/beams`
 
 **Standard imports:**
 
@@ -434,37 +461,38 @@ Integration tests for notes, chords, and rests live in their **component's own t
 | `chord/chord.test.ts` | `'staff integration'`      | Chord top position, stem direction, staff Y coordinates                              |
 | `rest/rest.test.ts`   | `'staff integration'`      | Rest Y positioning per duration, double-whole overflow                               |
 
-- Pattern: import `'../staffTreble/index'` to register the staff, create staff → set `TIME_SIG` → `slot.assignedElements = () => [...]` → `slot.dispatchEvent(new Event('slotchange'))`
+- Pattern: import `'../staff/index'` to register the staff, create staff → set `TIME_SIG` → `slot.assignedElements = () => [...]` → `slot.dispatchEvent(new Event('slotchange'))`
 - Use `jest.spyOn(console, 'warn')` to assert overflow/validation conditions (the library uses `console.warn` exclusively for non-fatal validation issues)
 
 `staffClassicalBase.test.ts` retains only **cross-cutting** `StaffClassicalElementBase` behaviour that doesn't belong to a single element type (currently: measure overflow/validation).
 
 **Per-staff test scope** — each staff's own `*.test.ts` file is intentionally narrow:
 
-| File                              | What to test here                                                                     |
-| --------------------------------- | ------------------------------------------------------------------------------------- |
-| `staffTreble/staffTreble.test.ts` | Treble clef present in shadow DOM; note Y-coordinates match treble `yCoordinates` map |
-| `staffBass/staffBass.test.ts`     | Bass clef present; note Y-coordinates match bass `yCoordinates` map                   |
-| `staffVocal/staffVocal.test.ts`   | Vocal clef / voice-type variants; lyrics rendering and positioning                    |
+| File                            | What to test here                                                                                                                                           |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `staff/staff.test.ts`           | Clef glyph present per `clef` value; note Y-coordinates match the active clef's table; mid-stream `<music-clef>` behavior (`'clef changes'` describe block) |
+| `staffVocal/staffVocal.test.ts` | Vocal clef / voice-type variants; lyrics rendering and positioning                                                                                          |
+| `rules/clefRules.test.ts`       | `getClefRenderData()` reproduces the exact Y-coordinate/key-signature tables per clef (regression-locks against silent pitch shifts)                        |
 
 ### Browser tests
 
 - Runner: Playwright (`@playwright/test`), completely separate from Jest
 - Config: `playwright.config.ts` matches `*.browser-test.ts`; starts Vite dev server on port 5179
-- Existing files: `measure/measure.browser-test.ts`, `staffTreble/staffTreble.browser-test.ts`, `composition/composition.browser-test.ts`
+- Existing files: `measure/measure.browser-test.ts`, `staff/staff.browser-test.ts`, `composition/composition.browser-test.ts`
 - **Add a browser test when the feature involves**: responsive resizing, CSS `style.flex` values, `getBoundingClientRect()` / `getBBox()` geometry, multi-measure coordination, or `ResizeObserver`-driven layout changes
-- Helpers in `test-fixtures/helpers.ts`: `waitForRedrawCycle`, `waitForStaffNotesPositioned`, `buildStandaloneTrebleStaff`, `buildComposition`, `resizeHost`
+- Helpers in `test-fixtures/helpers.ts`: `waitForRedrawCycle`, `waitForStaffNotesPositioned`, `buildStandaloneStaff`, `buildComposition`, `resizeHost`
 - All DOM interaction via `page.evaluate()` (runs in real browser); all assertions are async
 
 ---
 
 ## Conventions
 
-- Use TypeScript `#` private fields for custom element internals
+- Use TypeScript `#` private fields for custom element internals. **Exception**: state a subclass needs direct access to must use plain TypeScript `protected` (no `#`) instead — ECMAScript `#private` fields are not inheritable at all, only accessible within the exact class body that declares them. `staffBase.ts` mixes both: `#lastStaffWidth`/`#standaloneConnectorsOverlay` are `#`-private (base-only), while `staffContainer`/`transcribeContainer`/`staffResizeObserver`/`effectiveTimeSig`/`resolveInheritedValue`/`convertTotimeInts` are `protected` (subclasses read/call them directly). When moving state from a subclass onto a shared base specifically so other subclasses can use it, drop the `#` — keeping it silently breaks the subclass that used to own it.
 - Guard all custom element registration with `typeof window !== 'undefined'`
 - Use `SVG_NS` in `src/utils/consts.ts` with `createElementNS()` for all SVG creation
 - CSS custom properties: `--flex-staff-basis`, `--flex-staff-minw` for layout overrides
 - `currentColor` used in SVG so staff color inherits from CSS
 - **Always run `npx nx format:write` after every batch of file edits or new files** — do not skip this step
+- **Whenever a custom element's attributes change — added, renamed, removed, or retyped, on any element, not just note/chord — update `src/types.d.ts` in the same change.** It is not enforced by `implements` like `IXxxElement` in `types/elements.ts`, so it drifts silently otherwise.
 - Use full words when defining variables, functions, and classes; no abbreviations or uncommon acronyms
 - In test files (both `*.browser-test.ts` and `*.test.ts`), always use strong types from `types/theory.ts` and `types/elements.ts` instead of primitives — e.g. `DurationType` instead of `string` for durations, `Note` instead of `string` for note values like `'C'`

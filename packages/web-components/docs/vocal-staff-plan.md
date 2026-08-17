@@ -111,9 +111,9 @@ Key signature accidental positions follow the same transposition pattern as the 
 
 ### Clef SVGs
 
-- **Soprano, Mezzo, Alto**: Reuse the existing treble clef SVG path from `staffTreble.ts`
+- **Soprano, Mezzo, Alto**: Reuse the existing treble clef SVG path from `utils/svgCreator/clefs.ts` (`createTrebleClefSvg`)
 - **Tenor (Treble-8)**: Same treble clef SVG path with an added `<text>8</text>` element positioned below the clef. The container height increases from 60px to ~72px to accommodate the "8".
-- **Baritone, Bass**: Reuse the existing bass clef SVG path from `staffBass.ts`
+- **Baritone, Bass**: Reuse the existing bass clef SVG path from `utils/svgCreator/clefs.ts` (`createBassClefSvg`)
 
 ---
 
@@ -324,8 +324,7 @@ These are not in scope for the initial implementation but are documented here fo
 ```
 StaffElementBase                    (staffBase.ts)
 ├── StaffClassicalElementBase       (staffClassicalBase.ts)
-│   ├── StaffTrebleElement          (staffTreble/staffTreble.ts)      — existing
-│   ├── StaffBassElement            (staffBass/staffBass.ts)          — existing
+│   ├── StaffElement                (staff/staff.ts)                  — clef="treble"|"bass"
 │   └── StaffVocalElement           (staffVocal/staffVocal.ts)        — NEW
 │       ├── voice="soprano"         → treble clef, C4–C6
 │       ├── voice="mezzo"           → treble clef, A3–C6

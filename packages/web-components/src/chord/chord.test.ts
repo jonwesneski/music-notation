@@ -2,14 +2,14 @@
  * @jest-environment jsdom
  */
 import '../note/index';
-import '../staffTreble/index';
+import '../staff/index';
 import type { ChordElementType, NoteElementType } from '../types/elements';
 import type { Chord, DurationType, Note, Octave } from '../types/theory';
 import {
   COMMON_ATTRIBUTES,
   MUSIC_CHORD,
   MUSIC_NOTE,
-  MUSIC_STAFF_TREBLE,
+  MUSIC_STAFF,
 } from '../utils/consts';
 import { NOTE_SCALE } from '../utils/svgCreator/note';
 import './index';
@@ -19,10 +19,6 @@ afterEach(() => {
 });
 
 describe(MUSIC_CHORD, () => {
-  it('registers as a custom element', () => {
-    expect(customElements.get(MUSIC_CHORD)).toBeDefined();
-  });
-
   it('renders shadow root with default duration', () => {
     const chordElement = document.createElement(
       MUSIC_CHORD
@@ -400,9 +396,7 @@ describe(MUSIC_CHORD, () => {
       const gapOneAccidental = Math.abs(
         topNoteHeadCenterY - endY(oneAccidental)
       );
-      // The 2-accidental case's gap must not be larger than the 1-accidental
-      // case's — this is exactly the regression the user reported (chords
-      // with more accidentals showing a visibly bigger end-point gap).
+      // Adding a second accidental must not increase the end-point gap.
       expect(gapTwoAccidentals).toBeCloseTo(gapOneAccidental, 5);
     });
 
@@ -674,12 +668,12 @@ const TREBLE_STAFF_Y: Record<string, number> = {
 };
 
 function makeStaff(): Element {
-  const staffTreble = document.createElement(MUSIC_STAFF_TREBLE) as any;
-  staffTreble.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'C');
-  staffTreble.setAttribute(COMMON_ATTRIBUTES.MODE, 'major');
-  staffTreble.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
-  document.body.appendChild(staffTreble);
-  return staffTreble;
+  const staff = document.createElement(MUSIC_STAFF) as any;
+  staff.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'C');
+  staff.setAttribute(COMMON_ATTRIBUTES.MODE, 'major');
+  staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
+  document.body.appendChild(staff);
+  return staff;
 }
 
 function renderChordByNotes(

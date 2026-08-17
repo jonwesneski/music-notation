@@ -1,8 +1,9 @@
 import 'react';
-import type { ConnectorRole } from './types/elements';
+import type { ConnectorRole, GuitarFret } from './types/elements';
 import type {
   ArticulationType,
   Chord,
+  ClefType,
   DurationType,
   DynamicMarking,
   GraceDuration,
@@ -12,16 +13,22 @@ import type {
   Mode,
   Note,
   Octave,
+  StaffGroupType,
   StressType,
   TimeSignature,
+  TupletRatio,
   Voice,
 } from './types/theory';
 
-type WebComponentProps = {
+type WebComponentNoChildrenProps = {
   key?: React.Key;
   ref?: React.Ref<HTMLElement>;
   children?: React.ReactNode;
   className?: string;
+};
+
+type WebComponentProps = WebComponentNoChildrenProps & {
+  children?: React.ReactNode;
 };
 
 declare module 'react' {
@@ -33,30 +40,31 @@ declare module 'react' {
         time?: TimeSignature;
       };
       'music-measure': WebComponentProps & {
+        number?: number;
         keySig?: Note;
         mode?: Mode;
         time?: TimeSignature;
         onClick?: React.MouseEventHandler<HTMLElement>;
       };
-      'music-staff-bass': WebComponentProps & {
+      'music-staff': WebComponentProps & {
+        clef?: ClefType;
         keySig?: Note;
         mode?: Mode;
         time?: TimeSignature;
         editable?: boolean;
         managed?: boolean;
-        onClick?: React.MouseEventHandler<HTMLElement>;
-      };
-      'music-staff-treble': WebComponentProps & {
-        keySig?: Note;
-        mode?: Mode;
-        time?: TimeSignature;
-        editable?: boolean;
-        managed?: boolean;
+        // Pairs this staff with its immediate next sibling under a
+        // brace ("grand") or bracket connector — see StaffElementBase#group.
+        group?: StaffGroupType;
+        // Shared identifier joining this staff with other group="bracket"
+        // staves into one multi-staff bracket connector — see StaffElementBase#groupId.
+        'group-id'?: string;
         onClick?: React.MouseEventHandler<HTMLElement>;
       };
       'music-staff-guitar-tab': WebComponentProps & {
         time?: TimeSignature;
-        children?: React.ReactNode;
+        group?: StaffGroupType;
+        'group-id'?: string;
       };
       'music-staff-vocal': WebComponentProps & {
         voice?: Voice;
@@ -65,12 +73,23 @@ declare module 'react' {
         time?: TimeSignature;
         editable?: boolean;
         managed?: boolean;
+        group?: StaffGroupType;
+        'group-id'?: string;
       };
       'music-lyrics': WebComponentProps & {
         verse?: string;
       };
-      'music-rest': WebComponentProps & {
+      'music-clef': WebComponentNoChildrenProps & {
+        clef?: ClefType;
+      };
+      'music-rest': WebComponentNoChildrenProps & {
         duration?: DurationType;
+        onClick?: (e: MouseEvent) => void;
+        onPointerDown?: (e: PointerEvent) => void;
+        onPointerUp?: (e: PointerEvent) => void;
+      };
+      'music-tuplet': WebComponentProps & {
+        ratio?: TupletRatio;
       };
       'music-chord': WebComponentProps & {
         chord?: Chord;
@@ -100,7 +119,7 @@ declare module 'react' {
         onPointerDown?: (e: PointerEvent) => void;
         onPointerUp?: (e: PointerEvent) => void;
       };
-      'music-note': WebComponentProps & {
+      'music-note': WebComponentNoChildrenProps & {
         note?: Note;
         duration?: DurationType;
         octave?: Octave;
@@ -131,8 +150,8 @@ declare module 'react' {
         // Custom events (note-click, note-pointerdown, note-pointerup) require
         // useRef + addEventListener in React — they are not auto-wired by prop name.
       };
-      'music-guitar-note': WebComponentProps & {
-        fret?: number | 'x';
+      'music-guitar-note': WebComponentNoChildrenProps & {
+        fret?: GuitarFret;
         string?: number;
         duration?: DurationType;
         tie?: ConnectorRole;

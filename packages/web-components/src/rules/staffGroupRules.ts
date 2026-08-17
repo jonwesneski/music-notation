@@ -1,0 +1,102 @@
+import { StaffGroupType } from '../types/theory';
+
+export type StaffGroupEntry = {
+  group: StaffGroupType | null;
+  groupId: string | null;
+};
+
+export type StaffGroupSpan = {
+  // Index of the first staff in the span within the measure's staff children.
+  index: number;
+  // Number of consecutive staves the connector joins (>= 2).
+  count: number;
+  group: StaffGroupType;
+};
+
+export type StaffGroupResolution = {
+  groups: StaffGroupSpan[];
+  warnings: string[];
+};
+
+// Resolves which staves should be joined by a brace/bracket connector. Kept
+// separate from measure.ts so it's unit-testable — jsdom's ResizeObserver
+// polyfill never fires, so measure.ts's actual render path only runs in
+// browser tests.
+//
+// group="grand" always pairs positionally with the immediate next sibling
+// (groupId is ignored) — a warning with no span is produced if there's no
+// next sibling, or if that sibling also declares its own group (ambiguous;
+// the sibling's own turn is still evaluated separately so one bad pairing
+// doesn't cascade). group="bracket" either shares a groupId across a
+// contiguous run (a run of 1 is a warning; the same groupId reappearing in a
+// second non-contiguous run is a warning for that second run), or with no
+// groupId falls back to the same positional pairing as group="grand".
+export function resolveStaffGroups(
+  entries: StaffGroupEntry[]
+): StaffGroupResolution {
+  const groups: StaffGroupSpan[] = [];
+  const warnings: string[] = [];
+  const closedGroupIds = new Set<string>();
+
+  let i = 0;
+  while (i < entries.length) {
+    const { group, groupId } = entries[i];
+
+    if (!group) {
+      i++;
+      continue;
+    }
+
+    if (group === 'bracket' && groupId) {
+      let j = i + 1;
+      while (
+        j < entries.length &&
+        entries[j].group === 'bracket' &&
+        entries[j].groupId === groupId
+      ) {
+        j++;
+      }
+      const count = j - i;
+
+      if (closedGroupIds.has(groupId)) {
+        warnings.push(
+          `staff with group="bracket" group-id="${groupId}" reappears in a separate, non-contiguous run; skipping connector`
+        );
+      } else if (count < 2) {
+        warnings.push(
+          `staff with group="bracket" group-id="${groupId}" matched only one staff; a bracket needs at least 2, skipping connector`
+        );
+      } else {
+        groups.push({ index: i, count, group: 'bracket' });
+      }
+
+      closedGroupIds.add(groupId);
+      i = j;
+      continue;
+    }
+
+    // Positional pairing: `group="grand"`, or `group="bracket"` with no
+    // `groupId`.
+    if (i + 1 >= entries.length) {
+      warnings.push(
+        `staff with group="${group}" has no next sibling to pair with; skipping connector`
+      );
+      i++;
+      continue;
+    }
+
+    const next = entries[i + 1];
+    if (next.group) {
+      warnings.push(
+        `staff with group="${group}" is followed by a staff that also declares group="${next.group}"; ambiguous pairing (the second staff should not set its own group), skipping connector`
+      );
+      i++;
+      continue;
+    }
+
+    groups.push({ index: i, count: 2, group });
+    i++;
+  }
+
+  return { groups, warnings };
+}

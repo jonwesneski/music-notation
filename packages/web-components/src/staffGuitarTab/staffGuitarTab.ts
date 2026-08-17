@@ -3,6 +3,7 @@ import { durationToFactor } from '../rules/theoryConsts';
 import { StaffElementBase } from '../staffBase';
 import { GuitarNoteElementType } from '../types/elements';
 import {
+  COMMON_ATTRIBUTES,
   MUSIC_GUITAR_CHORD_NODE,
   MUSIC_GUITAR_NOTE,
   MUSIC_GUITAR_NOTE_NODE,
@@ -57,7 +58,7 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
       this.#describeContainer = document.createElementNS(SVG_NS, 'g');
     }
 
-    protected override get staffLineCount(): number {
+    get staffLineCount(): number {
       return 6;
     }
 
@@ -70,10 +71,43 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
     }
 
     static get observedAttributes(): string[] {
-      return [];
+      return [COMMON_ATTRIBUTES.TIME_SIG, 'group', 'group-id'];
+    }
+
+    // No time-signature glyph to render (tab notation doesn't show one), so
+    // unlike StaffClassicalElementBase's equivalent branch, this only
+    // re-resolves the stored value — no re-render needed.
+    override attributeChangedCallback(
+      name: string,
+      oldValue: string | null,
+      newValue: string | null
+    ): void {
+      if (oldValue === newValue) {
+        return;
+      }
+      if (name === COMMON_ATTRIBUTES.TIME_SIG) {
+        this.effectiveTimeSig = this.convertTotimeInts(
+          this.resolveInheritedValue(COMMON_ATTRIBUTES.TIME_SIG, '4/4')
+        );
+      } else if (name === 'group' || name === 'group-id') {
+        this.dispatchGroupAttributeChange();
+      }
+    }
+
+    // Mirrors StaffClassicalElementBase.refreshInheritedAttrs, scoped to
+    // `time` only — guitar tab has no keySig/mode concept.
+    refreshInheritedAttrs() {
+      this.effectiveTimeSig = this.convertTotimeInts(
+        this.resolveInheritedValue(COMMON_ATTRIBUTES.TIME_SIG, '4/4')
+      );
     }
 
     protected onConnectedCallback() {
+      // Re-resolve now that ancestors are reachable via closest()
+      this.effectiveTimeSig = this.convertTotimeInts(
+        this.resolveInheritedValue(COMMON_ATTRIBUTES.TIME_SIG, '4/4')
+      );
+
       this.#describeContainer.setAttribute('class', 'describe-container');
       this.#describeContainer.innerHTML = this.#showDescribe
         ? StaffGuitarTabElement.#tabSvg
@@ -87,7 +121,7 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
         : '';
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-empty-function -- will handle later
+    // eslint-disable-next-line @typescript-eslint/no-empty-function -- no cleanup needed yet; still an empty stub (see CLAUDE.md Known Incomplete Areas)
     protected override onDisconnectedCallback(): void {}
 
     protected override onHandleSlotChange(event: Event): void {

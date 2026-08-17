@@ -1,7 +1,7 @@
 /**
- * I didn't create a separate /lyrics folder because it is not currently a
- * standalone like note or chord are; it is only used in staffVocal for now.
- * Maybe I'll think about supporting lyrics as a standalone in the future.
+ * Lives under staffVocal rather than its own folder since lyrics aren't a
+ * standalone element like note/chord — that may change if standalone
+ * support is added later.
  */
 
 import { ILyricsElement, LyricSyllablePosition } from '../types/elements';
@@ -92,10 +92,7 @@ export class MusicLyricsElement
       return;
     }
 
-    // Clear previous rendering
     this.#lyricContainer.innerHTML = '';
-
-    // Set SVG to use pixel coordinate system (no viewBox scaling)
     this.#lyricContainer.removeAttribute('viewBox');
     this.#lyricContainer.style.width = '100%';
     this.#lyricContainer.style.height = '100%';
@@ -103,7 +100,6 @@ export class MusicLyricsElement
     for (let i = 0; i < this.#syllablePositions.length; i++) {
       const syllable = this.#syllablePositions[i];
 
-      // Render syllable text
       const text = document.createElementNS(SVG_NS, 'text');
       text.setAttribute('x', syllable.x.toString());
       text.setAttribute('y', syllable.y.toString());
@@ -113,7 +109,6 @@ export class MusicLyricsElement
       text.textContent = syllable.text;
       this.#lyricContainer.appendChild(text);
 
-      // Render hyphen if needed
       if (syllable.isHyphenated && i < this.#syllablePositions.length - 1) {
         const nextSyllable = this.#syllablePositions[i + 1];
         const hyphenX = (syllable.x + nextSyllable.x) / 2;
@@ -127,7 +122,6 @@ export class MusicLyricsElement
         this.#lyricContainer.appendChild(hyphen);
       }
 
-      // Render extender line if melisma
       if (syllable.isMelisma && i < this.#syllablePositions.length - 1) {
         const nextSyllable = this.#syllablePositions[i + 1];
         const line = document.createElementNS(SVG_NS, 'line');

@@ -3,16 +3,16 @@
  */
 
 import '../../index';
-import { ChordElementType } from '../../types/elements';
-import { DurationType } from '../../types/theory';
-import { NOTE_SCALE } from './note';
-import { makeNote, makeChord } from '../../test-fixtures/unitHelpers';
+import { makeChord, makeNote } from '../../test-fixtures/unitHelpers';
+import type { ChordElementType, StaffElementType } from '../../types/elements';
+import type { DurationType } from '../../types/theory';
 import {
   COMMON_ATTRIBUTES,
   MUSIC_CHORD,
   MUSIC_NOTE,
-  MUSIC_STAFF_TREBLE,
+  MUSIC_STAFF,
 } from '../consts';
+import { NOTE_SCALE } from './note';
 
 const NOTE_STEM_X_OFFSET_PX = 365 * NOTE_SCALE;
 
@@ -21,7 +21,7 @@ afterEach(() => {
 });
 
 function triggerSlotChange(staff: any, notes: HTMLElement[]) {
-  const slot = staff.shadowRoot.querySelector('slot');
+  const slot = staff.shadowRoot!.querySelector('slot');
   slot.assignedElements = () => notes;
   slot.dispatchEvent(new Event('slotchange'));
 }
@@ -84,7 +84,7 @@ function getChordStem(chord: HTMLElement): Element | null {
 describe('beams', () => {
   describe('beam groups are created for beamable note sequences', () => {
     it('creates one beam group for two consecutive eighth notes', () => {
-      const staff = document.createElement(MUSIC_STAFF_TREBLE) as any;
+      const staff = document.createElement(MUSIC_STAFF) as StaffElementType;
       staff.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'C');
       staff.setAttribute(COMMON_ATTRIBUTES.MODE, 'major');
       staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
@@ -96,11 +96,11 @@ describe('beams', () => {
       ];
       triggerSlotChange(staff, notes);
 
-      expect(staff.shadowRoot.querySelectorAll('.beam-group')).toHaveLength(1);
+      expect(staff.shadowRoot!.querySelectorAll('.beam-group')).toHaveLength(1);
     });
 
     it('does not create a beam group for a lone beamable note', () => {
-      const staff = document.createElement(MUSIC_STAFF_TREBLE) as any;
+      const staff = document.createElement(MUSIC_STAFF) as StaffElementType;
       staff.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'C');
       staff.setAttribute(COMMON_ATTRIBUTES.MODE, 'major');
       staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
@@ -112,11 +112,11 @@ describe('beams', () => {
       ];
       triggerSlotChange(staff, notes);
 
-      expect(staff.shadowRoot.querySelectorAll('.beam-group')).toHaveLength(0);
+      expect(staff.shadowRoot!.querySelectorAll('.beam-group')).toHaveLength(0);
     });
 
     it('splits 4/4 eighth notes into two groups at the half-measure boundary', () => {
-      const staff = document.createElement(MUSIC_STAFF_TREBLE) as any;
+      const staff = document.createElement(MUSIC_STAFF) as StaffElementType;
       staff.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'C');
       staff.setAttribute(COMMON_ATTRIBUTES.MODE, 'major');
       staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
@@ -136,11 +136,11 @@ describe('beams', () => {
       ];
       triggerSlotChange(staff, notes);
 
-      expect(staff.shadowRoot.querySelectorAll('.beam-group')).toHaveLength(2);
+      expect(staff.shadowRoot!.querySelectorAll('.beam-group')).toHaveLength(2);
     });
 
     it('groups 6/8 eighth notes into two dotted-quarter beats', () => {
-      const staff = document.createElement(MUSIC_STAFF_TREBLE) as any;
+      const staff = document.createElement(MUSIC_STAFF) as StaffElementType;
       staff.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'C');
       staff.setAttribute(COMMON_ATTRIBUTES.MODE, 'major');
       staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '6/8');
@@ -158,13 +158,13 @@ describe('beams', () => {
       ];
       triggerSlotChange(staff, notes);
 
-      expect(staff.shadowRoot.querySelectorAll('.beam-group')).toHaveLength(2);
+      expect(staff.shadowRoot!.querySelectorAll('.beam-group')).toHaveLength(2);
     });
   });
 
   describe('primary beam (eighth notes)', () => {
     it('has exactly one beam polygon for a group of eighth notes', () => {
-      const staff = document.createElement(MUSIC_STAFF_TREBLE) as any;
+      const staff = document.createElement(MUSIC_STAFF) as StaffElementType;
       staff.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'C');
       staff.setAttribute(COMMON_ATTRIBUTES.MODE, 'major');
       staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
@@ -176,12 +176,12 @@ describe('beams', () => {
       ];
       triggerSlotChange(staff, notes);
 
-      const beamGroup = staff.shadowRoot.querySelector('.beam-group');
+      const beamGroup = staff.shadowRoot!.querySelector('.beam-group')!;
       expect(beamGroup.querySelectorAll('.beam')).toHaveLength(1);
     });
 
     it('primary beam polygon spans the full width of the note group', () => {
-      const staff = document.createElement(MUSIC_STAFF_TREBLE) as any;
+      const staff = document.createElement(MUSIC_STAFF) as StaffElementType;
       staff.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'C');
       staff.setAttribute(COMMON_ATTRIBUTES.MODE, 'major');
       staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
@@ -193,7 +193,7 @@ describe('beams', () => {
       ];
       triggerSlotChange(staff, notes);
 
-      const primary = staff.shadowRoot.querySelector('.beam-group .beam');
+      const primary = staff.shadowRoot!.querySelector('.beam-group .beam')!;
       // Spanning beam must be noticeably wider than a fractional stub (6 px).
       expect(beamWidth(primary)).toBeGreaterThan(10);
     });
@@ -201,7 +201,7 @@ describe('beams', () => {
 
   describe('secondary beam (sixteenth notes)', () => {
     it('adds a secondary beam polygon for a group of sixteenth notes', () => {
-      const staff = document.createElement(MUSIC_STAFF_TREBLE) as any;
+      const staff = document.createElement(MUSIC_STAFF) as StaffElementType;
       staff.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'C');
       staff.setAttribute(COMMON_ATTRIBUTES.MODE, 'major');
       staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
@@ -215,12 +215,12 @@ describe('beams', () => {
       ];
       triggerSlotChange(staff, notes);
 
-      const beamGroup = staff.shadowRoot.querySelector('.beam-group');
+      const beamGroup = staff.shadowRoot!.querySelector('.beam-group')!;
       expect(beamGroup.querySelectorAll('.beam')).toHaveLength(2);
     });
 
     it('secondary beam is no wider than the primary beam', () => {
-      const staff = document.createElement(MUSIC_STAFF_TREBLE) as any;
+      const staff = document.createElement(MUSIC_STAFF) as StaffElementType;
       staff.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'C');
       staff.setAttribute(COMMON_ATTRIBUTES.MODE, 'major');
       staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
@@ -233,7 +233,7 @@ describe('beams', () => {
       ];
       triggerSlotChange(staff, notes);
 
-      const beams = staff.shadowRoot.querySelectorAll('.beam-group .beam');
+      const beams = staff.shadowRoot!.querySelectorAll('.beam-group .beam');
       const [primary, secondary] = beams;
       expect(beamWidth(secondary)).toBeLessThanOrEqual(beamWidth(primary));
     });
@@ -241,7 +241,7 @@ describe('beams', () => {
 
   describe('fractional beams', () => {
     it('adds a fractional when a single sixteenth is adjacent to an eighth', () => {
-      const staff = document.createElement(MUSIC_STAFF_TREBLE) as any;
+      const staff = document.createElement(MUSIC_STAFF) as StaffElementType;
       staff.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'C');
       staff.setAttribute(COMMON_ATTRIBUTES.MODE, 'major');
       staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
@@ -253,7 +253,7 @@ describe('beams', () => {
       ];
       triggerSlotChange(staff, notes);
 
-      const beams = staff.shadowRoot.querySelectorAll('.beam-group .beam');
+      const beams = staff.shadowRoot!.querySelectorAll('.beam-group .beam');
       expect(beams).toHaveLength(2);
       const [primary, stub] = beams;
       expect(beamWidth(stub)).toBeLessThan(beamWidth(primary));
@@ -261,7 +261,7 @@ describe('beams', () => {
     });
 
     it('adds two fractionals for a sixteenth-eighth-sixteenth pattern', () => {
-      const staff = document.createElement(MUSIC_STAFF_TREBLE) as any;
+      const staff = document.createElement(MUSIC_STAFF) as StaffElementType;
       staff.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'C');
       staff.setAttribute(COMMON_ATTRIBUTES.MODE, 'major');
       staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
@@ -274,7 +274,7 @@ describe('beams', () => {
       ];
       triggerSlotChange(staff, notes);
 
-      const beams = staff.shadowRoot.querySelectorAll('.beam-group .beam');
+      const beams = staff.shadowRoot!.querySelectorAll('.beam-group .beam');
       expect(beams).toHaveLength(3);
       const [primary, stub1, stub2] = beams;
       expect(beamWidth(stub1)).toBeLessThan(beamWidth(primary));
@@ -289,7 +289,7 @@ describe('beams', () => {
     // style.left directly equals the beamsContainer-relative x coordinate.
 
     it('stem-up notes: stem tips are enclosed by the primary beam', () => {
-      const staff = document.createElement(MUSIC_STAFF_TREBLE) as any;
+      const staff = document.createElement(MUSIC_STAFF) as StaffElementType;
       staff.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'C');
       staff.setAttribute(COMMON_ATTRIBUTES.MODE, 'major');
       staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
@@ -301,7 +301,7 @@ describe('beams', () => {
       ];
       triggerSlotChange(staff, notes);
 
-      const primaryBeam = staff.shadowRoot.querySelector('.beam-group .beam');
+      const primaryBeam = staff.shadowRoot!.querySelector('.beam-group .beam')!;
 
       expect(notes.length).toBeGreaterThan(0);
       for (const note of notes) {
@@ -321,7 +321,7 @@ describe('beams', () => {
     });
 
     it('stem-down notes: stem tips are enclosed by the primary beam', () => {
-      const staff = document.createElement(MUSIC_STAFF_TREBLE) as any;
+      const staff = document.createElement(MUSIC_STAFF) as StaffElementType;
       staff.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'C');
       staff.setAttribute(COMMON_ATTRIBUTES.MODE, 'major');
       staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
@@ -333,7 +333,7 @@ describe('beams', () => {
       ];
       triggerSlotChange(staff, notes);
 
-      const primaryBeam = staff.shadowRoot.querySelector('.beam-group .beam');
+      const primaryBeam = staff.shadowRoot!.querySelector('.beam-group .beam')!;
 
       expect(notes.length).toBeGreaterThan(0);
       for (const note of notes) {
@@ -355,7 +355,7 @@ describe('beams', () => {
 
   describe('beam slant follows pitch contour', () => {
     it('beam ascends when the first note is lower than the last', () => {
-      const staff = document.createElement(MUSIC_STAFF_TREBLE) as any;
+      const staff = document.createElement(MUSIC_STAFF) as StaffElementType;
       staff.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'C');
       staff.setAttribute(COMMON_ATTRIBUTES.MODE, 'major');
       staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
@@ -368,13 +368,13 @@ describe('beams', () => {
       triggerSlotChange(staff, notes);
 
       const points = parsePoints(
-        staff.shadowRoot.querySelector('.beam-group .beam')
+        staff.shadowRoot!.querySelector('.beam-group .beam')!
       );
       expect(points[0][1]).toBeGreaterThan(points[3][1]);
     });
 
     it('beam descends when the first note is higher than the last', () => {
-      const staff = document.createElement(MUSIC_STAFF_TREBLE) as any;
+      const staff = document.createElement(MUSIC_STAFF) as StaffElementType;
       staff.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'C');
       staff.setAttribute(COMMON_ATTRIBUTES.MODE, 'major');
       staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
@@ -387,13 +387,13 @@ describe('beams', () => {
       triggerSlotChange(staff, notes);
 
       const points = parsePoints(
-        staff.shadowRoot.querySelector('.beam-group .beam')
+        staff.shadowRoot!.querySelector('.beam-group .beam')!
       );
       expect(points[0][1]).toBeLessThan(points[3][1]);
     });
 
     it('beam is horizontal when all notes are the same pitch', () => {
-      const staff = document.createElement(MUSIC_STAFF_TREBLE) as any;
+      const staff = document.createElement(MUSIC_STAFF) as StaffElementType;
       staff.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'C');
       staff.setAttribute(COMMON_ATTRIBUTES.MODE, 'major');
       staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
@@ -406,7 +406,7 @@ describe('beams', () => {
       triggerSlotChange(staff, notes);
 
       const pts = parsePoints(
-        staff.shadowRoot.querySelector('.beam-group .beam')
+        staff.shadowRoot!.querySelector('.beam-group .beam')!
       );
       expect(Math.abs(pts[0][1] - pts[3][1])).toBeLessThan(1);
     });
@@ -414,7 +414,7 @@ describe('beams', () => {
 
   describe('beam clears chord noteheads', () => {
     it('beam inner edge stays above the non-extremal notehead in a stem-up chord', () => {
-      const staff = document.createElement(MUSIC_STAFF_TREBLE) as any;
+      const staff = document.createElement(MUSIC_STAFF) as StaffElementType;
       staff.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'C');
       staff.setAttribute(COMMON_ATTRIBUTES.MODE, 'major');
       staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
@@ -438,7 +438,7 @@ describe('beams', () => {
       ];
       triggerSlotChange(staff, chords);
 
-      const primaryBeam = staff.shadowRoot.querySelector('.beam-group .beam');
+      const primaryBeam = staff.shadowRoot!.querySelector('.beam-group .beam')!;
 
       const B4_STAFF_Y = 50;
       const NOTEHEAD_V_RADIUS = 3.2;
@@ -452,7 +452,7 @@ describe('beams', () => {
     });
 
     it('extremal note stems in all chords still reach the beam after clearance shift', () => {
-      const staff = document.createElement(MUSIC_STAFF_TREBLE) as any;
+      const staff = document.createElement(MUSIC_STAFF) as StaffElementType;
       staff.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'C');
       staff.setAttribute(COMMON_ATTRIBUTES.MODE, 'major');
       staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
@@ -476,7 +476,7 @@ describe('beams', () => {
       ];
       triggerSlotChange(staff, chords);
 
-      const primaryBeam = staff.shadowRoot.querySelector('.beam-group .beam');
+      const primaryBeam = staff.shadowRoot!.querySelector('.beam-group .beam')!;
 
       for (const chord of chords) {
         const chordX = getNoteX(chord);
@@ -498,7 +498,7 @@ describe('beams', () => {
     });
 
     it('secondary beam inner edge stays above non-extremal notehead in sixteenth chord', () => {
-      const staff = document.createElement(MUSIC_STAFF_TREBLE) as any;
+      const staff = document.createElement(MUSIC_STAFF) as StaffElementType;
       staff.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'C');
       staff.setAttribute(COMMON_ATTRIBUTES.MODE, 'major');
       staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
@@ -523,7 +523,7 @@ describe('beams', () => {
       triggerSlotChange(staff, chords);
 
       const beams = [
-        ...staff.shadowRoot.querySelectorAll('.beam-group .beam'),
+        ...staff.shadowRoot!.querySelectorAll('.beam-group .beam'),
       ] as Element[];
 
       expect(beams.length).toBeGreaterThanOrEqual(2);
@@ -559,7 +559,7 @@ describe('beams', () => {
     }
 
     it('stem tips of both chords sit inside the beam polygon', () => {
-      const staff = document.createElement(MUSIC_STAFF_TREBLE) as any;
+      const staff = document.createElement(MUSIC_STAFF) as StaffElementType;
       staff.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'C');
       staff.setAttribute(COMMON_ATTRIBUTES.MODE, 'major');
       staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
@@ -571,7 +571,7 @@ describe('beams', () => {
       ];
       triggerSlotChange(staff, chords);
 
-      const primaryBeam = staff.shadowRoot.querySelector('.beam-group .beam');
+      const primaryBeam = staff.shadowRoot!.querySelector('.beam-group .beam');
       expect(primaryBeam).not.toBeNull();
 
       // Close-voicing resolves ['A','E'] to A4 (staffY=55) and E5 (staffY=35).
@@ -597,7 +597,7 @@ describe('beams', () => {
     });
 
     it('beam outer edge is below both chord noteheads for stem-down', () => {
-      const staff = document.createElement(MUSIC_STAFF_TREBLE) as any;
+      const staff = document.createElement(MUSIC_STAFF) as StaffElementType;
       staff.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'C');
       staff.setAttribute(COMMON_ATTRIBUTES.MODE, 'major');
       staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
@@ -609,7 +609,7 @@ describe('beams', () => {
       ];
       triggerSlotChange(staff, chords);
 
-      const primaryBeam = staff.shadowRoot.querySelector('.beam-group .beam');
+      const primaryBeam = staff.shadowRoot!.querySelector('.beam-group .beam');
       expect(primaryBeam).not.toBeNull();
 
       // A4 (staffY=55) notehead center is at approximately staffY - 2 = 53.
@@ -631,7 +631,7 @@ describe('beams', () => {
 
   describe('minimum stem length is enforced', () => {
     it('no stem is shorter than 25 px when a steep-pitch beam group requires shifting', () => {
-      const staff = document.createElement(MUSIC_STAFF_TREBLE) as any;
+      const staff = document.createElement(MUSIC_STAFF) as StaffElementType;
       staff.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'C');
       staff.setAttribute(COMMON_ATTRIBUTES.MODE, 'major');
       staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');

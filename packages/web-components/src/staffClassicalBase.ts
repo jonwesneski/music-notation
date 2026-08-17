@@ -4,6 +4,7 @@ import {
   totalChordAccidentalWidth,
 } from './rules/accidentalRules';
 import { buildBeamsRenderer } from './rules/beamRules';
+import { getClefRenderData } from './rules/clefRules';
 import { pairHairpins } from './rules/dynamicsRules';
 import {
   computeFirstGraceHeadX,
@@ -27,6 +28,7 @@ import { StaffElementBase } from './staffBase';
 import {
   ChordElementType,
   ChordNote,
+  ClefMarkerPlacement,
   IChordElement,
   INoteElement,
   NoteChordOrRestElementType,
@@ -35,13 +37,11 @@ import {
   TupletElementType,
   YCoordinates,
 } from './types/elements';
-import {
-  BeatsInMeasure,
-  BeatTypeInMeasure,
+import type {
+  ClefType,
   DurationType,
   Mode,
   Note,
-  NoteLetter,
   Octave,
 } from './types/theory';
 import {
@@ -54,9 +54,10 @@ import {
   createTimeSignatureSvg,
 } from './utils';
 import {
+  CLEF_EVENTS,
   COMMON_ATTRIBUTES,
   MUSIC_CHORD_NODE,
-  MUSIC_COMPOSITION,
+  MUSIC_CLEF_NODE,
   MUSIC_MEASURE,
   MUSIC_NOTE,
   MUSIC_NOTE_NODE,
@@ -67,12 +68,14 @@ import {
   SVG_NS,
 } from './utils/consts';
 import {
+  CLEF_CHANGE_RESERVED_WIDTH_PX,
   CLEF_X_OFFSET,
   DYNAMICS_BASELINE_Y,
   HAIRPIN_OPEN_HEIGHT,
   KEY_SIG_FLAT_WIDTH,
   KEY_SIG_FLAT_Y_OFFSET,
   KEY_SIG_SHARP_WIDTH,
+  MID_STREAM_CLEF_Y_OFFSET,
   MIN_NOTE_WIDTH,
   NOTES_AREA_LEFT_MARGIN,
   STAFF_TOP_LINE_Y,
@@ -85,13 +88,13 @@ import {
 } from './utils/notationDimensions';
 import { NoteTimingDragHandler } from './utils/noteTimingDragHandler';
 import { PitchDragHandler } from './utils/pitchDragHandler';
+import { flattenSlotElements } from './utils/slotElements';
 import {
   ACCIDENTAL_NOTE_GAP,
   ACCIDENTAL_SYMBOL_WIDTH,
   NOTE_SVG_WIDTH,
 } from './utils/svgCreator/note';
 import { createTupletBracketSvg } from './utils/svgCreator/tuplet';
-import { flattenSlotElements } from './utils/slotElements';
 
 export abstract class StaffClassicalElementBase extends StaffElementBase {
   static get observedAttributes(): string[] {
@@ -103,23 +106,18 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
       COMMON_ATTRIBUTES.TIME_SIG,
       'editable',
       'managed',
+      'group',
+      'group-id',
     ];
   }
 
   #mutationObservers: MutationObserver[];
-  #effectiveTimeSig: [BeatsInMeasure, BeatTypeInMeasure];
   #effectiveMode: Mode;
   #effectiveKeySig: Note;
   #describeContainer: SVGGElement;
   #beamsContainer: SVGSVGElement;
-  #tupletContainer: SVGSVGElement = document.createElementNS(
-    SVG_NS,
-    'svg'
-  ) as SVGSVGElement;
-  #dynamicsContainer: SVGSVGElement = document.createElementNS(
-    SVG_NS,
-    'svg'
-  ) as SVGSVGElement;
+  #tupletContainer: SVGSVGElement = document.createElementNS(SVG_NS, 'svg');
+  #dynamicsContainer: SVGSVGElement = document.createElementNS(SVG_NS, 'svg');
   #beamRenderer: ReturnType<BeamsBuilder['buildRenderer']> | null = null;
   #currentElements: NoteChordOrRestElementType[] = [];
   #noteTimingDragHandler: NoteTimingDragHandler | null = null;
@@ -127,8 +125,11 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
   #boundPointerDown: ((e: PointerEvent) => void) | null = null;
   #describeEndX = 0;
   #showDescribe = true;
+  #clefChangeAtBoundary = false;
+  #timeChangeAtBoundary = false;
   #tupletGroups: TupletGroup[] = [];
   #tupletsByIndex: Map<number, TupletElementType[]> = new Map();
+  #clefMarkers: ClefMarkerPlacement[] = [];
   #noteXPositions: Map<number, number> = new Map();
   // X (beams-container space) of the first grace note's head, for elements
   // that have both a grace group and a grace-dynamic. Populated alongside
@@ -145,6 +146,11 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
     this.#renderDynamics();
   };
   #boundNoteYChange = () => {
+    if (this.#currentElements.length > 0) {
+      this.#renderNotes(this.#currentElements);
+    }
+  };
+  #boundClefMarkerChange = () => {
     if (this.#currentElements.length > 0) {
       this.#renderNotes(this.#currentElements);
     }
@@ -166,18 +172,46 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
     this.#refreshDescribe();
   }
 
+  // Set by composition.ts when this staff starts a new visual row and its
+  // effectiveStartClef differs from the previous row's matching staff's
+  // effectiveEndClef — keeps the clef glyph visible (but not key/time
+  // signature) even though showDescribe is false for non-first-in-row staves.
+  get clefChangeAtBoundary(): boolean {
+    return this.#clefChangeAtBoundary;
+  }
+
+  set clefChangeAtBoundary(value: boolean) {
+    if (this.#clefChangeAtBoundary === value) {
+      return;
+    }
+    this.#clefChangeAtBoundary = value;
+    this.#refreshDescribe();
+  }
+
+  // Set by composition.ts when this staff's resolved time signature differs
+  // from the previous measure's — keeps the time signature glyph visible even
+  // though this isn't the first measure in the composition.
+  get timeChangeAtBoundary(): boolean {
+    return this.#timeChangeAtBoundary;
+  }
+
+  set timeChangeAtBoundary(value: boolean) {
+    if (this.#timeChangeAtBoundary === value) {
+      return;
+    }
+    this.#timeChangeAtBoundary = value;
+    this.#refreshDescribe();
+  }
+
   constructor() {
     super();
     this.#mutationObservers = [];
 
-    this.#effectiveTimeSig = this.#convertTotimeInts(
-      this.#resolveInheritedValue(COMMON_ATTRIBUTES.TIME_SIG, '4/4')
-    );
-    this.#effectiveMode = this.#resolveInheritedValue(
+    this.#effectiveMode = this.resolveInheritedValue(
       COMMON_ATTRIBUTES.MODE,
       'major'
     ) as Mode;
-    this.#effectiveKeySig = this.#resolveInheritedValue(
+    this.#effectiveKeySig = this.resolveInheritedValue(
       COMMON_ATTRIBUTES.KEY_SIG,
       'C'
     ) as Note;
@@ -186,21 +220,7 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
     this.#beamsContainer = document.createElementNS(SVG_NS, 'svg');
   }
 
-  #resolveInheritedValue(attributeName: string, defaultValue: string): string {
-    return (
-      this.getAttribute(attributeName) ??
-      this.closest(MUSIC_MEASURE)?.getAttribute(attributeName) ??
-      this.closest(MUSIC_COMPOSITION)?.getAttribute(attributeName) ??
-      defaultValue
-    );
-  }
-
-  #convertTotimeInts(time: string): [BeatsInMeasure, BeatTypeInMeasure] {
-    const [beats, beatType] = time.split('/').map((n) => parseInt(n, 10));
-    return [beats as BeatsInMeasure, beatType as BeatTypeInMeasure];
-  }
-
-  protected get staffLineCount(): number {
+  get staffLineCount(): number {
     return 5;
   }
 
@@ -262,14 +282,6 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
     this.setAttribute(COMMON_ATTRIBUTES.MODE, value);
   }
 
-  get time(): string {
-    return `${this.#effectiveTimeSig[0]}/${this.#effectiveTimeSig[1]}`;
-  }
-
-  set time(value: string) {
-    this.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, value);
-  }
-
   abstract get yCoordinates(): YCoordinates;
 
   abstract get octaves(): Octave[];
@@ -283,14 +295,14 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
 
   protected onConnectedCallback() {
     // Re-resolve inherited attrs now that ancestors are reachable via closest()
-    this.#effectiveTimeSig = this.#convertTotimeInts(
-      this.#resolveInheritedValue(COMMON_ATTRIBUTES.TIME_SIG, '4/4')
+    this.effectiveTimeSig = this.convertTotimeInts(
+      this.resolveInheritedValue(COMMON_ATTRIBUTES.TIME_SIG, '4/4')
     );
-    this.#effectiveMode = this.#resolveInheritedValue(
+    this.#effectiveMode = this.resolveInheritedValue(
       COMMON_ATTRIBUTES.MODE,
       'major'
     ) as Mode;
-    this.#effectiveKeySig = this.#resolveInheritedValue(
+    this.#effectiveKeySig = this.resolveInheritedValue(
       COMMON_ATTRIBUTES.KEY_SIG,
       'C'
     ) as Note;
@@ -308,6 +320,10 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
       NOTE_EVENTS.DYNAMIC_ATTRIBUTE_CHANGE,
       this.#boundRenderDynamics
     );
+    this.addEventListener(
+      CLEF_EVENTS.ATTRIBUTE_CHANGE,
+      this.#boundClefMarkerChange
+    );
   }
 
   #enableDrag() {
@@ -324,19 +340,21 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
 
     const host = this as unknown as HTMLElement;
     const getElements = () => this.#currentElements as unknown as HTMLElement[];
+    const getClefMarkers = () => this.#clefMarkers;
 
     this.#noteTimingDragHandler = new NoteTimingDragHandler(
       host,
       wrapper,
       getElements,
+      getClefMarkers,
       this.managed
     );
 
     this.#notePitchDragHandler = new PitchDragHandler(
       host,
-      this.yCoordinates,
-      (elementIndex, newNote, chordNoteIndex) => {
-        this.#onPitchLivePreview(elementIndex, newNote, chordNoteIndex);
+      (elementIndex) => this.#renderDataForIndex(elementIndex).yCoordinates,
+      (elementIndex, note, octave, chordNoteIndex) => {
+        this.#onPitchLivePreview(elementIndex, note, octave, chordNoteIndex);
       }
     );
 
@@ -472,7 +490,8 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
    */
   #onPitchLivePreview(
     elementIndex: number,
-    newNote: NoteLetterOctave,
+    note: Note,
+    octave: Octave,
     chordNoteIndex: number | null
   ) {
     const element = this.#currentElements[elementIndex];
@@ -480,18 +499,15 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
       return;
     }
 
-    const letter = newNote[0] as NoteLetter;
-    const octave = parseInt(newNote[1], 10) as Octave;
-
     if (element.nodeName === MUSIC_CHORD_NODE && chordNoteIndex !== null) {
       const noteElements = element.querySelectorAll(MUSIC_NOTE);
       const noteEl = noteElements[chordNoteIndex] as HTMLElement | undefined;
       if (noteEl) {
-        noteEl.setAttribute('note', letter);
+        noteEl.setAttribute('note', note);
         noteEl.setAttribute('octave', String(octave));
       }
     } else if (element.nodeName === MUSIC_NOTE_NODE) {
-      element.setAttribute('note', letter);
+      element.setAttribute('note', note);
       element.setAttribute('octave', String(octave));
     }
 
@@ -502,7 +518,8 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
   // Describe is: clef, key signature, time signature, and beams overlay
   #buildDescribe(clefSvgStr: string) {
     this.#describeContainer.classList.add('describe-container');
-    this.#describeContainer.innerHTML = this.#showDescribe ? clefSvgStr : '';
+    this.#describeContainer.innerHTML =
+      this.#showDescribe || this.#clefChangeAtBoundary ? clefSvgStr : '';
     this.transcribeContainer.appendChild(this.#describeContainer);
 
     const xOffsetOfClef = CLEF_X_OFFSET;
@@ -533,7 +550,8 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
 
   #refreshDescribe() {
     if (!this.isConnected) return;
-    this.#describeContainer.innerHTML = this.#showDescribe ? this.clefSvg : '';
+    this.#describeContainer.innerHTML =
+      this.#showDescribe || this.#clefChangeAtBoundary ? this.clefSvg : '';
     const xOffsetOfKeySignature = this.#showDescribe
       ? this.#appendKeySignatureSvg(this.#describeContainer, CLEF_X_OFFSET)
       : CLEF_X_OFFSET;
@@ -547,14 +565,14 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
   }
 
   refreshInheritedAttrs() {
-    this.#effectiveTimeSig = this.#convertTotimeInts(
-      this.#resolveInheritedValue(COMMON_ATTRIBUTES.TIME_SIG, '4/4')
+    this.effectiveTimeSig = this.convertTotimeInts(
+      this.resolveInheritedValue(COMMON_ATTRIBUTES.TIME_SIG, '4/4')
     );
-    this.#effectiveMode = this.#resolveInheritedValue(
+    this.#effectiveMode = this.resolveInheritedValue(
       COMMON_ATTRIBUTES.MODE,
       'major'
     ) as Mode;
-    this.#effectiveKeySig = this.#resolveInheritedValue(
+    this.#effectiveKeySig = this.resolveInheritedValue(
       COMMON_ATTRIBUTES.KEY_SIG,
       'C'
     ) as Note;
@@ -588,18 +606,10 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
   #appendTimeSignatureSvgIfNecessary(parentSvg: SVGElement, xOffset: number) {
     const measure = this.closest(MUSIC_MEASURE);
     const measureNumberStr: string | null = measure?.getAttribute('number');
-    const firstMeasureOrNoCompositionTime =
-      measureNumberStr === '1' || !measure ? this.#effectiveTimeSig : null;
-    const timeChangeInMeasure =
-      !firstMeasureOrNoCompositionTime && measure && this.getAttribute('time')
-        ? this.#effectiveTimeSig
-        : null;
+    const isFirstMeasureOrStandalone = measureNumberStr === '1' || !measure;
 
-    if (firstMeasureOrNoCompositionTime || timeChangeInMeasure) {
-      const timeSigSvg = createTimeSignatureSvg(
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- will not be null
-        ...(firstMeasureOrNoCompositionTime ?? timeChangeInMeasure)!
-      );
+    if (isFirstMeasureOrStandalone || this.#timeChangeAtBoundary) {
+      const timeSigSvg = createTimeSignatureSvg(...this.effectiveTimeSig);
       timeSigSvg.setAttribute(
         'transform',
         `translate(${xOffset}, ${TIME_SIG_Y_TRANSLATE})`
@@ -619,6 +629,10 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
       NOTE_EVENTS.DYNAMIC_ATTRIBUTE_CHANGE,
       this.#boundRenderDynamics
     );
+    this.removeEventListener(
+      CLEF_EVENTS.ATTRIBUTE_CHANGE,
+      this.#boundClefMarkerChange
+    );
     try {
       this.#mutationObservers.forEach((m) => m.disconnect());
     } catch (e) {
@@ -635,6 +649,11 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
       return;
     }
 
+    if (name === 'group' || name === 'group-id') {
+      this.dispatchGroupAttributeChange();
+      return;
+    }
+
     if (name === 'editable') {
       if (this.editable) {
         this.#enableDrag();
@@ -648,16 +667,16 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
       }
     } else {
       if (name === 'time') {
-        this.#effectiveTimeSig = this.#convertTotimeInts(
-          this.#resolveInheritedValue('time', '4/4')
+        this.effectiveTimeSig = this.convertTotimeInts(
+          this.resolveInheritedValue('time', '4/4')
         );
       } else if (name === 'mode') {
-        this.#effectiveMode = this.#resolveInheritedValue(
+        this.#effectiveMode = this.resolveInheritedValue(
           'mode',
           'major'
         ) as Mode;
       } else if (name === 'keysig') {
-        this.#effectiveKeySig = this.#resolveInheritedValue(
+        this.#effectiveKeySig = this.resolveInheritedValue(
           'keysig',
           'C'
         ) as Note;
@@ -675,11 +694,14 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
           e.nodeName === MUSIC_NOTE_NODE ||
           e.nodeName === MUSIC_CHORD_NODE ||
           e.nodeName === MUSIC_REST_NODE ||
-          e.nodeName === MUSIC_TUPLET_NODE
+          e.nodeName === MUSIC_TUPLET_NODE ||
+          e.nodeName === MUSIC_CLEF_NODE
       );
 
-    const { flatElements, tupletsByIndex } = flattenSlotElements(assigned);
+    const { flatElements, tupletsByIndex, clefMarkers } =
+      flattenSlotElements(assigned);
     this.#tupletsByIndex = tupletsByIndex;
+    this.#clefMarkers = clefMarkers;
     this.#renderNotes(flatElements);
 
     /*
@@ -713,7 +735,7 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
 
     const { allowedElementCount, error } = computeAllowedElementCount(
       elements,
-      this.#effectiveTimeSig,
+      this.effectiveTimeSig,
       this.#tupletsByIndex
     );
     if (error !== null) {
@@ -724,30 +746,45 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
     }
     elements = elements.slice(0, allowedElementCount);
 
+    // Clef markers anchored to a note/chord/rest that got truncated above
+    // dangle — drop and hide them rather than positioning against an index
+    // that no longer exists in the rendered elements array.
+    const survivingClefMarkers: ClefMarkerPlacement[] = [];
+    for (const marker of this.#clefMarkers) {
+      if (marker.afterElementIndex < allowedElementCount) {
+        survivingClefMarkers.push(marker);
+      } else {
+        marker.element.style.display = 'none';
+      }
+    }
+    this.#clefMarkers = survivingClefMarkers;
+
     const noteStaffYCoords = new Map<NoteElementType, number>();
     const chordStaffYCoords = new Map<ChordElementType, number[]>();
-    for (const element of elements) {
+    for (let i = 0; i < elements.length; i++) {
+      const element = elements[i];
       if (element.nodeName === MUSIC_NOTE_NODE) {
         const noteElement = element as NoteElementType;
         noteStaffYCoords.set(
           noteElement,
           this.noteToYCoordinate(
             noteElement.note,
-            noteElement.octave ?? undefined
+            noteElement.octave ?? undefined,
+            i
           )
         );
       } else if (element.nodeName === MUSIC_CHORD_NODE) {
         const chordElement = element as ChordElementType;
         chordStaffYCoords.set(
           chordElement,
-          this.#resolveChordStaffYCoordinates(chordElement.notes)
+          this.#resolveChordStaffYCoordinates(chordElement.notes, i)
         );
       }
     }
 
     const { beamsBuilder, beamRenderer, stemDirections } = buildBeamsRenderer(
       elements,
-      this.#effectiveTimeSig,
+      this.effectiveTimeSig,
       noteStaffYCoords,
       chordStaffYCoords,
       this.#tupletsByIndex
@@ -875,7 +912,8 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
         this.#describeEndX,
         computeTupletScaledNoteCount(elements, this.#tupletsByIndex),
         firstElementLeftwardWidth,
-        extraLeftwardWidth
+        extraLeftwardWidth,
+        this.#clefMarkers.length * CLEF_CHANGE_RESERVED_WIDTH_PX
       );
       this.dispatchEvent(
         new CustomEvent(STAFF_EVENTS.STAFF_MIN_WIDTH, {
@@ -887,13 +925,21 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
     }
   }
 
-  #resolveChordStaffYCoordinates(notes: ChordNote[]): number[] {
+  #resolveChordStaffYCoordinates(
+    notes: ChordNote[],
+    elementIndex: number
+  ): number[] {
     const result: number[] = [];
     let previousY = Infinity;
+    const { octaves } = this.#renderDataForIndex(elementIndex);
 
     for (const note of notes) {
       if (note.octave !== null) {
-        const y = this.noteToYCoordinate(note.value, note.octave ?? undefined);
+        const y = this.noteToYCoordinate(
+          note.value,
+          note.octave ?? undefined,
+          elementIndex
+        );
         result.push(y);
         previousY = y;
       } else {
@@ -901,8 +947,8 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
         // that is still strictly below the previous note's Y, ensuring ascending
         // pitch (root-position close voicing).
         const candidates: number[] = [];
-        for (const octave of this.octaves) {
-          const y = this.noteToYCoordinate(note.value, octave);
+        for (const octave of octaves) {
+          const y = this.noteToYCoordinate(note.value, octave, elementIndex);
           if (y > 0 && y < previousY) {
             candidates.push(y);
           }
@@ -910,7 +956,7 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
         const resolved =
           candidates.length > 0
             ? Math.max(...candidates)
-            : this.noteToYCoordinate(note.value, undefined);
+            : this.noteToYCoordinate(note.value, undefined, elementIndex);
         result.push(resolved);
         previousY = resolved;
       }
@@ -919,27 +965,86 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
     return result;
   }
 
+  // Finds the clef marker active at `elementIndex` — the latest marker whose
+  // `afterElementIndex` is strictly less than it — or null if segment 0 (the
+  // staff's own clef, via the abstract yCoordinates/octaves getters) applies.
+  // Always null for staves with no <music-clef> markers (e.g. StaffVocalElement),
+  // which is exactly what keeps this mechanism a no-op for them.
+  #activeClefAt(elementIndex: number): ClefType | null {
+    let active: ClefMarkerPlacement | null = null;
+    for (const marker of this.#clefMarkers) {
+      if (
+        marker.afterElementIndex < elementIndex &&
+        (active === null || marker.afterElementIndex > active.afterElementIndex)
+      ) {
+        active = marker;
+      }
+    }
+    return active ? active.element.clef : null;
+  }
+
+  #renderDataForIndex(elementIndex: number): {
+    yCoordinates: YCoordinates;
+    octaves: Octave[];
+  } {
+    const clef = this.#activeClefAt(elementIndex);
+    if (clef === null) {
+      return { yCoordinates: this.yCoordinates, octaves: this.octaves };
+    }
+    const { yCoordinates, octaves } = getClefRenderData(clef);
+    return { yCoordinates, octaves };
+  }
+
+  // Subclasses that have a genuine `clef` attribute (StaffElement) override
+  // this to `return this.clef`. Staves with no comparable clef concept
+  // (StaffVocalElement) leave it null, which makes effectiveStartClef/
+  // effectiveEndClef null too — composition.ts's courtesy-clef logic treats
+  // null as "not clef-comparable" and skips the pair.
+  protected get ownClef(): ClefType | null {
+    return null;
+  }
+
+  // The clef in effect at the very start of the staff's note stream — the
+  // staff's own clef (via `ownClef`), unless a <music-clef> marker sits at
+  // afterElementIndex === -1. Backs composition-level courtesy-clef logic.
+  public get effectiveStartClef(): ClefType | null {
+    return this.#activeClefAt(0) ?? this.ownClef;
+  }
+
+  // The clef in effect after the last note/chord/rest — the last marker's
+  // clef, or the start clef if there are no markers.
+  public get effectiveEndClef(): ClefType | null {
+    return this.#activeClefAt(Number.POSITIVE_INFINITY) ?? this.ownClef;
+  }
+
   // Return the y-coordinate for a given note and octave.
   // Accidentals are ignored for vertical placement — C# and C natural occupy
   // the same staff line/space.
-  public noteToYCoordinate(note: Note, octave?: Octave): number {
+  public noteToYCoordinate(
+    note: Note,
+    octave?: Octave,
+    elementIndex?: number
+  ): number {
     if (!note) {
       return 0;
     }
 
     // Strip accidentals: take the first character (always the letter A-G).
     const letter = note[0].toUpperCase();
+    const { yCoordinates, octaves } =
+      elementIndex !== undefined
+        ? this.#renderDataForIndex(elementIndex)
+        : { yCoordinates: this.yCoordinates, octaves: this.octaves };
 
     if (octave !== undefined) {
       const yCoordinate =
-        this.yCoordinates[`${letter}${octave}` as NoteLetterOctave];
+        yCoordinates[`${letter}${octave}` as NoteLetterOctave];
       if (yCoordinate !== undefined) {
         return yCoordinate;
       }
     } else {
-      for (const n of this.octaves) {
-        const yCoordinate =
-          this.yCoordinates[`${letter}${n}` as NoteLetterOctave];
+      for (const n of octaves) {
+        const yCoordinate = yCoordinates[`${letter}${n}` as NoteLetterOctave];
         if (yCoordinate !== undefined) {
           return yCoordinate;
         }
@@ -989,18 +1094,39 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
       `${STAFF_TRANSCRIPTION_HEIGHT}`
     );
 
-    const [beatsInMeasure, beatType] = this.#effectiveTimeSig;
+    const [beatsInMeasure, beatType] = this.effectiveTimeSig;
     const measureDuration = beatsInMeasure / beatType;
 
     const scaledNoteCount = computeTupletScaledNoteCount(
       this.#currentElements,
       this.#tupletsByIndex
     );
-    const proportionalWidth = remainingWidth - scaledNoteCount * MIN_NOTE_WIDTH;
+    const proportionalWidth =
+      remainingWidth -
+      scaledNoteCount * MIN_NOTE_WIDTH -
+      this.#clefMarkers.length * CLEF_CHANGE_RESERVED_WIDTH_PX;
+
+    const clefMarkersByAfterIndex = new Map(
+      this.#clefMarkers.map((marker) => [marker.afterElementIndex, marker])
+    );
 
     let beatOffset = 0;
     let minWidthAccumulator = 0;
     let previousRightEdge = this.#describeEndX;
+
+    // A marker before the first note/chord/rest (afterElementIndex === -1)
+    // is positioned here, ahead of the loop, since there's no element index
+    // to key off inside it.
+    const leadingClefMarker = clefMarkersByAfterIndex.get(-1);
+    if (leadingClefMarker) {
+      leadingClefMarker.element.style.position = 'absolute';
+      leadingClefMarker.element.style.left = `${previousRightEdge}px`;
+      leadingClefMarker.element.style.top = `${MID_STREAM_CLEF_Y_OFFSET}px`;
+      leadingClefMarker.element.style.display = '';
+      previousRightEdge += CLEF_CHANGE_RESERVED_WIDTH_PX;
+      minWidthAccumulator += CLEF_CHANGE_RESERVED_WIDTH_PX;
+    }
+
     for (let i = 0; i < this.#currentElements.length; i++) {
       const element = this.#currentElements[i];
       const duration = element.duration as DurationType;
@@ -1100,7 +1226,8 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
           STAFF_Y_PADDING +
           this.noteToYCoordinate(
             noteElement.note,
-            noteElement.octave ?? undefined
+            noteElement.octave ?? undefined,
+            i
           ) -
           yHeadOffset;
         element.style.top = `${noteY}px`;
@@ -1122,6 +1249,19 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
       } else {
         beatOffset += durationToFactor[duration];
         minWidthAccumulator += MIN_NOTE_WIDTH;
+      }
+
+      // A marker following this element (afterElementIndex === i) is
+      // zero-duration — it does not advance beatOffset — but does reserve
+      // horizontal space, same as MIN_NOTE_WIDTH does for a real note.
+      const trailingClefMarker = clefMarkersByAfterIndex.get(i);
+      if (trailingClefMarker) {
+        trailingClefMarker.element.style.position = 'absolute';
+        trailingClefMarker.element.style.left = `${previousRightEdge}px`;
+        trailingClefMarker.element.style.top = `${MID_STREAM_CLEF_Y_OFFSET}px`;
+        trailingClefMarker.element.style.display = '';
+        previousRightEdge += CLEF_CHANGE_RESERVED_WIDTH_PX;
+        minWidthAccumulator += CLEF_CHANGE_RESERVED_WIDTH_PX;
       }
     }
     this.#beamRenderer?.spaceAll();
@@ -1305,17 +1445,20 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
     return topY < 0 ? Math.ceil(-topY) + 2 : 0;
   }
 
-  // Respace notes on resize
+  // Respace notes on resize. Runs even when there are no notes/chords, since
+  // the describe area (clef/key/time signature) and the SVG viewBox still
+  // need to track the staff's current width — otherwise an empty staff's
+  // viewBox stays frozen at whatever width it had when it first connected,
+  // and the browser's default viewBox scaling silently mis-scales/repositions
+  // the clef on every subsequent resize.
   onStaffResize() {
-    if (this.#currentElements.length > 0) {
-      this.#spaceElements();
-      this.dispatchEvent(
-        new CustomEvent(STAFF_EVENTS.NOTES_POSITIONED, {
-          bubbles: true,
-          composed: true,
-        })
-      );
-      this.drawConnectorsWhenStandalone();
-    }
+    this.#spaceElements();
+    this.dispatchEvent(
+      new CustomEvent(STAFF_EVENTS.NOTES_POSITIONED, {
+        bubbles: true,
+        composed: true,
+      })
+    );
+    this.drawConnectorsWhenStandalone();
   }
 }

@@ -7,22 +7,23 @@ import type { Chord, Octave } from './types/theory';
 import {
   COMMON_ATTRIBUTES,
   MUSIC_CHORD,
+  MUSIC_MEASURE,
   MUSIC_NOTE,
-  MUSIC_STAFF_TREBLE,
+  MUSIC_STAFF,
 } from './utils/consts';
 
 afterEach(() => {
   document.body.innerHTML = '';
 });
 
-// I'm using <music-staff-treble /> to test staffClassicalBase specific scenarios
+// I'm using <music-staff /> (default clef="treble") to test staffClassicalBase specific scenarios
 describe('staffClassicalBase', () => {
   it('logs a warning when adding another note on a filled measure', () => {
     const consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
 
-    const staffTreble = document.createElement(MUSIC_STAFF_TREBLE) as any;
-    staffTreble.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
-    document.body.appendChild(staffTreble);
+    const staff = document.createElement(MUSIC_STAFF) as any;
+    staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
+    document.body.appendChild(staff);
 
     const notes = Array.from({ length: 5 }, () => {
       const note = document.createElement(MUSIC_NOTE) as any;
@@ -32,7 +33,7 @@ describe('staffClassicalBase', () => {
       return note;
     });
 
-    const slot = staffTreble.shadowRoot.querySelector('slot');
+    const slot = staff.shadowRoot.querySelector('slot');
     slot.assignedElements = () => notes;
     slot.dispatchEvent(new Event('slotchange'));
 
@@ -50,9 +51,9 @@ describe('staffClassicalBase', () => {
   it('logs a warning when adding a note that partially exceeds the remaining available space in measure', () => {
     const consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
 
-    const staffTreble = document.createElement(MUSIC_STAFF_TREBLE) as any;
-    staffTreble.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
-    document.body.appendChild(staffTreble);
+    const staff = document.createElement(MUSIC_STAFF) as any;
+    staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
+    document.body.appendChild(staff);
 
     const notes = [
       ...Array.from({ length: 3 }, () => {
@@ -71,7 +72,7 @@ describe('staffClassicalBase', () => {
       })(),
     ];
 
-    const slot = staffTreble.shadowRoot.querySelector('slot');
+    const slot = staff.shadowRoot.querySelector('slot');
     slot.assignedElements = () => notes;
     slot.dispatchEvent(new Event('slotchange'));
 
@@ -87,7 +88,7 @@ describe('staffClassicalBase', () => {
   });
 
   it('assigns ascending pitch Y coordinates to a chord driven by chord attribute', () => {
-    const staff = document.createElement(MUSIC_STAFF_TREBLE) as any;
+    const staff = document.createElement(MUSIC_STAFF) as any;
     document.body.appendChild(staff);
 
     const chord = document.createElement(MUSIC_CHORD) as ChordElementType;
@@ -130,7 +131,7 @@ describe('staffClassicalBase', () => {
         .spyOn(console, 'warn')
         .mockImplementation(() => {});
 
-      const staff = document.createElement(MUSIC_STAFF_TREBLE) as any;
+      const staff = document.createElement(MUSIC_STAFF) as any;
       document.body.appendChild(staff);
 
       const notes = [
@@ -166,7 +167,7 @@ describe('staffClassicalBase', () => {
     }
 
     it('renders a dynamic-marking text for grace-dynamic, left of the main note’s own dynamic', () => {
-      const staff = document.createElement(MUSIC_STAFF_TREBLE) as any;
+      const staff = document.createElement(MUSIC_STAFF) as any;
       document.body.appendChild(staff);
 
       const note = makeNote({
@@ -197,7 +198,7 @@ describe('staffClassicalBase', () => {
     });
 
     it('renders only the grace-dynamic marking when the main dynamic is unset', () => {
-      const staff = document.createElement(MUSIC_STAFF_TREBLE) as any;
+      const staff = document.createElement(MUSIC_STAFF) as any;
       document.body.appendChild(staff);
 
       const note = makeNote({
@@ -216,7 +217,7 @@ describe('staffClassicalBase', () => {
     });
 
     it('renders no grace-dynamic marking when grace-dynamic is set but the note has no grace notes', () => {
-      const staff = document.createElement(MUSIC_STAFF_TREBLE) as any;
+      const staff = document.createElement(MUSIC_STAFF) as any;
       document.body.appendChild(staff);
 
       const note = makeNote({ 'grace-dynamic': 'f' });
@@ -228,6 +229,71 @@ describe('staffClassicalBase', () => {
       expect(
         staff.shadowRoot.querySelectorAll('.dynamic-marking')
       ).toHaveLength(0);
+    });
+  });
+
+  describe('time signature visibility', () => {
+    function hasTimeSignature(staff: any): boolean {
+      return staff.shadowRoot.querySelector('.time-signature') !== null;
+    }
+
+    it('shows the time signature on a standalone staff with no measure ancestor', () => {
+      const staff = document.createElement(MUSIC_STAFF) as any;
+      staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '3/4');
+      document.body.appendChild(staff);
+
+      expect(hasTimeSignature(staff)).toBe(true);
+    });
+
+    it('shows the time signature when its measure is number 1', () => {
+      const measure = document.createElement(MUSIC_MEASURE) as any;
+      measure.setAttribute('number', '1');
+      const staff = document.createElement(MUSIC_STAFF) as any;
+      staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
+      measure.appendChild(staff);
+      document.body.appendChild(measure);
+
+      expect(hasTimeSignature(staff)).toBe(true);
+    });
+
+    it('hides the time signature on a later measure when timeChangeAtBoundary is not set', () => {
+      const measure = document.createElement(MUSIC_MEASURE) as any;
+      measure.setAttribute('number', '2');
+      const staff = document.createElement(MUSIC_STAFF) as any;
+      staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
+      measure.appendChild(staff);
+      document.body.appendChild(measure);
+
+      expect(hasTimeSignature(staff)).toBe(false);
+    });
+
+    it('shows the time signature on a later measure once timeChangeAtBoundary is set', () => {
+      const measure = document.createElement(MUSIC_MEASURE) as any;
+      measure.setAttribute('number', '2');
+      const staff = document.createElement(MUSIC_STAFF) as any;
+      staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '3/4');
+      measure.appendChild(staff);
+      document.body.appendChild(measure);
+
+      staff.timeChangeAtBoundary = true;
+
+      expect(hasTimeSignature(staff)).toBe(true);
+    });
+
+    it('timeChangeAtBoundary getter/setter round-trips and is a no-op when set to the same value', () => {
+      const measure = document.createElement(MUSIC_MEASURE) as any;
+      measure.setAttribute('number', '2');
+      const staff = document.createElement(MUSIC_STAFF) as any;
+      measure.appendChild(staff);
+      document.body.appendChild(measure);
+
+      expect(staff.timeChangeAtBoundary).toBe(false);
+      staff.timeChangeAtBoundary = true;
+      expect(staff.timeChangeAtBoundary).toBe(true);
+      staff.timeChangeAtBoundary = true;
+      expect(staff.timeChangeAtBoundary).toBe(true);
+      staff.timeChangeAtBoundary = false;
+      expect(staff.timeChangeAtBoundary).toBe(false);
     });
   });
 });

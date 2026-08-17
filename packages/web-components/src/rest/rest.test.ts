@@ -2,15 +2,11 @@
  * @jest-environment jsdom
  */
 import { restToYCoordinate } from '../rules/restRules';
-import '../staffTreble/index';
+import '../staff/index';
 import type { RestElementType } from '../types/elements';
 import type { DurationType, TimeSignature } from '../types/theory';
 import { DURATIONS } from '../utils';
-import {
-  COMMON_ATTRIBUTES,
-  MUSIC_REST,
-  MUSIC_STAFF_TREBLE,
-} from '../utils/consts';
+import { COMMON_ATTRIBUTES, MUSIC_REST, MUSIC_STAFF } from '../utils/consts';
 import './index';
 
 afterEach(() => {
@@ -18,10 +14,6 @@ afterEach(() => {
 });
 
 describe(MUSIC_REST, () => {
-  it('registers as a custom element', () => {
-    expect(customElements.get(MUSIC_REST)).toBeDefined();
-  });
-
   it('renders a rest SVG in shadow DOM', () => {
     const restElement = document.createElement(MUSIC_REST) as RestElementType;
     restElement.setAttribute('duration', 'quarter');
@@ -89,12 +81,12 @@ describe(MUSIC_REST, () => {
 });
 
 function makeStaff(): Element {
-  const staffTreble = document.createElement(MUSIC_STAFF_TREBLE) as any;
-  staffTreble.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'C');
-  staffTreble.setAttribute(COMMON_ATTRIBUTES.MODE, 'major');
-  staffTreble.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
-  document.body.appendChild(staffTreble);
-  return staffTreble;
+  const staff = document.createElement(MUSIC_STAFF) as any;
+  staff.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'C');
+  staff.setAttribute(COMMON_ATTRIBUTES.MODE, 'major');
+  staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
+  document.body.appendChild(staff);
+  return staff;
 }
 
 function renderRest(staff: Element, duration: DurationType): RestElementType {
@@ -134,7 +126,7 @@ describe('staff integration', () => {
   it('renders a double-whole rest in a 4/2 staff without overflow warning', () => {
     const consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
 
-    const staff = document.createElement(MUSIC_STAFF_TREBLE) as any;
+    const staff = document.createElement(MUSIC_STAFF) as any;
     staff.setAttribute(
       COMMON_ATTRIBUTES.TIME_SIG,
       '4/2' satisfies TimeSignature

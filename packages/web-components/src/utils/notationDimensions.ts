@@ -435,3 +435,108 @@ export const GRACE_SLASH_STROKE_WIDTH = 1.1;
  * space shows above it, per standard engraving practice.
  */
 export const GRACE_SLASH_TIP_INSET_PX = STAFF_LINE_SPACING * 0.5;
+
+// ─── Clef changes ─────────────────────────────────────────────────────────────
+
+/**
+ * Horizontal width (px) reserved for a mid-stream <music-clef> glyph.
+ * Starting value — tune visually in Storybook.
+ */
+export const MID_STREAM_CLEF_WIDTH_PX = STAFF_LINE_SPACING * 3;
+
+/**
+ * Horizontal gap (px) on either side of a mid-stream clef glyph, separating
+ * it from the surrounding notes.
+ */
+export const MID_STREAM_CLEF_GAP_PX = STAFF_LINE_SPACING * 0.5;
+
+/**
+ * Total horizontal space (px) a mid-stream clef change reserves in the note
+ * stream — the glyph plus a gap on each side.
+ */
+export const CLEF_CHANGE_RESERVED_WIDTH_PX =
+  MID_STREAM_CLEF_WIDTH_PX + MID_STREAM_CLEF_GAP_PX * 2;
+
+/**
+ * Vertical offset (px) of a mid-stream clef glyph from the top of the
+ * transcribe container. Starting value — tune visually in Storybook.
+ */
+export const MID_STREAM_CLEF_Y_OFFSET = STAFF_LINE_SPACING * 2;
+
+/**
+ * Uniform scale applied to a courtesy clef (the small clef preview drawn at
+ * the end of a line/measure when the next line changes clef).
+ */
+export const COURTESY_CLEF_SCALE = 0.7;
+
+/**
+ * Horizontal gap (px) between a courtesy clef and the right edge of the staff
+ * it's drawn on.
+ */
+export const COURTESY_CLEF_MARGIN_RIGHT_PX = STAFF_LINE_SPACING * 0.5;
+
+// ─── Grand staff / part connectors ─────────────────────────────────────────────
+
+/**
+ * Horizontal depth (px) a brace connector's curve extends left of the
+ * staves it joins. Starting value — tune visually in Storybook.
+ */
+export const BRACE_WIDTH_PX = STAFF_LINE_SPACING * 2.2;
+
+/**
+ * Horizontal gap (px) between the brace's right edge and the staff barline
+ * it connects to. Starting value — tune visually in Storybook.
+ */
+export const BRACE_STAFF_GAP_PX = STAFF_LINE_SPACING * 0.3;
+
+/**
+ * Horizontal overlap (px) the bracket's hook tip is pulled past the staff
+ * barline it connects to (i.e. a negative gap) — the hook's own curl already
+ * holds its stem well clear of the staff, so pulling the tip slightly past
+ * the barline brings the visually-dominant stem closer without touching the
+ * hook glyph's own shape. Starting value — tune visually in Storybook.
+ */
+export const BRACKET_STAFF_GAP_PX = STAFF_LINE_SPACING * 1;
+
+/**
+ * Horizontal gap (px) reserved to the left of a bracket connector's stem,
+ * so it doesn't sit flush against the container/page edge. Starting value —
+ * tune visually in Storybook.
+ */
+export const BRACKET_LEFT_MARGIN_PX = STAFF_LINE_SPACING * 0.5;
+
+/**
+ * Horizontal depth (px) a bracket connector extends left of the staves it
+ * joins: the natural width of the engraved hook glyphs it's built from (see
+ * `utils/svgCreator/brace.ts`) plus `BRACKET_LEFT_MARGIN_PX`. Combined with
+ * `BRACKET_STAFF_GAP_PX` (see `measure.ts`'s `#renderGroupConnectors`), the
+ * hook's outermost tip lands slightly past the staves' plain barline
+ * connector, while the stem gets breathing room on its other side.
+ */
+export const BRACKET_WIDTH_PX =
+  STAFF_LINE_SPACING * 1.876 + BRACKET_LEFT_MARGIN_PX;
+
+/**
+ * Additional upward shift (px) applied to a bracket connector's top (and,
+ * since its height is unchanged, its bottom follows automatically) beyond
+ * the shared CONNECTOR_TOP_PX baseline used by the barline/brace — a
+ * bracket's hook needs to curl clearly above/below the staves it groups,
+ * not just blend into the top/bottom staff line. Brace-only connectors are
+ * unaffected. Starting value — tune visually in Storybook.
+ */
+export const BRACKET_TOP_OFFSET_PX = STAFF_LINE_SPACING * 0.5;
+
+/**
+ * Extra height (px) added to a bracket connector's overall span, split
+ * evenly between the top and bottom shift — on top of BRACKET_TOP_OFFSET_PX
+ * — so both hooks clear their staff lines by a bit more margin. Brace-only
+ * connectors are unaffected. Starting value — tune visually in Storybook.
+ */
+export const BRACKET_EXTRA_HEIGHT_PX = STAFF_LINE_SPACING * 0.5;
+
+/**
+ * Thickness (px) of a bracket connector's straight stem, drawn as a plain
+ * filled rectangle between its top and bottom hook glyphs. Sourced from the
+ * reference engraving font's bracket stem thickness (0.5 staff-spaces).
+ */
+export const BRACKET_STEM_THICKNESS_PX = STAFF_LINE_SPACING * 0.5;

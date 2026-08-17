@@ -2,16 +2,20 @@ import {
   AccidentalType,
   ArticulationType,
   Chord,
+  ClefType,
   DurationType,
   DynamicMarking,
   GraceDuration,
   GraceSlur,
   GraceType,
   HairpinRole,
+  Mode,
   Note,
   NoteLetter,
   Octave,
+  StaffGroupType,
   StressType,
+  TimeSignature,
   TupletRatio,
 } from './theory';
 
@@ -113,6 +117,7 @@ export interface IGuitarNoteElement {
   hammerOn: ConnectorRole | null;
   pullOff: ConnectorRole | null;
   slide: ConnectorRole | null;
+  // todo
   //bend: SOMETHING | null;
 }
 
@@ -120,9 +125,27 @@ export interface IRestElement {
   duration: DurationType;
 }
 
+export interface IClefElement {
+  clef: ClefType;
+}
+
 export interface ITupletElement {
   ratio: TupletRatio;
   readonly flatElements: NoteChordOrRestElementType[];
+}
+
+export interface IStaffElementBase {
+  group: StaffGroupType | null;
+  groupId: string | null;
+  time: TimeSignature;
+  readonly staffHeight: number;
+  readonly staffLineCount: number;
+}
+
+export interface IStaffElement extends IStaffElementBase {
+  keySig: Note;
+  mode: Mode;
+  clef: ClefType;
 }
 
 export type NoteElementType = HTMLElement & INoteElement;
@@ -130,6 +153,9 @@ export type ChordElementType = HTMLElement & IChordElement;
 export type RestElementType = HTMLElement & IRestElement;
 export type GuitarNoteElementType = HTMLElement & IGuitarNoteElement;
 export type TupletElementType = HTMLElement & ITupletElement;
+export type ClefElementType = HTMLElement & IClefElement;
+export type StaffElementBaseType = HTMLElement & IStaffElementBase;
+export type StaffElementType = HTMLElement & IStaffElement;
 export type NoteOrChordElementType = NoteElementType | ChordElementType;
 export type NoteChordOrRestElementType =
   | NoteElementType
@@ -139,6 +165,15 @@ export type NoteLikeElementType =
   | NoteElementType
   | GuitarNoteElementType
   | ChordElementType;
+
+// A <music-clef> encountered in a staff's slotted content, marking a
+// mid-stream clef change. `afterElementIndex` is the index (into the
+// resulting flatElements array) of the note/chord/rest this marker follows;
+// -1 means the marker appears before any note/chord/rest.
+export type ClefMarkerPlacement = {
+  afterElementIndex: number;
+  element: ClefElementType;
+};
 
 export type YCoordinates = Partial<Record<NoteLetterOctave, number>>;
 

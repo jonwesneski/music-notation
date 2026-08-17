@@ -180,10 +180,6 @@ function renderNote(staff: Element, value: NoteLetterOctave): HTMLElement {
 }
 
 describe(MUSIC_STAFF_VOCAL, () => {
-  it('registers as a custom element', () => {
-    expect(customElements.get(MUSIC_STAFF_VOCAL)).toBeDefined();
-  });
-
   it('renders shadow root with provided attributes', () => {
     const el = document.createElement(MUSIC_STAFF_VOCAL) as any;
     el.setAttribute('voice', 'soprano');
@@ -355,10 +351,6 @@ describe(`${MUSIC_STAFF_VOCAL} bass note head alignment`, () => {
 });
 
 describe(`${MUSIC_STAFF_VOCAL} lyrics`, () => {
-  it('registers lyrics element as a custom element', () => {
-    expect(customElements.get(MUSIC_LYRICS)).toBeDefined();
-  });
-
   it('creates music-lyrics element with verse attribute', () => {
     const lyrics = document.createElement(MUSIC_LYRICS) as any;
     lyrics.setAttribute('verse', '1');

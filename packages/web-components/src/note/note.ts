@@ -454,7 +454,7 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
     }
 
     private render(): void {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- contructor creates it
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- constructor attaches the shadow root
       this.shadowRoot!.innerHTML = `
         <style>
           :host { display: inline-block; width: 32px; height: 60px; overflow: visible; }
@@ -499,7 +499,7 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
 
       this.#appendGraceNotes(noteSvg, accidental);
 
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- contructor creates it
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- constructor attaches the shadow root
       this.shadowRoot!.appendChild(noteSvg);
 
       noteSvg.addEventListener('click', (e) => {

@@ -26,6 +26,21 @@ one-step-at-a-time/
 
 - Always use curly braces around conditional branches (`if`, `else`, `else if`), even for single-line bodies
 
+# Code Comments
+
+- **Default: no comments.** Delete anything that restates what the code already says.
+- **Never point-in-time.** No references to refactors, migrations, "used to be X", ticket/PR/issue numbers, or author names/initials — that belongs in commit messages, not source.
+- **Design-decision comments are allowed**, phrased differently depending on scope:
+  - **Single-file rationale** (a non-obvious constraint, derivation, or workaround local to one file): state the constraint tersely, with brief rationale if needed. No discussion of alternatives rejected. `packages/web-components/src/utils/notationDimensions.ts`'s per-constant JSDoc (value + one-line derivation) is the model to match.
+  - **Cross-file design decisions** (mechanisms that coordinate across multiple files — batching, event dispatch/orchestration, redraw/trigger sequencing): rationale **and** a brief note of alternatives rejected are allowed, since maintainers touching any one of the files need the full picture.
+  - **Polymorphic/OOP-shape comments** (interfaces, abstract/base classes, inheritance hierarchies explaining why a shape exists): always terse — state the constraint only, never alternatives rejected, even when the hierarchy spans multiple files.
+- **"This may change" / forward-looking design notes are fine** — flagging that a decision is provisional and may be revisited is not point-in-time in the disallowed sense.
+- **Verified-true but undiagnosed constraints are allowed if flagged honestly** — e.g. "import order matters here; root cause not diagnosed" is acceptable when the constraint is real and load-bearing. Don't silently omit it, and don't fabricate a false explanation.
+- **JSDoc comment blocks with `@param`/`@returns`** are only expected on symbols that are part of a package's actual public npm surface (e.g. `packages/web-components`'s custom elements, exported types, `types.d.ts` JSX declarations) — not on internal-only exports. Elsewhere, treat JSDoc under the same "only if non-obvious" rule as regular comments — no boilerplate `@param` restating the type/name.
+- **TODO comments are allowed only if they describe a real future constraint/trigger** (e.g. "revisit when X ships Y"). Vague deferrals ("may revisit this", "todo: fix later") are not allowed.
+- **No verbosity for its own sake** — keep comments as short as the point requires. Length is fine when the subject is genuinely complex, not otherwise.
+- **eslint-disable justification comments follow the same bar** — state the actual reason the rule doesn't apply, not a content-free assertion (`-- it's okay`).
+
 # CI Error Guidelines
 
 If the user wants help with fixing an error in their CI pipeline, use the following flow:

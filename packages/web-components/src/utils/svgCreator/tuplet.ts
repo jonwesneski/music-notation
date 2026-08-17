@@ -92,7 +92,6 @@ export function createTupletBracketSvg(
     }
   }
 
-  // Numeral (always rendered)
   const text = document.createElementNS(SVG_NS, 'text');
   text.classList.add('tuplet-numeral');
   text.setAttribute('x', `${numeralX}`);

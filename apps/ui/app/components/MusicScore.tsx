@@ -2,6 +2,7 @@ import '@one-step-at-a-time/web-components';
 import type {
   DurationType,
   Note,
+  Octave,
   PitchChangeDetail,
 } from '@one-step-at-a-time/web-components';
 import { useEffect, useRef, useState } from 'react';
@@ -10,22 +11,45 @@ type NoteItem = {
   id: string;
   type: 'note';
   value: Note;
+  octave: Octave | null;
   duration: DurationType;
 };
 type ChordItem = {
   id: string;
   type: 'chord';
   duration: DurationType;
-  notes: Note[];
+  notes: { value: Note; octave: Octave | null }[];
 };
 type StaffItem = NoteItem | ChordItem;
 
 const initialNotes: StaffItem[] = [
-  { id: 'c1', type: 'chord', duration: 'eighth', notes: ['A', 'E'] },
-  { id: 'c2', type: 'chord', duration: 'eighth', notes: ['A', 'E'] },
-  { id: 'n1', type: 'note', value: 'D', duration: 'quarter' },
-  { id: 'n2', type: 'note', value: 'F#' as Note, duration: 'quarter' },
-  { id: 'n3', type: 'note', value: 'B', duration: 'quarter' },
+  {
+    id: 'c1',
+    type: 'chord',
+    duration: 'eighth',
+    notes: [
+      { value: 'A', octave: 4 },
+      { value: 'E', octave: 4 },
+    ],
+  },
+  {
+    id: 'c2',
+    type: 'chord',
+    duration: 'eighth',
+    notes: [
+      { value: 'A', octave: 4 },
+      { value: 'E', octave: 4 },
+    ],
+  },
+  { id: 'n1', type: 'note', value: 'D', octave: 4, duration: 'quarter' },
+  {
+    id: 'n2',
+    type: 'note',
+    value: 'F#' as Note,
+    octave: 4,
+    duration: 'quarter',
+  },
+  { id: 'n3', type: 'note', value: 'B', octave: 4, duration: 'quarter' },
 ];
 
 export default function MusicScore() {
@@ -48,20 +72,19 @@ export default function MusicScore() {
     };
 
     const onPitchChange = (e: Event) => {
-      const { elementIndex, chordNoteIndex, toNote } = (e as CustomEvent)
-        .detail as PitchChangeDetail;
-      // todo: fixing typings on web components. I want note and chord type to support Note and Octave
-      const newValue = toNote as Note;
+      const { elementIndex, chordNoteIndex, toNote, toOctave } = (
+        e as CustomEvent
+      ).detail as PitchChangeDetail;
 
       setItems((prev) => {
         const next = [...prev];
         const item = next[elementIndex];
         if (item.type === 'chord' && chordNoteIndex !== null) {
           const updatedNotes = [...item.notes];
-          updatedNotes[chordNoteIndex] = newValue;
+          updatedNotes[chordNoteIndex] = { value: toNote, octave: toOctave };
           next[elementIndex] = { ...item, notes: updatedNotes };
         } else if (item.type === 'note') {
-          next[elementIndex] = { ...item, value: newValue };
+          next[elementIndex] = { ...item, value: toNote, octave: toOctave };
         }
         return next;
       });
@@ -78,38 +101,43 @@ export default function MusicScore() {
   return (
     <music-composition keySig="D" mode="major" time="4/4">
       <music-measure>
-        <music-staff-treble editable managed ref={staffRef}>
+        <music-staff clef="treble" editable managed ref={staffRef}>
           {items.map((item) =>
             item.type === 'chord' ? (
               <music-chord key={item.id} duration={item.duration}>
                 {item.notes.map((n, j) => (
-                  <music-note key={j} note={n}></music-note>
+                  <music-note
+                    key={j}
+                    note={n.value}
+                    octave={n.octave ?? undefined}
+                  ></music-note>
                 ))}
               </music-chord>
             ) : (
               <music-note
                 key={item.id}
                 note={item.value}
+                octave={item.octave ?? undefined}
                 duration={item.duration}
               ></music-note>
             )
           )}
-        </music-staff-treble>
-        <music-staff-bass>
+        </music-staff>
+        <music-staff clef="bass">
           <music-note note="A" duration="quarter"></music-note>
-        </music-staff-bass>
+        </music-staff>
         <music-staff-vocal></music-staff-vocal>
       </music-measure>
       <music-measure>
-        <music-staff-treble>
+        <music-staff clef="treble">
           <music-note note="A" duration="thirtysecond"></music-note>
           <music-note note="D" duration="eighth"></music-note>
-        </music-staff-treble>
-        <music-staff-bass>
+        </music-staff>
+        <music-staff clef="bass">
           <music-note note="A" duration="quarter"></music-note>
           <music-note note="A" duration="quarter"></music-note>
           <music-rest duration="eighth"></music-rest>
-        </music-staff-bass>
+        </music-staff>
 
         <music-staff-vocal voice="soprano">
           <music-note note={'C'} octave={5} duration="eighth"></music-note>
@@ -126,15 +154,15 @@ export default function MusicScore() {
         </music-staff-vocal>
       </music-measure>
       <music-measure>
-        <music-staff-treble>
+        <music-staff clef="treble">
           <music-note note="A" duration="quarter"></music-note>
           <music-note note="A" duration="quarter"></music-note>
           <music-note note="A" duration="quarter"></music-note>
           <music-note note="A" duration="quarter"></music-note>
-        </music-staff-treble>
-        <music-staff-bass>
+        </music-staff>
+        <music-staff clef="bass">
           <music-note note="A" duration="quarter"></music-note>
-        </music-staff-bass>
+        </music-staff>
         <music-staff-vocal></music-staff-vocal>
       </music-measure>
     </music-composition>

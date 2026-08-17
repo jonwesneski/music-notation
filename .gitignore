@@ -57,4 +57,6 @@ storybook-static
 
 out-tsc
 
+packages/web-components/smufl
+
 zDelete

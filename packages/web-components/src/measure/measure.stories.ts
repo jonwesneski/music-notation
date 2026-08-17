@@ -12,7 +12,8 @@ const meta: Meta = {
       mode=${args.mode}
       time=${args.time}
     >
-      <music-staff-treble
+      <music-staff
+        clef="treble"
         keySig=${args.keySig}
         mode=${args.mode}
         time=${args.time}
@@ -21,7 +22,18 @@ const meta: Meta = {
         <music-note note="E" duration="quarter"></music-note>
         <music-note note="G" duration="quarter"></music-note>
         <music-note note="C" duration="quarter"></music-note>
-      </music-staff-treble>
+      </music-staff>
+      <music-staff
+        clef="bass"
+        keySig=${args.keySig}
+        mode=${args.mode}
+        time=${args.time}
+      >
+        <music-note note="G" octave="2" duration="quarter"></music-note>
+        <music-note note="E" octave="2" duration="quarter"></music-note>
+        <music-note note="C" octave="2" duration="quarter"></music-note>
+        <music-note note="G" octave="2" duration="quarter"></music-note>
+      </music-staff>
     </music-measure>
   `,
   argTypes: {
@@ -63,42 +75,104 @@ export default meta;
 
 type Story = StoryObj;
 
-export const TrebleOnly: Story = {
-  args: { number: 1, keySig: 'C', mode: 'major', time: '4/4' },
-};
-
-export const TrebleAndBass: Story = {
-  args: { number: 1, keySig: 'C', mode: 'major', time: '4/4' },
-  render: (args) => html`
-    <music-measure
-      number=${args.number}
-      keySig=${args.keySig}
-      mode=${args.mode}
-      time=${args.time}
-    >
-      <music-staff-treble
-        keySig=${args.keySig}
-        mode=${args.mode}
-        time=${args.time}
+export const GrandStaves: Story = {
+  render: () => html`
+    <music-measure number="1" keySig="C" mode="major" time="4/4">
+      <music-staff
+        clef="treble"
+        group="grand"
+        keySig="C"
+        mode="major"
+        time="4/4"
       >
-        <music-note note="C" duration="quarter"></music-note>
-        <music-note note="E" duration="quarter"></music-note>
-        <music-note note="G" duration="quarter"></music-note>
-        <music-note note="C" duration="quarter"></music-note>
-      </music-staff-treble>
-      <music-staff-bass
-        keySig=${args.keySig}
-        mode=${args.mode}
-        time=${args.time}
+        <music-note note="C" duration="whole"></music-note>
+      </music-staff>
+      <music-staff clef="bass" keySig="C" mode="major" time="4/4">
+        <music-note note="C" duration="whole"></music-note>
+      </music-staff>
+      <music-staff
+        clef="treble"
+        group="grand"
+        keySig="C"
+        mode="major"
+        time="4/4"
       >
-        <music-note note="C" duration="half"></music-note>
-        <music-note note="G" duration="half"></music-note>
-      </music-staff-bass>
+        <music-note note="G" duration="whole"></music-note>
+      </music-staff>
+      <music-staff clef="bass" keySig="C" mode="major" time="4/4">
+        <music-note note="G" duration="whole"></music-note>
+      </music-staff>
     </music-measure>
   `,
 };
 
-export const WithGuitarTab: Story = {
+export const GroupBracketWithoutGroupId: Story = {
+  render: () => html`
+    <music-measure number="1" keySig="C" mode="major" time="4/4">
+      <music-staff
+        clef="treble"
+        group="bracket"
+        keySig="C"
+        mode="major"
+        time="4/4"
+      >
+        <music-note note="C" octave="5" duration="whole"></music-note>
+      </music-staff>
+      <music-staff clef="treble" keySig="C" mode="major" time="4/4">
+        <music-note note="G" octave="4" duration="whole"></music-note>
+      </music-staff>
+    </music-measure>
+  `,
+};
+
+export const GroupBracket: Story = {
+  render: () => html`
+    <music-measure number="1" keySig="C" mode="major" time="4/4">
+      <music-staff
+        clef="treble"
+        group="bracket"
+        group-id="choir"
+        keySig="C"
+        mode="major"
+        time="4/4"
+      >
+        <music-note note="C" octave="5" duration="whole"></music-note>
+      </music-staff>
+      <music-staff
+        clef="treble"
+        group="bracket"
+        group-id="choir"
+        keySig="C"
+        mode="major"
+        time="4/4"
+      >
+        <music-note note="G" octave="4" duration="whole"></music-note>
+      </music-staff>
+      <music-staff
+        clef="bass"
+        group="bracket"
+        group-id="choir"
+        keySig="C"
+        mode="major"
+        time="4/4"
+      >
+        <music-note note="E" octave="4" duration="whole"></music-note>
+      </music-staff>
+      <music-staff
+        clef="bass"
+        group="bracket"
+        group-id="choir"
+        keySig="C"
+        mode="major"
+        time="4/4"
+      >
+        <music-note note="C" octave="3" duration="whole"></music-note>
+      </music-staff>
+    </music-measure>
+  `,
+};
+
+export const GroupBracketWithGuitarTab: Story = {
   args: { number: 1, keySig: 'C', mode: 'major', time: '4/4' },
   render: (args) => html`
     <music-measure
@@ -107,7 +181,9 @@ export const WithGuitarTab: Story = {
       mode=${args.mode}
       time=${args.time}
     >
-      <music-staff-treble
+      <music-staff
+        clef="treble"
+        group="bracket"
         keySig=${args.keySig}
         mode=${args.mode}
         time=${args.time}
@@ -116,7 +192,7 @@ export const WithGuitarTab: Story = {
         <music-note note="G" duration="quarter"></music-note>
         <music-note note="B" duration="quarter"></music-note>
         <music-note note="E" duration="quarter"></music-note>
-      </music-staff-treble>
+      </music-staff>
       <music-staff-guitar-tab>
         <music-guitar-note
           fret="0"
