@@ -6,12 +6,12 @@ import { useCompositionFormSession } from './CompositionFormSessionContext';
 import type { DraftMusicEntry } from './types';
 import { DURATION_OPTIONS, NOTE_OPTIONS } from './types';
 
-interface NoteChordInputProps {
+interface EntryInputProps {
   onAdd: (entry: DraftMusicEntry) => void;
   remainingBeats: number;
 }
 
-export function NoteChordInput({ onAdd, remainingBeats }: NoteChordInputProps) {
+export function EntryInput({ onAdd, remainingBeats }: EntryInputProps) {
   const { session, setSession } = useCompositionFormSession();
 
   const activeEntry = session.lastActiveEntry;
@@ -23,8 +23,7 @@ export function NoteChordInput({ onAdd, remainingBeats }: NoteChordInputProps) {
     { value: 'E' },
   ]);
 
-  const canAddNote = durationToFactor[duration] <= remainingBeats;
-  const canAddChord = durationToFactor[duration] <= remainingBeats;
+  const canAdd = durationToFactor[duration] <= remainingBeats;
 
   function handleNoteAdd() {
     onAdd({ type: 'note', value: noteValue, duration });
@@ -38,6 +37,10 @@ export function NoteChordInput({ onAdd, remainingBeats }: NoteChordInputProps) {
     });
   }
 
+  function handleRestAdd() {
+    onAdd({ type: 'rest', duration });
+  }
+
   return (
     <div
       className="border border-zinc-200 rounded bg-white"
@@ -49,18 +52,25 @@ export function NoteChordInput({ onAdd, remainingBeats }: NoteChordInputProps) {
         className="flex items-center gap-4 border-b border-zinc-200 px-4 py-2"
       >
         <Radio
-          name="note-chord-entry"
+          name="entry-type"
           value="note"
           label="Note"
           checked={activeEntry === 'note'}
           onChange={() => setSession({ lastActiveEntry: 'note' })}
         />
         <Radio
-          name="note-chord-entry"
+          name="entry-type"
           value="chord"
           label="Chord"
           checked={activeEntry === 'chord'}
           onChange={() => setSession({ lastActiveEntry: 'chord' })}
+        />
+        <Radio
+          name="entry-type"
+          value="rest"
+          label="Rest"
+          checked={activeEntry === 'rest'}
+          onChange={() => setSession({ lastActiveEntry: 'rest' })}
         />
       </div>
 
@@ -87,11 +97,7 @@ export function NoteChordInput({ onAdd, remainingBeats }: NoteChordInputProps) {
                 </option>
               ))}
             </Select>
-            <Button
-              type="button"
-              disabled={!canAddNote}
-              onClick={handleNoteAdd}
-            >
+            <Button type="button" disabled={!canAdd} onClick={handleNoteAdd}>
               Add
             </Button>
           </>
@@ -135,11 +141,25 @@ export function NoteChordInput({ onAdd, remainingBeats }: NoteChordInputProps) {
                 </option>
               ))}
             </Select>
-            <Button
-              type="button"
-              disabled={!canAddChord}
-              onClick={handleChordAdd}
+            <Button type="button" disabled={!canAdd} onClick={handleChordAdd}>
+              Add
+            </Button>
+          </>
+        )}
+
+        {activeEntry === 'rest' && (
+          <>
+            <Select
+              value={duration}
+              onChange={(e) => setDuration(e.target.value as DurationType)}
             >
+              {DURATION_OPTIONS.map((d) => (
+                <option key={d} value={d}>
+                  {d}
+                </option>
+              ))}
+            </Select>
+            <Button type="button" disabled={!canAdd} onClick={handleRestAdd}>
               Add
             </Button>
           </>

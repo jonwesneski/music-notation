@@ -19,9 +19,17 @@ export type ChordEntry = {
   notes: Note[];
   duration: DurationType;
 };
-export type MusicEntry = NoteEntry | ChordEntry;
-// Entry shape before an id is assigned (used when constructing entries in NoteChordInput)
-export type DraftMusicEntry = Omit<NoteEntry, 'id'> | Omit<ChordEntry, 'id'>;
+export type RestEntry = {
+  id: string;
+  type: 'rest';
+  duration: DurationType;
+};
+export type MusicEntry = NoteEntry | ChordEntry | RestEntry;
+// Entry shape before an id is assigned (used when constructing entries in EntryInput)
+export type DraftMusicEntry =
+  | Omit<NoteEntry, 'id'>
+  | Omit<ChordEntry, 'id'>
+  | Omit<RestEntry, 'id'>;
 
 // Flat normalized nodes
 export type NormalizedMeasure = { id: string; staffIds: string[] };

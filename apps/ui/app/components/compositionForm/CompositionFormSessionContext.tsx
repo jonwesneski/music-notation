@@ -1,7 +1,7 @@
 import { createContext, useContext, useState } from 'react';
 
 export type CompositionFormSession = {
-  lastActiveEntry: 'note' | 'chord';
+  lastActiveEntry: 'note' | 'chord' | 'rest';
   entryPanelTab: string | null;
 };
 

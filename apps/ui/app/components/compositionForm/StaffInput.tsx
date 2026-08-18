@@ -2,7 +2,7 @@ import '@one-step-at-a-time/web-components';
 import { durationToFactor } from '@one-step-at-a-time/web-components';
 import { useFormContext } from 'react-hook-form';
 import { AnchoredTabPanel } from './AnchoredTabPanel';
-import { NoteChordInput } from './NoteChordInput';
+import { EntryInput } from './EntryInput';
 import type { CompositionFormValues, DraftMusicEntry } from './types';
 
 interface StaffInputProps {
@@ -47,20 +47,26 @@ export function StaffInput({
     isSelected ? 'rainbow-selected' : ''
   }`;
 
-  const entryNodes = entries.map((entry, i) =>
-    entry.type === 'note' ? (
-      <music-note key={i} note={entry.value} duration={entry.duration} />
-    ) : (
-      <music-chord key={i} duration={entry.duration}>
-        {entry.notes.map((n, j) => (
-          <music-note key={j} note={n} />
-        ))}
-      </music-chord>
-    )
-  );
+  const entryNodes = entries.map((entry, i) => {
+    if (entry.type === 'note') {
+      return (
+        <music-note key={i} note={entry.value} duration={entry.duration} />
+      );
+    } else if (entry.type === 'chord') {
+      return (
+        <music-chord key={i} duration={entry.duration}>
+          {entry.notes.map((n, j) => (
+            <music-note key={j} note={n} />
+          ))}
+        </music-chord>
+      );
+    } else {
+      return <music-rest key={i} duration={entry.duration} />;
+    }
+  });
 
   return (
-    <div className="relative">
+    <>
       <music-staff
         clef={staff.type === 'treble' ? 'treble' : 'bass'}
         className={staffClass}
@@ -77,7 +83,7 @@ export function StaffInput({
             {
               label: 'Entry',
               content: (
-                <NoteChordInput
+                <EntryInput
                   onAdd={(entry) => onAddEntry(measureId, staffId, entry)}
                   remainingBeats={remainingBeats}
                 />
@@ -86,6 +92,6 @@ export function StaffInput({
           ]}
         />
       )}
-    </div>
+    </>
   );
 }
