@@ -1,6 +1,7 @@
 import '@one-step-at-a-time/web-components';
 import { durationToFactor } from '@one-step-at-a-time/web-components';
 import { useFormContext } from 'react-hook-form';
+import { AnchoredTabPanel } from './AnchoredTabPanel';
 import { NoteChordInput } from './NoteChordInput';
 import type { CompositionFormValues, DraftMusicEntry } from './types';
 
@@ -71,12 +72,19 @@ export function StaffInput({
         {entryNodes}
       </music-staff>
       {isSelected && (
-        <div className="absolute top-full left-1/2 -translate-x-1/2 z-20 mt-1 w-72 shadow-lg">
-          <NoteChordInput
-            onAdd={(entry) => onAddEntry(measureId, staffId, entry)}
-            remainingBeats={remainingBeats}
-          />
-        </div>
+        <AnchoredTabPanel
+          tabs={[
+            {
+              label: 'Entry',
+              content: (
+                <NoteChordInput
+                  onAdd={(entry) => onAddEntry(measureId, staffId, entry)}
+                  remainingBeats={remainingBeats}
+                />
+              ),
+            },
+          ]}
+        />
       )}
     </div>
   );

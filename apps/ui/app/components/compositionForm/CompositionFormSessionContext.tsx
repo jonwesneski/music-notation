@@ -2,6 +2,7 @@ import { createContext, useContext, useState } from 'react';
 
 export type CompositionFormSession = {
   tab: 'note' | 'chord';
+  entryPanelTab: string | null;
 };
 
 const CompositionFormSessionContext = createContext<{
@@ -17,6 +18,7 @@ export function CompositionFormSessionProvider({
 }) {
   const [session, setSessionState] = useState<CompositionFormSession>({
     tab: 'note',
+    entryPanelTab: null,
   });
   const setSession = (patch: Partial<CompositionFormSession>) =>
     setSessionState((prev) => ({ ...prev, ...patch }));
