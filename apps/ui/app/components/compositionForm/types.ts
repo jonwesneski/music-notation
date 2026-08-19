@@ -47,7 +47,25 @@ export type CompositionStructure = {
   entriesById: Record<string, MusicEntry>;
 };
 
-export type Selection = { measureId: string | null; staffId: string | null };
+export type Selection = {
+  measureIds: string[];
+  staffIds: string[];
+  entryIds: string[];
+};
+
+export const EMPTY_SELECTION: Selection = {
+  measureIds: [],
+  staffIds: [],
+  entryIds: [],
+};
+
+export function isSelectionEmpty(selection: Selection): boolean {
+  return (
+    selection.measureIds.length === 0 &&
+    selection.staffIds.length === 0 &&
+    selection.entryIds.length === 0
+  );
+}
 
 // Root form shape (BasicInfo fields + structure)
 export type CompositionFormValues = {

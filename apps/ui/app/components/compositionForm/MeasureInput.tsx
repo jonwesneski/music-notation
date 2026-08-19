@@ -1,49 +1,31 @@
 import '@one-step-at-a-time/web-components';
 import { useFormContext } from 'react-hook-form';
+import { useCompositionFormSession } from './CompositionFormSessionContext';
 import { StaffInput } from './StaffInput';
-import type {
-  CompositionFormValues,
-  DraftMusicEntry,
-  Selection,
-  StaffType,
-} from './types';
+import type { CompositionFormValues, StaffType } from './types';
 
 interface MeasureInputProps {
   measureId: string;
-  isMeasureSelected: boolean;
-  selection: Selection;
-  onSelectMeasure: (id: string) => void;
-  onSelectStaff: (
-    measureId: string,
-    staffId: string,
-    e: React.MouseEvent
-  ) => void;
-  onAddEntry: (
-    measureId: string,
-    staffId: string,
-    entry: DraftMusicEntry
-  ) => void;
-  onAddStaff: (measureId: string, staffType: StaffType) => void;
 }
 
-export function MeasureInput({
-  measureId,
-  isMeasureSelected,
-  selection,
-  onSelectMeasure,
-  onSelectStaff,
-  onAddEntry,
-  onAddStaff,
-}: MeasureInputProps) {
+export function MeasureInput({ measureId }: MeasureInputProps) {
   const { watch } = useFormContext<CompositionFormValues>();
   const measure = watch(`measuresById.${measureId}`);
+  const { session, selectMeasure, registerMeasureRef, addStaff } =
+    useCompositionFormSession();
+
+  const isMeasureSelected = session.selection.measureIds.includes(measureId);
+  const containsSelectedStaff = measure.staffIds.some((id) =>
+    session.selection.staffIds.includes(id)
+  );
 
   return (
     <music-measure
+      ref={(el: HTMLElement | null) => registerMeasureRef(measureId, el)}
       className={`cursor-pointer rounded transition-shadow ${
-        isMeasureSelected && !selection.staffId ? 'rainbow-selected pb-10' : ''
-      } ${isMeasureSelected ? 'pb-10' : ''}`}
-      onClick={() => onSelectMeasure(measureId)}
+        isMeasureSelected ? 'rainbow-selected' : ''
+      } ${isMeasureSelected || containsSelectedStaff ? 'pb-10' : ''}`}
+      onClick={() => selectMeasure(measureId)}
     >
       {measure.staffIds.length === 0 && (
         <div className="text-zinc-400 text-sm px-3 py-4 select-none">
@@ -51,14 +33,7 @@ export function MeasureInput({
         </div>
       )}
       {measure.staffIds.map((staffId) => (
-        <StaffInput
-          key={staffId}
-          staffId={staffId}
-          measureId={measureId}
-          isSelected={isMeasureSelected && selection.staffId === staffId}
-          onSelectStaff={onSelectStaff}
-          onAddEntry={onAddEntry}
-        />
+        <StaffInput key={staffId} staffId={staffId} measureId={measureId} />
       ))}
       {isMeasureSelected && (
         <select
@@ -66,7 +41,7 @@ export function MeasureInput({
           value=""
           onChange={(e) => {
             const value = e.target.value as StaffType;
-            if (value) onAddStaff(measureId, value);
+            if (value) addStaff(measureId, value);
           }}
           onClick={(e) => e.stopPropagation()}
         >

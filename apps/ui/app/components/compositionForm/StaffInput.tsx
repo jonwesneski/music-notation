@@ -2,38 +2,32 @@ import '@one-step-at-a-time/web-components';
 import { durationToFactor } from '@one-step-at-a-time/web-components';
 import { useFormContext } from 'react-hook-form';
 import { AnchoredTabPanel } from './AnchoredTabPanel';
+import { useCompositionFormSession } from './CompositionFormSessionContext';
 import { EntryInput } from './EntryInput';
-import type { CompositionFormValues, DraftMusicEntry } from './types';
+import type { CompositionFormValues } from './types';
 
 interface StaffInputProps {
   staffId: string;
   measureId: string;
-  isSelected: boolean;
-  onSelectStaff: (
-    measureId: string,
-    staffId: string,
-    e: React.MouseEvent
-  ) => void;
-  onAddEntry: (
-    measureId: string,
-    staffId: string,
-    entry: DraftMusicEntry
-  ) => void;
 }
 
-export function StaffInput({
-  staffId,
-  measureId,
-  isSelected,
-  onSelectStaff,
-  onAddEntry,
-}: StaffInputProps) {
+export function StaffInput({ staffId, measureId }: StaffInputProps) {
   const { watch } = useFormContext<CompositionFormValues>();
   const staff = watch(`stavesById.${staffId}`);
   const entriesById = watch('entriesById');
   const keySig = watch('keySig');
   const timeSig = watch('timeSig');
   const mode = watch('mode');
+  const {
+    session,
+    selectStaff,
+    selectEntry,
+    registerStaffRef,
+    registerEntryRef,
+    addEntry,
+  } = useCompositionFormSession();
+
+  const isSelected = session.selection.staffIds.includes(staffId);
 
   const entries = staff.entryIds.map((eid) => entriesById[eid]);
 
@@ -47,33 +41,62 @@ export function StaffInput({
     isSelected ? 'rainbow-selected' : ''
   }`;
 
-  const entryNodes = entries.map((entry, i) => {
+  const entryNodes = entries.map((entry) => {
+    const isEntrySelected = session.selection.entryIds.includes(entry.id);
+    const entryClass = isEntrySelected ? 'rainbow-selected' : '';
+    const handleEntryClick = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      selectEntry(measureId, staffId, entry.id, e);
+    };
+
     if (entry.type === 'note') {
       return (
-        <music-note key={i} note={entry.value} duration={entry.duration} />
+        <music-note
+          key={entry.id}
+          ref={(el: HTMLElement | null) => registerEntryRef(entry.id, el)}
+          note={entry.value}
+          duration={entry.duration}
+          className={entryClass}
+          onClick={handleEntryClick}
+        />
       );
     } else if (entry.type === 'chord') {
       return (
-        <music-chord key={i} duration={entry.duration}>
+        <music-chord
+          key={entry.id}
+          ref={(el: HTMLElement | null) => registerEntryRef(entry.id, el)}
+          duration={entry.duration}
+          className={entryClass}
+          onClick={handleEntryClick}
+        >
           {entry.notes.map((n, j) => (
             <music-note key={j} note={n} />
           ))}
         </music-chord>
       );
     } else {
-      return <music-rest key={i} duration={entry.duration} />;
+      return (
+        <music-rest
+          key={entry.id}
+          ref={(el: HTMLElement | null) => registerEntryRef(entry.id, el)}
+          duration={entry.duration}
+          className={entryClass}
+          onClick={handleEntryClick}
+        />
+      );
     }
   });
 
   return (
     <>
       <music-staff
+        ref={(el: HTMLElement | null) => registerStaffRef(staffId, el)}
         clef={staff.type === 'treble' ? 'treble' : 'bass'}
         className={staffClass}
         keySig={keySig}
         mode={mode}
         time={timeSig}
-        onClick={(e) => onSelectStaff(measureId, staffId, e)}
+        onClick={(e) => selectStaff(measureId, staffId, e)}
       >
         {entryNodes}
       </music-staff>
@@ -81,10 +104,10 @@ export function StaffInput({
         <AnchoredTabPanel
           tabs={[
             {
-              label: 'Entry',
+              label: 'Staff Entries',
               content: (
                 <EntryInput
-                  onAdd={(entry) => onAddEntry(measureId, staffId, entry)}
+                  onAdd={(entry) => addEntry(measureId, staffId, entry)}
                   remainingBeats={remainingBeats}
                 />
               ),

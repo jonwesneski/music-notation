@@ -3,6 +3,7 @@ import { Select, TextInput } from '../../design-system';
 import {
   KEY_SIGNATURE_OPTIONS,
   MODE_OPTIONS,
+  TIME_SIGNATURE_OPTIONS,
   type CompositionFormValues,
 } from './types';
 
@@ -32,7 +33,7 @@ export function BasicInfoInput() {
       <div className="flex flex-col">
         <label className={labelClass}>Time</label>
         <Select className="w-full" {...register('timeSig')}>
-          {KEY_SIGNATURE_OPTIONS.map((time) => (
+          {TIME_SIGNATURE_OPTIONS.map((time) => (
             <option key={time} value={time}>
               {time}
             </option>
