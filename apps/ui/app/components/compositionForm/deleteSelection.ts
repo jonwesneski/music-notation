@@ -30,7 +30,9 @@ export function removeSelectionFromStructure(
         id,
         {
           ...measure,
-          staffIds: measure.staffIds.filter((sid) => !staffIdsToDelete.has(sid)),
+          staffIds: measure.staffIds.filter(
+            (sid) => !staffIdsToDelete.has(sid)
+          ),
         },
       ])
   );

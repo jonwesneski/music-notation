@@ -68,10 +68,11 @@ function performInstallation(currentInstallation, nxJson) {
     })
   );
   try {
-    cp.execSync('npm i', {
+    // --include=dev forces install even if consumer env sets NODE_ENV=production / omit=dev.
+    cp.execSync('npm i --include=dev', {
       cwd: path.dirname(installationPath),
       stdio: 'inherit',
-      windowsHide: false,
+      windowsHide: true,
     });
   } catch (e) {
     // revert possible changes to the current installation
@@ -91,10 +92,18 @@ function ensureUpToDateInstallation() {
       );
       process.exit(1);
     }
-  } catch {
-    console.error(
-      '[NX]: The "nx.json" file is required when running the nx wrapper. See https://nx.dev/recipes/installation/install-non-javascript'
-    );
+  } catch (e) {
+    if (e instanceof Error && e.code === 'MODULE_NOT_FOUND') {
+      console.error(
+        '[NX]: The "nx.json" file is required when running the nx wrapper. See https://nx.dev/recipes/installation/install-non-javascript'
+      );
+    } else {
+      console.error(
+        `[NX]: Failed to parse "nx.json": ${
+          e instanceof Error ? e.message : e
+        }. See https://nx.dev/recipes/installation/install-non-javascript`
+      );
+    }
     process.exit(1);
   }
   try {
@@ -121,5 +130,4 @@ function ensureUpToDateInstallation() {
 if (!process.env.NX_WRAPPER_SKIP_INSTALL) {
   ensureUpToDateInstallation();
 }
-
-require('./installation/node_modules/nx/bin/nx');
+require('./installation/node_modules/nx/dist/bin/nx');

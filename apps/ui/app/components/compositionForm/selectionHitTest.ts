@@ -12,7 +12,9 @@ export type ElementRefMaps = {
 };
 
 export function intersects(a: DOMRect, b: DOMRect): boolean {
-  return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+  return (
+    a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top
+  );
 }
 
 export function coverageRatio(dragRect: DOMRect, elementRect: DOMRect): number {
@@ -31,7 +33,10 @@ export function coverageRatio(dragRect: DOMRect, elementRect: DOMRect): number {
 
 export function computeBoxSelection(
   dragRect: DOMRect,
-  structure: Pick<CompositionStructure, 'measureOrder' | 'measuresById' | 'stavesById'>,
+  structure: Pick<
+    CompositionStructure,
+    'measureOrder' | 'measuresById' | 'stavesById'
+  >,
   refs: ElementRefMaps
 ): Selection {
   const measureIds: string[] = [];
@@ -46,7 +51,10 @@ export function computeBoxSelection(
 
     const measure = structure.measuresById[measureId];
     const canPromoteMeasure = structure.measureOrder.length >= 2;
-    if (canPromoteMeasure && coverageRatio(dragRect, measureRect) >= COVERAGE_THRESHOLD) {
+    if (
+      canPromoteMeasure &&
+      coverageRatio(dragRect, measureRect) >= COVERAGE_THRESHOLD
+    ) {
       measureIds.push(measureId);
       continue;
     }
@@ -59,7 +67,10 @@ export function computeBoxSelection(
 
       const staff = structure.stavesById[staffId];
       const canPromoteStaff = measure.staffIds.length >= 2;
-      if (canPromoteStaff && coverageRatio(dragRect, staffRect) >= COVERAGE_THRESHOLD) {
+      if (
+        canPromoteStaff &&
+        coverageRatio(dragRect, staffRect) >= COVERAGE_THRESHOLD
+      ) {
         staffIds.push(staffId);
         continue;
       }
@@ -76,7 +87,11 @@ export function computeBoxSelection(
     }
   }
 
-  if (measureIds.length === 0 && staffIds.length === 0 && entryIds.length === 0) {
+  if (
+    measureIds.length === 0 &&
+    staffIds.length === 0 &&
+    entryIds.length === 0
+  ) {
     return EMPTY_SELECTION;
   }
   return { measureIds, staffIds, entryIds };

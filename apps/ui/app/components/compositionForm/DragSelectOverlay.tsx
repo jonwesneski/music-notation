@@ -27,11 +27,7 @@ function isFormControl(target: EventTarget | null): boolean {
   );
 }
 
-export function DragSelectOverlay({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export function DragSelectOverlay({ children }: { children: React.ReactNode }) {
   const { control } = useFormContext<CompositionFormValues>();
   const measureOrder = useWatch({ control, name: 'measureOrder' });
   const measuresById = useWatch({ control, name: 'measuresById' });

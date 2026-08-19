@@ -1,4 +1,10 @@
-import { createContext, useCallback, useContext, useRef, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useRef,
+  useState,
+} from 'react';
 import { removeSelectionFromStructure } from './deleteSelection';
 import { computeBoxSelection } from './selectionHitTest';
 import type {

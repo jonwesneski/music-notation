@@ -8,7 +8,12 @@ import {
 } from './selectionHitTest';
 import type { CompositionStructure } from './types';
 
-function rect(left: number, top: number, width: number, height: number): DOMRect {
+function rect(
+  left: number,
+  top: number,
+  width: number,
+  height: number
+): DOMRect {
   return {
     left,
     top,

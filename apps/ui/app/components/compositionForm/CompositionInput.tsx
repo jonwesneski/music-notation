@@ -1,6 +1,11 @@
 import '@one-step-at-a-time/web-components';
 import { useCallback, useEffect } from 'react';
-import { FormProvider, useForm, useFormContext, useWatch } from 'react-hook-form';
+import {
+  FormProvider,
+  useForm,
+  useFormContext,
+  useWatch,
+} from 'react-hook-form';
 import { Button } from '../../design-system';
 import { useUndoRedo } from '../../hooks/useUndoRedo';
 import { BasicInfoInput } from './BasicInfoInput';
