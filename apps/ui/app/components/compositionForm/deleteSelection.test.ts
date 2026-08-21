@@ -10,9 +10,27 @@ function buildStructure(): CompositionStructure {
       m2: { id: 'm2', staffIds: ['s3'] },
     },
     stavesById: {
-      s1: { id: 's1', type: 'treble', entryIds: ['e1', 'e2'] },
-      s2: { id: 's2', type: 'bass', entryIds: ['e3'] },
-      s3: { id: 's3', type: 'treble', entryIds: ['e4', 'e5', 'e6'] },
+      s1: {
+        id: 's1',
+        type: 'treble',
+        entryIds: ['e1', 'e2'],
+        group: null,
+        groupId: null,
+      },
+      s2: {
+        id: 's2',
+        type: 'bass',
+        entryIds: ['e3'],
+        group: null,
+        groupId: null,
+      },
+      s3: {
+        id: 's3',
+        type: 'treble',
+        entryIds: ['e4', 'e5', 'e6'],
+        group: null,
+        groupId: null,
+      },
     },
     entriesById: {
       e1: { id: 'e1', type: 'note', value: 'C', duration: 'quarter' },

@@ -1,4 +1,5 @@
 import '@one-step-at-a-time/web-components';
+import type { StaffGroupType } from '@one-step-at-a-time/web-components';
 import { useCallback, useEffect } from 'react';
 import {
   FormProvider,
@@ -15,6 +16,7 @@ import {
 } from './CompositionFormSessionContext';
 import { DragSelectOverlay } from './DragSelectOverlay';
 import { MeasureInput } from './MeasureInput';
+import { findGroupMembers } from './staffGroups';
 import type {
   CompositionFormValues,
   CompositionStructure,
@@ -203,9 +205,61 @@ export function CompositionInput() {
       },
       stavesById: {
         ...s.stavesById,
-        [newSid]: { id: newSid, type: staffType, entryIds: [] },
+        [newSid]: {
+          id: newSid,
+          type: staffType,
+          entryIds: [],
+          group: null,
+          groupId: null,
+        },
       },
     });
+  }
+
+  function setStaffGroup(
+    measureId: string,
+    staffIds: string[],
+    groupType: StaffGroupType | null
+  ) {
+    const s = getStructure();
+    const measure = s.measuresById[measureId];
+
+    // Clear group/groupId for any staff currently grouped with one of the
+    // target staves, so reassigning a subset doesn't leave a stale partial
+    // group behind.
+    const idsToClear = new Set<string>();
+    staffIds.forEach((id) => {
+      findGroupMembers(measure.staffIds, s.stavesById, id).forEach((memberId) =>
+        idsToClear.add(memberId)
+      );
+      idsToClear.add(id);
+    });
+
+    const stavesById = { ...s.stavesById };
+    idsToClear.forEach((id) => {
+      stavesById[id] = { ...stavesById[id], group: null, groupId: null };
+    });
+
+    if (groupType === 'grand') {
+      // Implicit pairing: only the first (lowest-index) staff carries group="grand".
+      const firstId = staffIds[0];
+      stavesById[firstId] = {
+        ...stavesById[firstId],
+        group: 'grand',
+        groupId: null,
+      };
+    } else if (groupType === 'bracket') {
+      const newGroupId = crypto.randomUUID();
+      staffIds.forEach((id) => {
+        stavesById[id] = {
+          ...stavesById[id],
+          group: 'bracket',
+          groupId: newGroupId,
+        };
+      });
+    }
+
+    record({ ...s, stavesById });
   }
 
   function addEntry(
@@ -237,6 +291,7 @@ export function CompositionInput() {
       recordStructure={record}
       onAddMeasure={addMeasure}
       onAddStaff={addStaff}
+      onSetStaffGroup={setStaffGroup}
       onAddEntry={addEntry}
     >
       <FormProvider {...methods}>

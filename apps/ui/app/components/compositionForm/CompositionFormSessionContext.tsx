@@ -1,3 +1,4 @@
+import type { StaffGroupType } from '@one-step-at-a-time/web-components';
 import {
   createContext,
   useCallback,
@@ -49,6 +50,11 @@ type CompositionFormSessionContextValue = {
   deleteSelected: () => void;
   addMeasure: () => void;
   addStaff: (measureId: string, staffType: StaffType) => void;
+  setStaffGroup: (
+    measureId: string,
+    staffIds: string[],
+    groupType: StaffGroupType | null
+  ) => void;
   addEntry: (
     measureId: string,
     staffId: string,
@@ -64,6 +70,11 @@ type CompositionFormSessionProviderProps = {
   recordStructure: (structure: CompositionStructure) => void;
   onAddMeasure: () => void;
   onAddStaff: (measureId: string, staffType: StaffType) => void;
+  onSetStaffGroup: (
+    measureId: string,
+    staffIds: string[],
+    groupType: StaffGroupType | null
+  ) => void;
   onAddEntry: (
     measureId: string,
     staffId: string,
@@ -78,6 +89,7 @@ export function CompositionFormSessionProvider({
   recordStructure,
   onAddMeasure,
   onAddStaff,
+  onSetStaffGroup,
   onAddEntry,
   children,
 }: CompositionFormSessionProviderProps) {
@@ -187,6 +199,7 @@ export function CompositionFormSessionProvider({
         deleteSelected,
         addMeasure: onAddMeasure,
         addStaff: onAddStaff,
+        setStaffGroup: onSetStaffGroup,
         addEntry: onAddEntry,
       }}
     >

@@ -1,8 +1,11 @@
 import '@one-step-at-a-time/web-components';
 import { useFormContext } from 'react-hook-form';
+import { AddStaffInput } from './AddStaffInput';
+import { AnchoredTabPanel } from './AnchoredTabPanel';
 import { useCompositionFormSession } from './CompositionFormSessionContext';
+import { StaffGroupInput } from './StaffGroupInput';
 import { StaffInput } from './StaffInput';
-import type { CompositionFormValues, StaffType } from './types';
+import type { CompositionFormValues } from './types';
 
 interface MeasureInputProps {
   measureId: string;
@@ -11,13 +14,39 @@ interface MeasureInputProps {
 export function MeasureInput({ measureId }: MeasureInputProps) {
   const { watch } = useFormContext<CompositionFormValues>();
   const measure = watch(`measuresById.${measureId}`);
-  const { session, selectMeasure, registerMeasureRef, addStaff } =
+  const { session, selectMeasure, registerMeasureRef } =
     useCompositionFormSession();
 
   const isMeasureSelected = session.selection.measureIds.includes(measureId);
   const containsSelectedStaff = measure.staffIds.some((id) =>
     session.selection.staffIds.includes(id)
   );
+
+  const selectedStaffIdsInMeasure = measure.staffIds.filter((id) =>
+    session.selection.staffIds.includes(id)
+  );
+  const isGroupableSelection =
+    selectedStaffIdsInMeasure.length === session.selection.staffIds.length &&
+    selectedStaffIdsInMeasure.length >= 2;
+
+  const tabs = [];
+  if (isMeasureSelected) {
+    tabs.push({
+      label: 'Add Staff',
+      content: <AddStaffInput measureId={measureId} />,
+    });
+  }
+  if (isGroupableSelection) {
+    tabs.push({
+      label: 'Group Staves',
+      content: (
+        <StaffGroupInput
+          measureId={measureId}
+          staffIds={selectedStaffIdsInMeasure}
+        />
+      ),
+    });
+  }
 
   return (
     <music-measure
@@ -35,23 +64,7 @@ export function MeasureInput({ measureId }: MeasureInputProps) {
       {measure.staffIds.map((staffId) => (
         <StaffInput key={staffId} staffId={staffId} measureId={measureId} />
       ))}
-      {isMeasureSelected && (
-        <select
-          className="absolute bottom-2 left-1/2 -translate-x-1/2 z-10 text-sm border border-zinc-300 rounded bg-white px-2 py-1 cursor-pointer shadow-sm"
-          value=""
-          onChange={(e) => {
-            const value = e.target.value as StaffType;
-            if (value) addStaff(measureId, value);
-          }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <option value="" disabled>
-            Add staff...
-          </option>
-          <option value="treble">Treble</option>
-          <option value="bass">Bass</option>
-        </select>
-      )}
+      {tabs.length > 0 && <AnchoredTabPanel tabs={tabs} />}
     </music-measure>
   );
 }

@@ -85,7 +85,15 @@ describe('computeBoxSelection', () => {
     const structure = buildStructure(
       ['m1'],
       { m1: { id: 'm1', staffIds: ['s1'] } },
-      { s1: { id: 's1', type: 'treble', entryIds: ['e1'] } }
+      {
+        s1: {
+          id: 's1',
+          type: 'treble',
+          entryIds: ['e1'],
+          group: null,
+          groupId: null,
+        },
+      }
     );
     const refs = emptyRefs();
     refs.measures.set('m1', fakeElement(rect(0, 0, 40, 60)));
@@ -126,8 +134,20 @@ describe('computeBoxSelection', () => {
       ['m1'],
       { m1: { id: 'm1', staffIds: ['s1', 's2'] } },
       {
-        s1: { id: 's1', type: 'treble', entryIds: [] },
-        s2: { id: 's2', type: 'bass', entryIds: [] },
+        s1: {
+          id: 's1',
+          type: 'treble',
+          entryIds: [],
+          group: null,
+          groupId: null,
+        },
+        s2: {
+          id: 's2',
+          type: 'bass',
+          entryIds: [],
+          group: null,
+          groupId: null,
+        },
       }
     );
     const refs = emptyRefs();
@@ -153,6 +173,8 @@ describe('computeBoxSelection', () => {
           id: 's1',
           type: 'treble',
           entryIds: ['e1', 'e2', 'e3', 'e4', 'e5'],
+          group: null,
+          groupId: null,
         },
       }
     );

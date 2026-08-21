@@ -92,6 +92,8 @@ export function StaffInput({ staffId, measureId }: StaffInputProps) {
       <music-staff
         ref={(el: HTMLElement | null) => registerStaffRef(staffId, el)}
         clef={staff.type === 'treble' ? 'treble' : 'bass'}
+        group={staff.group ?? undefined}
+        group-id={staff.groupId ?? undefined}
         className={staffClass}
         keySig={keySig}
         mode={mode}

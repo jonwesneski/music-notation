@@ -1,3 +1,4 @@
+import { findGroupMembers } from './staffGroups';
 import type { CompositionStructure, Selection } from './types';
 
 export function removeSelectionFromStructure(
@@ -53,5 +54,25 @@ export function removeSelectionFromStructure(
     )
   );
 
-  return { measureOrder, measuresById, stavesById, entriesById };
+  // A deleted staff can orphan its former brace/bracket partner (e.g. one side
+  // of a 2-staff brace). Clear group/groupId on any staff that no longer has a
+  // grouped partner so invalid group state never persists.
+  const cleanedStavesById = { ...stavesById };
+  for (const measure of Object.values(measuresById)) {
+    measure.staffIds.forEach((id) => {
+      const staff = cleanedStavesById[id];
+      if (!staff.group && !staff.groupId) return;
+      const members = findGroupMembers(measure.staffIds, cleanedStavesById, id);
+      if (members.length < 2) {
+        cleanedStavesById[id] = { ...staff, group: null, groupId: null };
+      }
+    });
+  }
+
+  return {
+    measureOrder,
+    measuresById,
+    stavesById: cleanedStavesById,
+    entriesById,
+  };
 }

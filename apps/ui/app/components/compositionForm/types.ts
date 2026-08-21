@@ -2,6 +2,7 @@ import type {
   DurationType,
   Mode,
   Note,
+  StaffGroupType,
   TimeSignature,
 } from '@one-step-at-a-time/web-components';
 
@@ -37,6 +38,8 @@ export type NormalizedStaff = {
   id: string;
   type: StaffType;
   entryIds: string[];
+  group: StaffGroupType | null;
+  groupId: string | null;
 };
 
 // The undoable structural slice
