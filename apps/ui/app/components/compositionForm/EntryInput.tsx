@@ -1,7 +1,7 @@
 import type { DurationType, Note } from '@one-step-at-a-time/web-components';
 import { durationToFactor } from '@one-step-at-a-time/web-components';
 import { useState } from 'react';
-import { Button, Radio, Select } from '../../design-system';
+import { Button, Radio, Select } from '@/design-system';
 import { useCompositionFormSession } from './CompositionFormSessionContext';
 import type { DraftMusicEntry } from './types';
 import { DURATION_OPTIONS, NOTE_OPTIONS } from './types';

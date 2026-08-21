@@ -11,7 +11,7 @@
     "declarationMap": false,
     "types": ["vite/client"],
     "paths": {
-      "@/*": ["./*"],
+      "@/*": ["./app/*"],
       "@one-step-at-a-time/web-components": [
         "../../packages/web-components/src/index.ts"
       ],

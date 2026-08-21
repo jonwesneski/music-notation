@@ -7,8 +7,8 @@ import {
   useFormContext,
   useWatch,
 } from 'react-hook-form';
-import { Button } from '../../design-system';
-import { useUndoRedo } from '../../hooks/useUndoRedo';
+import { Button } from '@/design-system';
+import { useUndoRedo } from '@/hooks/useUndoRedo';
 import { BasicInfoInput } from './BasicInfoInput';
 import {
   CompositionFormSessionProvider,

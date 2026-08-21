@@ -1,4 +1,4 @@
-import { Select } from '../../design-system';
+import { Select } from '@/design-system';
 import { useCompositionFormSession } from './CompositionFormSessionContext';
 import type { StaffType } from './types';
 

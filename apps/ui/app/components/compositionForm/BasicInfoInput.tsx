@@ -1,5 +1,5 @@
 import { useFormContext } from 'react-hook-form';
-import { Select, TextInput } from '../../design-system';
+import { Select, TextInput } from '@/design-system';
 import {
   KEY_SIGNATURE_OPTIONS,
   MODE_OPTIONS,
