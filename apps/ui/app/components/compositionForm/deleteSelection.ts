@@ -21,10 +21,10 @@ export function removeSelectionFromStructure(
     }
   }
 
-  const measureOrder = structure.measureOrder.filter(
+  let measureOrder = structure.measureOrder.filter(
     (id) => !selectedMeasureIds.has(id)
   );
-  const measuresById = Object.fromEntries(
+  let measuresById = Object.fromEntries(
     Object.entries(structure.measuresById)
       .filter(([id]) => !selectedMeasureIds.has(id))
       .map(([id, measure]) => [
@@ -37,6 +37,14 @@ export function removeSelectionFromStructure(
         },
       ])
   );
+
+  // The composition must always have at least one measure so the
+  // "add a staff" placeholder has somewhere to attach.
+  if (measureOrder.length === 0) {
+    const newId = crypto.randomUUID();
+    measureOrder = [newId];
+    measuresById = { [newId]: { id: newId, staffIds: [] } };
+  }
   const stavesById = Object.fromEntries(
     Object.entries(structure.stavesById)
       .filter(([id]) => !staffIdsToDelete.has(id))

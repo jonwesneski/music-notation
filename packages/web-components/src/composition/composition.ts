@@ -44,7 +44,6 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
     }
 
     #observer: MutationObserver | null;
-    #measureCount: number;
     #resizeObserver: ResizeObserver | null;
     #redrawScheduled: boolean;
     #boundRedraw: () => void;
@@ -52,7 +51,6 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
     constructor() {
       super();
       this.#observer = null;
-      this.#measureCount = 0;
       this.#resizeObserver = null;
       this.#redrawScheduled = false;
       this.#boundRedraw = () => this.#scheduleRedraw();
@@ -603,22 +601,13 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
     }
 
     #manageMeasureCount() {
-      // Existing measures
-      Array.from(this.children).forEach((node) => {
-        if (node.nodeName === MUSIC_MEASURE_NODE) {
-          this.#setMeasure(node as HTMLElement);
-        }
-      });
+      this.#renumberMeasures();
 
-      // Dynamically added measures
-      this.#observer = new MutationObserver((mutations) => {
-        for (const m of mutations) {
-          for (const node of m.addedNodes) {
-            if (node.nodeName === MUSIC_MEASURE_NODE) {
-              this.#setMeasure(node as HTMLElement);
-            }
-          }
-        }
+      // Numbers are recomputed from live DOM order on every add or remove,
+      // rather than an ever-incrementing counter, so deleting measures
+      // renumbers the rest instead of leaving gaps or stale counts behind.
+      this.#observer = new MutationObserver(() => {
+        this.#renumberMeasures();
       });
 
       this.#observer.observe(this, {
@@ -626,22 +615,17 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
       });
     }
 
-    #setMeasure(measure: HTMLElement) {
-      if (this.#measureCount === 0) {
-        measure.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, this.time);
-      }
-      measure.setAttribute('number', (++this.#measureCount).toString());
+    #renumberMeasures() {
+      const measures = Array.from(this.children).filter(
+        (node) => node.nodeName === MUSIC_MEASURE_NODE
+      ) as HTMLElement[];
+      measures.forEach((measure, index) => {
+        if (index === 0) {
+          measure.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, this.time);
+        }
+        measure.setAttribute('number', (index + 1).toString());
+      });
     }
-
-    // #handleSlotChange(event: Event) {
-    //   // TODO: see if I still need this
-    //   // right now I'm adjusting in #manageMeasureCount
-    //   // slotChange event gets fired after all children it's children are rendered first
-    //   const slot = event.target as HTMLSlotElement;
-    //   const assignedElements = slot
-    //     .assignedElements({ flatten: true })
-    //     .filter((e) => e.nodeName === 'MUSIC-MEASURE');
-    // }
   }
 
   if (!customElements.get(MUSIC_COMPOSITION)) {

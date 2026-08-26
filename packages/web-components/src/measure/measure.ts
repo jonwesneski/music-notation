@@ -206,23 +206,6 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
       `;
     }
 
-    // #handleSlotChange(event: Event) {
-    //   const slot = event.target as HTMLSlotElement;
-    //   const staffMap = {
-    //     'MUSIC-STAFF-TREBLE': true,
-    //     'MUSIC-STAFF-BASS': true,
-    //     'MUSIC-STAFF-GUITAR-TAB': true,
-    //   };
-    //   const assignedNodes = slot
-    //     .assignedNodes({ flatten: true })
-    //     .filter((n) => staffMap[n.nodeName as keyof typeof staffMap]);
-    //   const assignedElements = slot
-    //     .assignedElements({ flatten: true })
-    //     .filter((e) => staffMap[e.nodeName as keyof typeof staffMap]);
-
-    //   for (let i = 0; i < assignedElements.length; i++) {}
-    // }
-
     #updateConnectorVisibility() {
       const staffConnector =
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- render() always creates .staff-connector before this runs

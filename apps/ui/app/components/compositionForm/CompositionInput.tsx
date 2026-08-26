@@ -169,6 +169,17 @@ export function CompositionInput() {
     const newId = crypto.randomUUID();
     const lastMeasure =
       s.measuresById[s.measureOrder[s.measureOrder.length - 1]];
+    if (!lastMeasure) {
+      record({
+        ...s,
+        measureOrder: [...s.measureOrder, newId],
+        measuresById: {
+          ...s.measuresById,
+          [newId]: { id: newId, staffIds: [] },
+        },
+      });
+      return;
+    }
     // Copying the staff structure from the last measure
     const newStaffEntries = lastMeasure.staffIds.map((sid) => {
       const newSid = crypto.randomUUID();

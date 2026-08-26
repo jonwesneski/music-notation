@@ -107,4 +107,20 @@ describe('removeSelectionFromStructure', () => {
     expect(result.entriesById).not.toHaveProperty('e3');
     expect(result.stavesById).toHaveProperty('s3');
   });
+
+  it('leaves one fresh empty measure behind when every measure is deleted', () => {
+    const result = removeSelectionFromStructure(buildStructure(), {
+      measureIds: ['m1', 'm2'],
+      staffIds: [],
+      entryIds: [],
+    });
+
+    expect(result.measureOrder).toHaveLength(1);
+    const [remainingId] = result.measureOrder;
+    expect(result.measuresById).toEqual({
+      [remainingId]: { id: remainingId, staffIds: [] },
+    });
+    expect(result.stavesById).toEqual({});
+    expect(result.entriesById).toEqual({});
+  });
 });
