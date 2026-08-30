@@ -1,0 +1,336 @@
+import type {
+  CompositionStructure,
+  ConnectorKind,
+  ConnectorRole,
+  NormalizedConnector,
+  Selection,
+  StaffType,
+} from './types';
+
+// Tie/slur resolution for the composition form. Mirrors the pairing rules of
+// packages/web-components' connectorsBuilder (pairConnectors): connectors are
+// matched in document order, a note carries a single `tie`/`slur` attribute, and
+// interleaving same-kind spans are disambiguated with `id` on the start element
+// and `for="<id>"` on the end. This app is the sole writer of that data, so the
+// helpers here only ever produce well-formed output.
+
+export type ConnectorEndpoints = { startEntryId: string; endEntryId: string };
+
+export type ConnectorEntryAttributes = {
+  tie?: ConnectorRole;
+  slur?: ConnectorRole;
+  id?: string;
+  for?: string;
+};
+
+type EntryStaffContext = {
+  measureId: string;
+  measureIndex: number;
+  staffId: string;
+  staffIndex: number;
+  staffType: StaffType;
+};
+
+// All entry ids in the order packages/web-components sees them — measure, then
+// staff, then entry — i.e. the order a `querySelectorAll` over the rendered tree
+// returns, which is what connector pairing keys off.
+export function flattenEntryOrder(structure: CompositionStructure): string[] {
+  const order: string[] = [];
+  for (const measureId of structure.measureOrder) {
+    const measure = structure.measuresById[measureId];
+    if (!measure) {
+      continue;
+    }
+    for (const staffId of measure.staffIds) {
+      const staff = structure.stavesById[staffId];
+      if (!staff) {
+        continue;
+      }
+      order.push(...staff.entryIds);
+    }
+  }
+  return order;
+}
+
+export function staffOfEntry(
+  structure: CompositionStructure,
+  entryId: string
+): EntryStaffContext | null {
+  for (
+    let measureIndex = 0;
+    measureIndex < structure.measureOrder.length;
+    measureIndex++
+  ) {
+    const measureId = structure.measureOrder[measureIndex];
+    const measure = structure.measuresById[measureId];
+    if (!measure) {
+      continue;
+    }
+    for (
+      let staffIndex = 0;
+      staffIndex < measure.staffIds.length;
+      staffIndex++
+    ) {
+      const staffId = measure.staffIds[staffIndex];
+      const staff = structure.stavesById[staffId];
+      if (staff && staff.entryIds.includes(entryId)) {
+        return {
+          measureId,
+          measureIndex,
+          staffId,
+          staffIndex,
+          staffType: staff.type,
+        };
+      }
+    }
+  }
+  return null;
+}
+
+// Interprets a selection as a tie/slur candidate. Returns the ordered outer
+// endpoints, or null when the selection can't carry a connector: fewer than two
+// note/chord entries, a rest in the mix, a measure/staff also selected, or
+// endpoints that are neither in the same staff nor the same voice (same staff
+// index + type) of an earlier and a later measure.
+export function isConnectableSelection(
+  selection: Selection,
+  structure: CompositionStructure
+): ConnectorEndpoints | null {
+  if (selection.measureIds.length > 0 || selection.staffIds.length > 0) {
+    return null;
+  }
+  if (selection.entryIds.length < 2) {
+    return null;
+  }
+
+  const entries = selection.entryIds.map((id) => structure.entriesById[id]);
+  if (entries.some((entry) => !entry || entry.type === 'rest')) {
+    return null;
+  }
+
+  const flat = flattenEntryOrder(structure);
+  const ordered = selection.entryIds
+    .map((id) => ({ id, index: flat.indexOf(id) }))
+    .filter((item) => item.index >= 0)
+    .sort((a, b) => a.index - b.index);
+  if (ordered.length < 2) {
+    return null;
+  }
+
+  const startEntryId = ordered[0].id;
+  const endEntryId = ordered[ordered.length - 1].id;
+
+  const startContext = staffOfEntry(structure, startEntryId);
+  const endContext = staffOfEntry(structure, endEntryId);
+  if (!startContext || !endContext) {
+    return null;
+  }
+
+  const sameStaff = startContext.staffId === endContext.staffId;
+  const sameVoiceAcrossMeasures =
+    startContext.staffIndex === endContext.staffIndex &&
+    startContext.staffType === endContext.staffType &&
+    startContext.measureIndex < endContext.measureIndex;
+
+  if (!sameStaff && !sameVoiceAcrossMeasures) {
+    return null;
+  }
+
+  return { startEntryId, endEntryId };
+}
+
+export function connectorBetween(
+  structure: CompositionStructure,
+  startEntryId: string,
+  endEntryId: string
+): NormalizedConnector | null {
+  return (
+    structure.connectorOrder
+      .map((id) => structure.connectorsById[id])
+      .find(
+        (connector) =>
+          connector &&
+          connector.startEntryId === startEntryId &&
+          connector.endEntryId === endEntryId
+      ) ?? null
+  );
+}
+
+// True when a tie (a single sustained pitch) is musically valid between the
+// endpoints: same pitch(es), and the two entries are immediately consecutive —
+// within one staff, or the last note of one staff and the first note of the
+// same voice in the very next measure.
+export function canTie(
+  structure: CompositionStructure,
+  endpoints: ConnectorEndpoints
+): boolean {
+  const start = structure.entriesById[endpoints.startEntryId];
+  const end = structure.entriesById[endpoints.endEntryId];
+  if (!start || !end || start.type === 'rest' || end.type === 'rest') {
+    return false;
+  }
+  if (start.type !== end.type) {
+    return false;
+  }
+  if (
+    start.type === 'note' &&
+    end.type === 'note' &&
+    start.value !== end.value
+  ) {
+    return false;
+  }
+  if (start.type === 'chord' && end.type === 'chord') {
+    const startNotes = [...start.notes].sort().join(',');
+    const endNotes = [...end.notes].sort().join(',');
+    if (startNotes !== endNotes) {
+      return false;
+    }
+  }
+
+  const startContext = staffOfEntry(structure, endpoints.startEntryId);
+  const endContext = staffOfEntry(structure, endpoints.endEntryId);
+  if (!startContext || !endContext) {
+    return false;
+  }
+
+  if (startContext.staffId === endContext.staffId) {
+    const entryIds = structure.stavesById[startContext.staffId].entryIds;
+    return (
+      entryIds.indexOf(endpoints.endEntryId) -
+        entryIds.indexOf(endpoints.startEntryId) ===
+      1
+    );
+  }
+
+  const startStaff = structure.stavesById[startContext.staffId];
+  const endStaff = structure.stavesById[endContext.staffId];
+  return (
+    startStaff.entryIds[startStaff.entryIds.length - 1] ===
+      endpoints.startEntryId &&
+    endStaff.entryIds[0] === endpoints.endEntryId &&
+    endContext.measureIndex - startContext.measureIndex === 1
+  );
+}
+
+// Per-entry tie/slur/id/for attributes for the whole composition.
+export function resolveConnectorAttributes(
+  structure: CompositionStructure
+): Map<string, ConnectorEntryAttributes> {
+  const flat = flattenEntryOrder(structure);
+  const indexOf = new Map(flat.map((id, index) => [id, index]));
+
+  type Span = {
+    connector: NormalizedConnector;
+    startIndex: number;
+    endIndex: number;
+  };
+
+  const spans: Span[] = [];
+  for (const connectorId of structure.connectorOrder) {
+    const connector = structure.connectorsById[connectorId];
+    if (!connector) {
+      continue;
+    }
+    const startIndex = indexOf.get(connector.startEntryId);
+    const endIndex = indexOf.get(connector.endEntryId);
+    if (
+      startIndex === undefined ||
+      endIndex === undefined ||
+      startIndex >= endIndex
+    ) {
+      continue;
+    }
+    spans.push({ connector, startIndex, endIndex });
+  }
+
+  const result = new Map<string, ConnectorEntryAttributes>();
+  const patch = (entryId: string, next: ConnectorEntryAttributes) => {
+    result.set(entryId, { ...result.get(entryId), ...next });
+  };
+
+  const interleaves = (a: Span, b: Span) =>
+    a.startIndex < b.startIndex &&
+    b.startIndex < a.endIndex &&
+    a.endIndex < b.endIndex;
+
+  for (const span of spans) {
+    const { connector } = span;
+    const role = (value: ConnectorRole): ConnectorEntryAttributes =>
+      connector.kind === 'tie' ? { tie: value } : { slur: value };
+
+    patch(connector.startEntryId, role('start'));
+    patch(connector.endEntryId, role('end'));
+
+    const needsExplicitPairing = spans.some(
+      (other) =>
+        other !== span &&
+        other.connector.kind === connector.kind &&
+        (interleaves(span, other) || interleaves(other, span))
+    );
+    if (needsExplicitPairing) {
+      patch(connector.startEntryId, { id: connector.startEntryId });
+      patch(connector.endEntryId, { for: connector.startEntryId });
+    }
+  }
+
+  return result;
+}
+
+// Adds a connector between the endpoints, replacing any existing connector with
+// the same endpoints (retarget / change kind) and dropping any other same-kind
+// connector that already starts at startEntryId or ends at endEntryId — the
+// renderer allows only one tie and one slur role per element.
+export function upsertConnector(
+  structure: CompositionStructure,
+  startEntryId: string,
+  endEntryId: string,
+  kind: ConnectorKind
+): CompositionStructure {
+  const removed = new Set<string>();
+  for (const [id, connector] of Object.entries(structure.connectorsById)) {
+    const samePair =
+      connector.startEntryId === startEntryId &&
+      connector.endEntryId === endEntryId;
+    const sameKindEndpointClash =
+      connector.kind === kind &&
+      (connector.startEntryId === startEntryId ||
+        connector.endEntryId === endEntryId);
+    if (samePair || sameKindEndpointClash) {
+      removed.add(id);
+    }
+  }
+
+  const newId = crypto.randomUUID();
+  const connectorsById: Record<string, NormalizedConnector> = {};
+  for (const [id, connector] of Object.entries(structure.connectorsById)) {
+    if (!removed.has(id)) {
+      connectorsById[id] = connector;
+    }
+  }
+  connectorsById[newId] = { id: newId, kind, startEntryId, endEntryId };
+
+  return {
+    ...structure,
+    connectorsById,
+    connectorOrder: [
+      ...structure.connectorOrder.filter((id) => !removed.has(id)),
+      newId,
+    ],
+  };
+}
+
+export function removeConnector(
+  structure: CompositionStructure,
+  connectorId: string
+): CompositionStructure {
+  if (!structure.connectorsById[connectorId]) {
+    return structure;
+  }
+  const connectorsById = { ...structure.connectorsById };
+  delete connectorsById[connectorId];
+  return {
+    ...structure,
+    connectorsById,
+    connectorOrder: structure.connectorOrder.filter((id) => id !== connectorId),
+  };
+}

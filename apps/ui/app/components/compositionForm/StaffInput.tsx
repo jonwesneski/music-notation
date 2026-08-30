@@ -5,6 +5,7 @@ import { AnchoredTabPanel } from './AnchoredTabPanel';
 import { useCompositionFormSession } from './CompositionFormSessionContext';
 import { EntryInput } from './EntryInput';
 import type { CompositionFormValues } from './types';
+import { useConnectorAttributes } from './useCompositionStructure';
 
 interface StaffInputProps {
   staffId: string;
@@ -26,6 +27,7 @@ export function StaffInput({ staffId, measureId }: StaffInputProps) {
     registerEntryRef,
     addEntry,
   } = useCompositionFormSession();
+  const connectorAttrs = useConnectorAttributes();
 
   const isSelected = session.selection.staffIds.includes(staffId);
 
@@ -44,6 +46,7 @@ export function StaffInput({ staffId, measureId }: StaffInputProps) {
   const entryNodes = entries.map((entry) => {
     const isEntrySelected = session.selection.entryIds.includes(entry.id);
     const entryClass = isEntrySelected ? 'rainbow-selected' : '';
+    const connector = connectorAttrs.get(entry.id);
     const handleEntryClick = (e: React.MouseEvent) => {
       e.stopPropagation();
       selectEntry(measureId, staffId, entry.id, e);
@@ -56,6 +59,10 @@ export function StaffInput({ staffId, measureId }: StaffInputProps) {
           ref={(el: HTMLElement | null) => registerEntryRef(entry.id, el)}
           note={entry.value}
           duration={entry.duration}
+          tie={connector?.tie}
+          slur={connector?.slur}
+          id={connector?.id}
+          for={connector?.for}
           className={entryClass}
           onClick={handleEntryClick}
         />
@@ -66,6 +73,10 @@ export function StaffInput({ staffId, measureId }: StaffInputProps) {
           key={entry.id}
           ref={(el: HTMLElement | null) => registerEntryRef(entry.id, el)}
           duration={entry.duration}
+          tie={connector?.tie}
+          slur={connector?.slur}
+          id={connector?.id}
+          for={connector?.for}
           className={entryClass}
           onClick={handleEntryClick}
         >

@@ -3,9 +3,12 @@ import { useFormContext } from 'react-hook-form';
 import { AddStaffInput } from './AddStaffInput';
 import { AnchoredTabPanel } from './AnchoredTabPanel';
 import { useCompositionFormSession } from './CompositionFormSessionContext';
+import { isConnectableSelection } from './connectors';
+import { ConnectorInput } from './ConnectorInput';
 import { StaffGroupInput } from './StaffGroupInput';
 import { StaffInput } from './StaffInput';
 import type { CompositionFormValues } from './types';
+import { useCompositionStructure } from './useCompositionStructure';
 
 interface MeasureInputProps {
   measureId: string;
@@ -14,8 +17,9 @@ interface MeasureInputProps {
 export function MeasureInput({ measureId }: MeasureInputProps) {
   const { watch } = useFormContext<CompositionFormValues>();
   const measure = watch(`measuresById.${measureId}`);
-  const { session, selectMeasure, registerMeasureRef } =
+  const { session, selectMeasure, registerMeasureRef, setConnector } =
     useCompositionFormSession();
+  const structure = useCompositionStructure();
 
   const isMeasureSelected = session.selection.measureIds.includes(measureId);
   const containsSelectedStaff = measure.staffIds.some((id) =>
@@ -28,6 +32,22 @@ export function MeasureInput({ measureId }: MeasureInputProps) {
   const isGroupableSelection =
     selectedStaffIdsInMeasure.length === session.selection.staffIds.length &&
     selectedStaffIdsInMeasure.length >= 2;
+
+  // A tie/slur editor is shown by the measure that holds the selection's start
+  // endpoint, so a cross-barline selection gets exactly one panel.
+  const selectionEndpoints = isConnectableSelection(
+    session.selection,
+    structure
+  );
+  const connectorEndpoints =
+    selectionEndpoints &&
+    measure.staffIds.some((sid) =>
+      structure.stavesById[sid]?.entryIds.includes(
+        selectionEndpoints.startEntryId
+      )
+    )
+      ? selectionEndpoints
+      : null;
 
   const tabs = [];
   if (isMeasureSelected) {
@@ -47,13 +67,30 @@ export function MeasureInput({ measureId }: MeasureInputProps) {
       ),
     });
   }
+  if (connectorEndpoints) {
+    tabs.push({
+      label: 'Ties & Slurs',
+      content: (
+        <ConnectorInput
+          endpoints={connectorEndpoints}
+          selectionEntryCount={session.selection.entryIds.length}
+          structure={structure}
+          onSetConnector={setConnector}
+        />
+      ),
+    });
+  }
 
   return (
     <music-measure
       ref={(el: HTMLElement | null) => registerMeasureRef(measureId, el)}
       className={`cursor-pointer rounded transition-shadow ${
         isMeasureSelected ? 'rainbow-selected' : ''
-      } ${isMeasureSelected || containsSelectedStaff ? 'pb-10' : ''}`}
+      } ${
+        isMeasureSelected || containsSelectedStaff || connectorEndpoints
+          ? 'pb-10'
+          : ''
+      }`}
       onClick={() => selectMeasure(measureId)}
     >
       {measure.staffIds.length === 0 && (

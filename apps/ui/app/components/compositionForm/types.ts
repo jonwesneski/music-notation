@@ -1,10 +1,13 @@
 import type {
+  ConnectorRole,
   DurationType,
   Mode,
   Note,
   StaffGroupType,
   TimeSignature,
 } from '@one-step-at-a-time/web-components';
+
+export type { ConnectorRole };
 
 export type StaffType = 'treble' | 'bass';
 
@@ -42,12 +45,27 @@ export type NormalizedStaff = {
   groupId: string | null;
 };
 
+export type ConnectorKind = 'tie' | 'slur';
+
+// A tie or slur between two note/chord entries. References entry ids only, so it
+// is independent of which staff/measure the endpoints live in (a slur or tie may
+// span a barline). startEntryId is always earlier than endEntryId in document
+// order (measure → staff → entry).
+export type NormalizedConnector = {
+  id: string;
+  kind: ConnectorKind;
+  startEntryId: string;
+  endEntryId: string;
+};
+
 // The undoable structural slice
 export type CompositionStructure = {
   measureOrder: string[];
   measuresById: Record<string, NormalizedMeasure>;
   stavesById: Record<string, NormalizedStaff>;
   entriesById: Record<string, MusicEntry>;
+  connectorsById: Record<string, NormalizedConnector>;
+  connectorOrder: string[];
 };
 
 export type Selection = {

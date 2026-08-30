@@ -62,6 +62,18 @@ export function removeSelectionFromStructure(
     )
   );
 
+  // Drop any tie/slur whose start or end entry is gone.
+  const connectorsById = Object.fromEntries(
+    Object.entries(structure.connectorsById).filter(
+      ([, connector]) =>
+        !entryIdsToDelete.has(connector.startEntryId) &&
+        !entryIdsToDelete.has(connector.endEntryId)
+    )
+  );
+  const connectorOrder = structure.connectorOrder.filter(
+    (id) => connectorsById[id]
+  );
+
   // A deleted staff can orphan its former brace/bracket partner (e.g. one side
   // of a 2-staff brace). Clear group/groupId on any staff that no longer has a
   // grouped partner so invalid group state never persists.
@@ -82,5 +94,7 @@ export function removeSelectionFromStructure(
     measuresById,
     stavesById: cleanedStavesById,
     entriesById,
+    connectorsById,
+    connectorOrder,
   };
 }

@@ -10,6 +10,7 @@ import { removeSelectionFromStructure } from './deleteSelection';
 import { computeBoxSelection } from './selectionHitTest';
 import type {
   CompositionStructure,
+  ConnectorKind,
   DraftMusicEntry,
   Selection,
   StaffType,
@@ -60,6 +61,11 @@ type CompositionFormSessionContextValue = {
     staffId: string,
     entry: DraftMusicEntry
   ) => void;
+  setConnector: (
+    startEntryId: string,
+    endEntryId: string,
+    kind: ConnectorKind | null
+  ) => void;
 };
 
 const CompositionFormSessionContext =
@@ -80,6 +86,11 @@ type CompositionFormSessionProviderProps = {
     staffId: string,
     entry: DraftMusicEntry
   ) => void;
+  onSetConnector: (
+    startEntryId: string,
+    endEntryId: string,
+    kind: ConnectorKind | null
+  ) => void;
   children: React.ReactNode;
 };
 
@@ -91,6 +102,7 @@ export function CompositionFormSessionProvider({
   onAddStaff,
   onSetStaffGroup,
   onAddEntry,
+  onSetConnector,
   children,
 }: CompositionFormSessionProviderProps) {
   const [session, setSessionState] = useState<CompositionFormSession>({
@@ -151,11 +163,28 @@ export function CompositionFormSessionProvider({
       e: React.MouseEvent
     ) => {
       e.stopPropagation();
-      setSession({
-        selection: { measureIds: [], staffIds: [], entryIds: [entryId] },
+      const additive = e.shiftKey || e.metaKey || e.ctrlKey;
+      setSessionState((prev) => {
+        if (!additive) {
+          return {
+            ...prev,
+            selection: { measureIds: [], staffIds: [], entryIds: [entryId] },
+          };
+        }
+        const alreadySelected = prev.selection.entryIds.includes(entryId);
+        return {
+          ...prev,
+          selection: {
+            measureIds: [],
+            staffIds: [],
+            entryIds: alreadySelected
+              ? prev.selection.entryIds.filter((id) => id !== entryId)
+              : [...prev.selection.entryIds, entryId],
+          },
+        };
       });
     },
-    [setSession]
+    []
   );
 
   const applyDragSelection = useCallback(
@@ -201,6 +230,7 @@ export function CompositionFormSessionProvider({
         addStaff: onAddStaff,
         setStaffGroup: onSetStaffGroup,
         addEntry: onAddEntry,
+        setConnector: onSetConnector,
       }}
     >
       {children}

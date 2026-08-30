@@ -14,12 +14,18 @@ import {
   CompositionFormSessionProvider,
   useCompositionFormSession,
 } from './CompositionFormSessionContext';
+import {
+  connectorBetween,
+  removeConnector,
+  upsertConnector,
+} from './connectors';
 import { DragSelectOverlay } from './DragSelectOverlay';
 import { MeasureInput } from './MeasureInput';
 import { findGroupMembers } from './staffGroups';
 import type {
   CompositionFormValues,
   CompositionStructure,
+  ConnectorKind,
   DraftMusicEntry,
   StaffType,
 } from './types';
@@ -136,6 +142,8 @@ export function CompositionInput() {
       measuresById: { [firstMeasureId]: { id: firstMeasureId, staffIds: [] } },
       stavesById: {},
       entriesById: {},
+      connectorsById: {},
+      connectorOrder: [],
     },
   });
 
@@ -145,6 +153,8 @@ export function CompositionInput() {
       measuresById: methods.getValues('measuresById'),
       stavesById: methods.getValues('stavesById'),
       entriesById: methods.getValues('entriesById'),
+      connectorsById: methods.getValues('connectorsById'),
+      connectorOrder: methods.getValues('connectorOrder'),
     }),
     [methods]
   );
@@ -155,6 +165,8 @@ export function CompositionInput() {
       methods.setValue('measuresById', s.measuresById);
       methods.setValue('stavesById', s.stavesById);
       methods.setValue('entriesById', s.entriesById);
+      methods.setValue('connectorsById', s.connectorsById);
+      methods.setValue('connectorOrder', s.connectorOrder);
     },
     [methods]
   );
@@ -296,6 +308,23 @@ export function CompositionInput() {
     });
   }
 
+  function setConnector(
+    startEntryId: string,
+    endEntryId: string,
+    kind: ConnectorKind | null
+  ) {
+    const s = getStructure();
+    if (kind === null) {
+      const existing = connectorBetween(s, startEntryId, endEntryId);
+      if (!existing) {
+        return;
+      }
+      record(removeConnector(s, existing.id));
+      return;
+    }
+    record(upsertConnector(s, startEntryId, endEntryId, kind));
+  }
+
   return (
     <CompositionFormSessionProvider
       getStructure={getStructure}
@@ -304,6 +333,7 @@ export function CompositionInput() {
       onAddStaff={addStaff}
       onSetStaffGroup={setStaffGroup}
       onAddEntry={addEntry}
+      onSetConnector={setConnector}
     >
       <FormProvider {...methods}>
         <CompositionFormBody

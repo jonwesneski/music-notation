@@ -40,6 +40,11 @@ function buildStructure(): CompositionStructure {
       e5: { id: 'e5', type: 'note', value: 'F', duration: 'quarter' },
       e6: { id: 'e6', type: 'note', value: 'G', duration: 'quarter' },
     },
+    connectorsById: {
+      c1: { id: 'c1', kind: 'slur', startEntryId: 'e1', endEntryId: 'e2' },
+      c2: { id: 'c2', kind: 'slur', startEntryId: 'e4', endEntryId: 'e6' },
+    },
+    connectorOrder: ['c1', 'c2'],
   };
 }
 
@@ -108,6 +113,41 @@ describe('removeSelectionFromStructure', () => {
     expect(result.stavesById).toHaveProperty('s3');
   });
 
+  it('drops a connector when one of its endpoint entries is deleted', () => {
+    const result = removeSelectionFromStructure(buildStructure(), {
+      measureIds: [],
+      staffIds: [],
+      entryIds: ['e1'],
+    });
+
+    expect(result.connectorsById).not.toHaveProperty('c1');
+    expect(result.connectorOrder).toEqual(['c2']);
+    expect(result.connectorsById).toHaveProperty('c2');
+  });
+
+  it('drops a connector when its entries are removed via a cascading measure delete', () => {
+    const result = removeSelectionFromStructure(buildStructure(), {
+      measureIds: ['m1'],
+      staffIds: [],
+      entryIds: [],
+    });
+
+    expect(result.connectorsById).not.toHaveProperty('c1');
+    expect(result.connectorsById).toHaveProperty('c2');
+    expect(result.connectorOrder).toEqual(['c2']);
+  });
+
+  it('keeps a connector whose endpoints both survive', () => {
+    const result = removeSelectionFromStructure(buildStructure(), {
+      measureIds: [],
+      staffIds: [],
+      entryIds: ['e5'],
+    });
+
+    expect(result.connectorsById).toHaveProperty('c2');
+    expect(result.connectorOrder).toEqual(['c1', 'c2']);
+  });
+
   it('leaves one fresh empty measure behind when every measure is deleted', () => {
     const result = removeSelectionFromStructure(buildStructure(), {
       measureIds: ['m1', 'm2'],
@@ -122,5 +162,7 @@ describe('removeSelectionFromStructure', () => {
     });
     expect(result.stavesById).toEqual({});
     expect(result.entriesById).toEqual({});
+    expect(result.connectorsById).toEqual({});
+    expect(result.connectorOrder).toEqual([]);
   });
 });
