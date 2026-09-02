@@ -13,4 +13,5 @@ import './rest';
 
 export { durationToFactor } from './rules/theoryConsts';
 export * from './types/theory';
+export type { ConnectorRole } from './types/elements';
 export type { PitchChangeDetail } from './utils/pitchDragHandler';

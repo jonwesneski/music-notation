@@ -45,6 +45,14 @@
       "options": {
         "lintFilePatterns": ["apps/ui/**/*.{ts,tsx}"]
       }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "outputs": ["{projectRoot}/coverage"],
+      "options": {
+        "command": "vitest run",
+        "cwd": "{projectRoot}"
+      }
     }
   }
 }

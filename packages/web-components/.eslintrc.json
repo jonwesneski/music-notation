@@ -1,5 +1,5 @@
 {
-  "extends": ["../../.eslintrc.json"],
+  "extends": ["../../.eslintrc.json", "plugin:storybook/recommended"],
   "ignorePatterns": [
     "!**/*",
     "**/out-tsc",
@@ -34,7 +34,6 @@
               "react",
               "tslib",
               "@storybook/web-components-vite",
-              "@storybook/web-components",
               "@nx/vite",
               "vite",
               "lit",

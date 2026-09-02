@@ -1,9 +1,9 @@
 {
   "installation": {
-    "version": "22.0.2",
+    "version": "22.7.8",
     "plugins": {
-      "@nx/eslint": "22.0.2",
-      "@nx/next": "22.0.2"
+      "@nx/eslint": "22.7.8",
+      "@nx/next": "22.7.8"
     }
   },
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
@@ -68,5 +68,6 @@
     "version": {
       "preVersionCommand": "pnpm dlx nx run-many -t build"
     }
-  }
+  },
+  "analytics": false
 }

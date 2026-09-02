@@ -23,7 +23,7 @@ import type {
 type WebComponentNoChildrenProps = {
   key?: React.Key;
   ref?: React.Ref<HTMLElement>;
-  children?: React.ReactNode;
+  id?: string;
   className?: string;
 };
 
@@ -96,6 +96,10 @@ declare module 'react' {
         duration?: DurationType;
         tie?: ConnectorRole;
         slur?: ConnectorRole;
+        // Binds this element (as a connector end) to the start element whose
+        // `id` matches — needed only when interleaving same-kind ties/slurs
+        // would otherwise mis-pair on the renderer's LIFO stack.
+        for?: string;
         dynamic?: DynamicMarking;
         crescendo?: HairpinRole;
         decrescendo?: HairpinRole;
@@ -125,6 +129,10 @@ declare module 'react' {
         octave?: Octave;
         tie?: ConnectorRole;
         slur?: ConnectorRole;
+        // Binds this element (as a connector end) to the start element whose
+        // `id` matches — needed only when interleaving same-kind ties/slurs
+        // would otherwise mis-pair on the renderer's LIFO stack.
+        for?: string;
         dynamic?: DynamicMarking;
         crescendo?: HairpinRole;
         decrescendo?: HairpinRole;

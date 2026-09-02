@@ -118,3 +118,72 @@ describe(`${MUSIC_COMPOSITION} attribute propagation`, () => {
     expect(staff.keySig).toBe('F');
   });
 });
+
+describe(`${MUSIC_COMPOSITION} measure numbering`, () => {
+  function flushMutations(): Promise<void> {
+    return new Promise((resolve) => queueMicrotask(resolve));
+  }
+
+  it('numbers measures sequentially starting at 1 on initial connect', () => {
+    const composition = document.createElement(MUSIC_COMPOSITION) as any;
+    const measures = [0, 1, 2].map(() => document.createElement(MUSIC_MEASURE));
+    measures.forEach((measure) => composition.appendChild(measure));
+    document.body.appendChild(composition);
+
+    expect(measures.map((m) => m.getAttribute('number'))).toEqual([
+      '1',
+      '2',
+      '3',
+    ]);
+  });
+
+  it('continues numbering when a measure is dynamically added', async () => {
+    const composition = document.createElement(MUSIC_COMPOSITION) as any;
+    document.body.appendChild(composition);
+    composition.appendChild(document.createElement(MUSIC_MEASURE));
+    await flushMutations();
+
+    const secondMeasure = document.createElement(MUSIC_MEASURE);
+    composition.appendChild(secondMeasure);
+    await flushMutations();
+
+    expect(secondMeasure.getAttribute('number')).toBe('2');
+  });
+
+  it('renumbers from 1 after removing every measure and adding a new one', async () => {
+    const composition = document.createElement(MUSIC_COMPOSITION) as any;
+    document.body.appendChild(composition);
+    const original = [0, 1, 2].map(() => {
+      const measure = document.createElement(MUSIC_MEASURE);
+      composition.appendChild(measure);
+      return measure;
+    });
+    await flushMutations();
+
+    original.forEach((measure) => composition.removeChild(measure));
+    await flushMutations();
+
+    const freshMeasure = document.createElement(MUSIC_MEASURE);
+    composition.appendChild(freshMeasure);
+    await flushMutations();
+
+    expect(freshMeasure.getAttribute('number')).toBe('1');
+  });
+
+  it('renumbers remaining measures with no gap after removing a middle measure', async () => {
+    const composition = document.createElement(MUSIC_COMPOSITION) as any;
+    document.body.appendChild(composition);
+    const [first, middle, last] = [0, 1, 2].map(() => {
+      const measure = document.createElement(MUSIC_MEASURE);
+      composition.appendChild(measure);
+      return measure;
+    });
+    await flushMutations();
+
+    composition.removeChild(middle);
+    await flushMutations();
+
+    expect(first.getAttribute('number')).toBe('1');
+    expect(last.getAttribute('number')).toBe('2');
+  });
+});

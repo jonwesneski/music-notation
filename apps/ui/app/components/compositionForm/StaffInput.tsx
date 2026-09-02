@@ -1,38 +1,35 @@
 import '@one-step-at-a-time/web-components';
 import { durationToFactor } from '@one-step-at-a-time/web-components';
 import { useFormContext } from 'react-hook-form';
-import { NoteChordInput } from './NoteChordInput';
-import type { CompositionFormValues, DraftMusicEntry } from './types';
+import { AnchoredTabPanel } from './AnchoredTabPanel';
+import { useCompositionFormSession } from './CompositionFormSessionContext';
+import { EntryInput } from './EntryInput';
+import type { CompositionFormValues } from './types';
+import { useConnectorAttributes } from './useCompositionStructure';
 
 interface StaffInputProps {
   staffId: string;
   measureId: string;
-  isSelected: boolean;
-  onSelectStaff: (
-    measureId: string,
-    staffId: string,
-    e: React.MouseEvent
-  ) => void;
-  onAddEntry: (
-    measureId: string,
-    staffId: string,
-    entry: DraftMusicEntry
-  ) => void;
 }
 
-export function StaffInput({
-  staffId,
-  measureId,
-  isSelected,
-  onSelectStaff,
-  onAddEntry,
-}: StaffInputProps) {
+export function StaffInput({ staffId, measureId }: StaffInputProps) {
   const { watch } = useFormContext<CompositionFormValues>();
   const staff = watch(`stavesById.${staffId}`);
   const entriesById = watch('entriesById');
   const keySig = watch('keySig');
   const timeSig = watch('timeSig');
   const mode = watch('mode');
+  const {
+    session,
+    selectStaff,
+    selectEntry,
+    registerStaffRef,
+    registerEntryRef,
+    addEntry,
+  } = useCompositionFormSession();
+  const connectorAttrs = useConnectorAttributes();
+
+  const isSelected = session.selection.staffIds.includes(staffId);
 
   const entries = staff.entryIds.map((eid) => entriesById[eid]);
 
@@ -46,38 +43,91 @@ export function StaffInput({
     isSelected ? 'rainbow-selected' : ''
   }`;
 
-  const entryNodes = entries.map((entry, i) =>
-    entry.type === 'note' ? (
-      <music-note key={i} note={entry.value} duration={entry.duration} />
-    ) : (
-      <music-chord key={i} duration={entry.duration}>
-        {entry.notes.map((n, j) => (
-          <music-note key={j} note={n} />
-        ))}
-      </music-chord>
-    )
-  );
+  const entryNodes = entries.map((entry) => {
+    const isEntrySelected = session.selection.entryIds.includes(entry.id);
+    const entryClass = isEntrySelected ? 'rainbow-selected' : '';
+    const connector = connectorAttrs.get(entry.id);
+    const handleEntryClick = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      selectEntry(measureId, staffId, entry.id, e);
+    };
+
+    if (entry.type === 'note') {
+      return (
+        <music-note
+          key={entry.id}
+          ref={(el: HTMLElement | null) => registerEntryRef(entry.id, el)}
+          note={entry.value}
+          duration={entry.duration}
+          tie={connector?.tie}
+          slur={connector?.slur}
+          id={connector?.id}
+          for={connector?.for}
+          className={entryClass}
+          onClick={handleEntryClick}
+        />
+      );
+    } else if (entry.type === 'chord') {
+      return (
+        <music-chord
+          key={entry.id}
+          ref={(el: HTMLElement | null) => registerEntryRef(entry.id, el)}
+          duration={entry.duration}
+          tie={connector?.tie}
+          slur={connector?.slur}
+          id={connector?.id}
+          for={connector?.for}
+          className={entryClass}
+          onClick={handleEntryClick}
+        >
+          {entry.notes.map((n, j) => (
+            <music-note key={j} note={n} />
+          ))}
+        </music-chord>
+      );
+    } else {
+      return (
+        <music-rest
+          key={entry.id}
+          ref={(el: HTMLElement | null) => registerEntryRef(entry.id, el)}
+          duration={entry.duration}
+          className={entryClass}
+          onClick={handleEntryClick}
+        />
+      );
+    }
+  });
 
   return (
-    <div className="relative">
+    <>
       <music-staff
+        ref={(el: HTMLElement | null) => registerStaffRef(staffId, el)}
         clef={staff.type === 'treble' ? 'treble' : 'bass'}
+        group={staff.group ?? undefined}
+        group-id={staff.groupId ?? undefined}
         className={staffClass}
         keySig={keySig}
         mode={mode}
         time={timeSig}
-        onClick={(e) => onSelectStaff(measureId, staffId, e)}
+        onClick={(e) => selectStaff(measureId, staffId, e)}
       >
         {entryNodes}
       </music-staff>
       {isSelected && (
-        <div className="absolute top-full left-1/2 -translate-x-1/2 z-20 mt-1 w-72 shadow-lg">
-          <NoteChordInput
-            onAdd={(entry) => onAddEntry(measureId, staffId, entry)}
-            remainingBeats={remainingBeats}
-          />
-        </div>
+        <AnchoredTabPanel
+          tabs={[
+            {
+              label: 'Staff Entries',
+              content: (
+                <EntryInput
+                  onAdd={(entry) => addEntry(measureId, staffId, entry)}
+                  remainingBeats={remainingBeats}
+                />
+              ),
+            },
+          ]}
+        />
       )}
-    </div>
+    </>
   );
 }

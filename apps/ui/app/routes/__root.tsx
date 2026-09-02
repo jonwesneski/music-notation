@@ -4,8 +4,8 @@ import {
   Scripts,
   createRootRoute,
 } from '@tanstack/react-router';
-import { NavBar } from '../components/NavBar';
-import appCss from '../globals.css?url';
+import { NavBar } from '@/components/NavBar';
+import appCss from '@/globals.css?url';
 
 export const Route = createRootRoute({
   head: () => ({
