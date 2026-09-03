@@ -1,9 +1,9 @@
 import '@one-step-at-a-time/web-components';
-import { durationToFactor } from '@one-step-at-a-time/web-components';
 import { useFormContext } from 'react-hook-form';
 import { AnchoredTabPanel } from './AnchoredTabPanel';
 import { useCompositionFormSession } from './CompositionFormSessionContext';
 import { EntryInput } from './EntryInput';
+import { remainingDuration } from './measureCapacity';
 import type { CompositionFormValues } from './types';
 import { useConnectorAttributes } from './useCompositionStructure';
 
@@ -33,11 +33,7 @@ export function StaffInput({ staffId, measureId }: StaffInputProps) {
 
   const entries = staff.entryIds.map((eid) => entriesById[eid]);
 
-  const usedBeats = entries.reduce(
-    (sum, entry) => sum + durationToFactor[entry.duration],
-    0
-  );
-  const remainingBeats = 1 - usedBeats;
+  const remainingBeats = remainingDuration(entries, timeSig);
 
   const staffClass = `cursor-pointer rounded transition-shadow ${
     isSelected ? 'rainbow-selected' : ''
