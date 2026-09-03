@@ -40,5 +40,6 @@ export {
   STAFF_GROUPS,
   STRESSES,
   TIMES,
+  TUPLET_RATIOS,
   VOICES,
 } from './utils/consts';

@@ -9,6 +9,8 @@ import { EntryEditInput } from './EntryEditInput';
 import { GraceInput } from './GraceInput';
 import { StaffGroupInput } from './StaffGroupInput';
 import { StaffInput } from './StaffInput';
+import { TupletInput } from './TupletInput';
+import { tupletCandidate } from './tuplets';
 import type { CompositionFormValues } from './types';
 import { isSingleEntrySelection } from './types';
 import { useCompositionStructure } from './useCompositionStructure';
@@ -65,6 +67,12 @@ export function MeasureInput({ measureId }: MeasureInputProps) {
       ? structure.entriesById[selectedEntryId]
       : null;
 
+  // A tuplet groups entries within one staff — offered by the measure holding
+  // that staff.
+  const tupletTarget = tupletCandidate(session.selection, structure);
+  const showTuplet =
+    tupletTarget !== null && measure.staffIds.includes(tupletTarget.staffId);
+
   const tabs = [];
   if (isMeasureSelected) {
     tabs.push({
@@ -108,6 +116,12 @@ export function MeasureInput({ measureId }: MeasureInputProps) {
       });
     }
   }
+  if (showTuplet) {
+    tabs.push({
+      label: 'Tuplet',
+      content: <TupletInput structure={structure} />,
+    });
+  }
 
   return (
     <music-measure
@@ -118,7 +132,8 @@ export function MeasureInput({ measureId }: MeasureInputProps) {
         isMeasureSelected ||
         containsSelectedStaff ||
         connectorEndpoints ||
-        editableEntry
+        editableEntry ||
+        showTuplet
           ? 'pb-10'
           : ''
       }`}

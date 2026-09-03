@@ -13,6 +13,7 @@ export function useCompositionStructure(): CompositionStructure {
   const entriesById = useWatch({ control, name: 'entriesById' });
   const connectorsById = useWatch({ control, name: 'connectorsById' });
   const connectorOrder = useWatch({ control, name: 'connectorOrder' });
+  const tupletsById = useWatch({ control, name: 'tupletsById' });
 
   return useMemo(
     () => ({
@@ -22,6 +23,7 @@ export function useCompositionStructure(): CompositionStructure {
       entriesById,
       connectorsById,
       connectorOrder,
+      tupletsById,
     }),
     [
       measureOrder,
@@ -30,6 +32,7 @@ export function useCompositionStructure(): CompositionStructure {
       entriesById,
       connectorsById,
       connectorOrder,
+      tupletsById,
     ]
   );
 }

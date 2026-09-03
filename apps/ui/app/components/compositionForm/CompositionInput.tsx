@@ -1,5 +1,8 @@
 import '@one-step-at-a-time/web-components';
-import type { StaffGroupType } from '@one-step-at-a-time/web-components';
+import type {
+  StaffGroupType,
+  TupletRatio,
+} from '@one-step-at-a-time/web-components';
 import { useCallback, useEffect } from 'react';
 import {
   FormProvider,
@@ -23,6 +26,7 @@ import { DragSelectOverlay } from './DragSelectOverlay';
 import { applyEntryUpdate } from './entryEdits';
 import { MeasureInput } from './MeasureInput';
 import { findGroupMembers } from './staffGroups';
+import { setTuplet as setTupletInStructure } from './tuplets';
 import type {
   CompositionFormValues,
   CompositionStructure,
@@ -146,6 +150,7 @@ export function CompositionInput() {
       entriesById: {},
       connectorsById: {},
       connectorOrder: [],
+      tupletsById: {},
     },
   });
 
@@ -157,6 +162,7 @@ export function CompositionInput() {
       entriesById: methods.getValues('entriesById'),
       connectorsById: methods.getValues('connectorsById'),
       connectorOrder: methods.getValues('connectorOrder'),
+      tupletsById: methods.getValues('tupletsById'),
     }),
     [methods]
   );
@@ -169,6 +175,7 @@ export function CompositionInput() {
       methods.setValue('entriesById', s.entriesById);
       methods.setValue('connectorsById', s.connectorsById);
       methods.setValue('connectorOrder', s.connectorOrder);
+      methods.setValue('tupletsById', s.tupletsById);
     },
     [methods]
   );
@@ -338,6 +345,10 @@ export function CompositionInput() {
     record(upsertConnector(s, startEntryId, endEntryId, kind));
   }
 
+  function setTuplet(entryIds: string[], ratio: TupletRatio | null) {
+    record(setTupletInStructure(getStructure(), entryIds, ratio));
+  }
+
   return (
     <CompositionFormSessionProvider
       getStructure={getStructure}
@@ -348,6 +359,7 @@ export function CompositionInput() {
       onAddEntry={addEntry}
       onUpdateEntry={updateEntry}
       onSetConnector={setConnector}
+      onSetTuplet={setTuplet}
     >
       <FormProvider {...methods}>
         <CompositionFormBody

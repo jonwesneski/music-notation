@@ -56,10 +56,35 @@ export function removeSelectionFromStructure(
         },
       ])
   );
-  const entriesById = Object.fromEntries(
+  let entriesById = Object.fromEntries(
     Object.entries(structure.entriesById).filter(
       ([id]) => !entryIdsToDelete.has(id)
     )
+  );
+
+  // A tuplet needs at least two members; drop any that fell below that and
+  // clear the dangling tupletId on the entries that were left in it.
+  const survivingMembers = new Map<string, number>();
+  for (const entry of Object.values(entriesById)) {
+    if (entry.tupletId) {
+      survivingMembers.set(
+        entry.tupletId,
+        (survivingMembers.get(entry.tupletId) ?? 0) + 1
+      );
+    }
+  }
+  const tupletsById = Object.fromEntries(
+    Object.entries(structure.tupletsById).filter(
+      ([id]) => (survivingMembers.get(id) ?? 0) >= 2
+    )
+  );
+  entriesById = Object.fromEntries(
+    Object.entries(entriesById).map(([id, entry]) => [
+      id,
+      entry.tupletId && !tupletsById[entry.tupletId]
+        ? { ...entry, tupletId: null }
+        : entry,
+    ])
   );
 
   // Drop any tie/slur/hairpin whose start or end entry is gone.
@@ -96,5 +121,6 @@ export function removeSelectionFromStructure(
     entriesById,
     connectorsById,
     connectorOrder,
+    tupletsById,
   };
 }

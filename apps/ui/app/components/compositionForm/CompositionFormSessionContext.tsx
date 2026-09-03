@@ -1,4 +1,7 @@
-import type { StaffGroupType } from '@one-step-at-a-time/web-components';
+import type {
+  StaffGroupType,
+  TupletRatio,
+} from '@one-step-at-a-time/web-components';
 import {
   createContext,
   useCallback,
@@ -69,6 +72,7 @@ type CompositionFormSessionContextValue = {
     kind: ConnectorKind | null,
     family: ConnectorKind[]
   ) => void;
+  setTuplet: (entryIds: string[], ratio: TupletRatio | null) => void;
 };
 
 const CompositionFormSessionContext =
@@ -96,6 +100,7 @@ type CompositionFormSessionProviderProps = {
     kind: ConnectorKind | null,
     family: ConnectorKind[]
   ) => void;
+  onSetTuplet: (entryIds: string[], ratio: TupletRatio | null) => void;
   children: React.ReactNode;
 };
 
@@ -109,6 +114,7 @@ export function CompositionFormSessionProvider({
   onAddEntry,
   onUpdateEntry,
   onSetConnector,
+  onSetTuplet,
   children,
 }: CompositionFormSessionProviderProps) {
   const [session, setSessionState] = useState<CompositionFormSession>({
@@ -238,6 +244,7 @@ export function CompositionFormSessionProvider({
         addEntry: onAddEntry,
         updateEntry: onUpdateEntry,
         setConnector: onSetConnector,
+        setTuplet: onSetTuplet,
       }}
     >
       {children}

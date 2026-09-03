@@ -45,6 +45,7 @@ function buildStructure(): CompositionStructure {
     },
     connectorsById: {},
     connectorOrder: [],
+    tupletsById: {},
   };
 }
 

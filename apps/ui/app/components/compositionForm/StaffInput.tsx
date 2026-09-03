@@ -5,8 +5,12 @@ import { useCompositionFormSession } from './CompositionFormSessionContext';
 import { EntryInput } from './EntryInput';
 import { serializeGrace } from './grace';
 import { remainingDuration } from './measureCapacity';
-import type { CompositionFormValues } from './types';
-import { useConnectorAttributes } from './useCompositionStructure';
+import { resolveTupletRuns } from './tuplets';
+import type { CompositionFormValues, MusicEntry } from './types';
+import {
+  useCompositionStructure,
+  useConnectorAttributes,
+} from './useCompositionStructure';
 
 interface StaffInputProps {
   staffId: string;
@@ -29,6 +33,7 @@ export function StaffInput({ staffId, measureId }: StaffInputProps) {
     addEntry,
   } = useCompositionFormSession();
   const connectorAttrs = useConnectorAttributes();
+  const structure = useCompositionStructure();
 
   const isSelected = session.selection.staffIds.includes(staffId);
 
@@ -40,7 +45,7 @@ export function StaffInput({ staffId, measureId }: StaffInputProps) {
     isSelected ? 'rainbow-selected' : ''
   }`;
 
-  const entryNodes = entries.map((entry) => {
+  const renderEntry = (entry: MusicEntry) => {
     const isEntrySelected = session.selection.entryIds.includes(entry.id);
     const entryClass = isEntrySelected ? 'rainbow-selected' : '';
     const connector = connectorAttrs.get(entry.id);
@@ -101,6 +106,23 @@ export function StaffInput({ staffId, measureId }: StaffInputProps) {
         />
       );
     }
+  };
+
+  // A tuplet run renders as a <music-tuplet> wrapper (a direct child of
+  // <music-staff>, as the library's slot walker requires); loose runs render
+  // their entries inline.
+  const runs = resolveTupletRuns(staff.entryIds, entriesById);
+  const entryNodes = runs.map((run) => {
+    const nodes = run.entries.map(renderEntry);
+    if (run.tupletId === null) {
+      return nodes;
+    }
+    const ratio = structure.tupletsById[run.tupletId]?.ratio;
+    return (
+      <music-tuplet key={run.tupletId} ratio={ratio}>
+        {nodes}
+      </music-tuplet>
+    );
   });
 
   return (

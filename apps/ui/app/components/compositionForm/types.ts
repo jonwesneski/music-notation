@@ -12,6 +12,7 @@ import type {
   StaffGroupType,
   StressType,
   TimeSignature,
+  TupletRatio,
 } from '@one-step-at-a-time/web-components';
 import { DURATIONS, MODES, TIMES } from '@one-step-at-a-time/web-components';
 
@@ -51,20 +52,28 @@ export type EntryMarkings = {
   grace?: GraceGroup | null;
 };
 
-export type NoteEntry = EntryMarkings & {
-  id: string;
-  type: 'note';
-  value: Note;
-  octave?: Octave | null;
-  duration: DurationType;
-};
-export type ChordEntry = EntryMarkings & {
-  id: string;
-  type: 'chord';
-  notes: ChordNote[];
-  duration: DurationType;
-};
-export type RestEntry = {
+// A note/chord/rest belongs to at most one tuplet, referenced by id. The
+// tuplet's member order and position come from `staff.entryIds` — there is no
+// separate order array. Nested tuplets are not modelled (one tupletId per
+// entry), though the library renderer does support them.
+export type TupletMembership = { tupletId?: string | null };
+
+export type NoteEntry = EntryMarkings &
+  TupletMembership & {
+    id: string;
+    type: 'note';
+    value: Note;
+    octave?: Octave | null;
+    duration: DurationType;
+  };
+export type ChordEntry = EntryMarkings &
+  TupletMembership & {
+    id: string;
+    type: 'chord';
+    notes: ChordNote[];
+    duration: DurationType;
+  };
+export type RestEntry = TupletMembership & {
   id: string;
   type: 'rest';
   duration: DurationType;
@@ -103,6 +112,10 @@ export type NormalizedConnector = {
   endEntryId: string;
 };
 
+// A tuplet grouping a contiguous run of entries in one staff. Which entries and
+// in what order is derived from the entries carrying this id in `staff.entryIds`.
+export type NormalizedTuplet = { id: string; ratio: TupletRatio };
+
 // The undoable structural slice
 export type CompositionStructure = {
   measureOrder: string[];
@@ -111,6 +124,7 @@ export type CompositionStructure = {
   entriesById: Record<string, MusicEntry>;
   connectorsById: Record<string, NormalizedConnector>;
   connectorOrder: string[];
+  tupletsById: Record<string, NormalizedTuplet>;
 };
 
 export type Selection = {
