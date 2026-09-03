@@ -6,8 +6,15 @@ import type {
   StaffGroupType,
   TimeSignature,
 } from '@one-step-at-a-time/web-components';
+import { DURATIONS, MODES, TIMES } from '@one-step-at-a-time/web-components';
 
 export type { ConnectorRole };
+
+// Re-export the library's option arrays so form controls have one source of
+// truth. `KEY_SIGNATURE_OPTIONS` below stays local — it is a deliberate
+// circle-of-fifths subset with no library equivalent.
+export { DURATIONS as DURATION_OPTIONS, TIMES as TIME_SIGNATURE_OPTIONS };
+export const MODE_OPTIONS = MODES;
 
 export type StaffType = 'treble' | 'bass';
 
@@ -109,50 +116,4 @@ export const KEY_SIGNATURE_OPTIONS: Note[] = [
   'Eb',
   'Bb',
   'F',
-];
-
-export const TIME_SIGNATURE_OPTIONS = [
-  '4/4',
-  '3/4',
-  '2/4',
-  '2/2',
-  '6/8',
-  '9/8',
-  '12/8',
-  '3/8',
-  '5/4',
-  '7/4',
-];
-
-export const MODE_OPTIONS: Mode[] = ['major', 'minor'];
-
-export const NOTE_OPTIONS: Note[] = [
-  'A',
-  'A#',
-  'Bb',
-  'B',
-  'C',
-  'C#',
-  'Db',
-  'D',
-  'D#',
-  'Eb',
-  'E',
-  'F',
-  'F#',
-  'Gb',
-  'G',
-  'G#',
-  'Ab',
-];
-
-export const DURATION_OPTIONS: DurationType[] = [
-  'whole',
-  'half',
-  'quarter',
-  'eighth',
-  'sixteenth',
-  'thirtysecond',
-  'sixtyfourth',
-  'hundredtwentyeighth',
 ];

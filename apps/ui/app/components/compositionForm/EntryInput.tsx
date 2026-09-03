@@ -1,10 +1,13 @@
 import type { DurationType, Note } from '@one-step-at-a-time/web-components';
-import { durationToFactor } from '@one-step-at-a-time/web-components';
+import {
+  durationToFactor,
+  DURATIONS,
+  NOTES,
+} from '@one-step-at-a-time/web-components';
 import { useState } from 'react';
 import { Button, Radio, Select } from '@/design-system';
 import { useCompositionFormSession } from './CompositionFormSessionContext';
 import type { DraftMusicEntry } from './types';
-import { DURATION_OPTIONS, NOTE_OPTIONS } from './types';
 
 interface EntryInputProps {
   onAdd: (entry: DraftMusicEntry) => void;
@@ -81,7 +84,7 @@ export function EntryInput({ onAdd, remainingBeats }: EntryInputProps) {
               value={noteValue}
               onChange={(e) => setNoteValue(e.target.value as Note)}
             >
-              {NOTE_OPTIONS.map((n) => (
+              {NOTES.map((n) => (
                 <option key={n} value={n}>
                   {n}
                 </option>
@@ -91,7 +94,7 @@ export function EntryInput({ onAdd, remainingBeats }: EntryInputProps) {
               value={duration}
               onChange={(e) => setDuration(e.target.value as DurationType)}
             >
-              {DURATION_OPTIONS.map((d) => (
+              {DURATIONS.map((d) => (
                 <option key={d} value={d}>
                   {d}
                 </option>
@@ -117,7 +120,7 @@ export function EntryInput({ onAdd, remainingBeats }: EntryInputProps) {
                   )
                 }
               >
-                {NOTE_OPTIONS.map((n) => (
+                {NOTES.map((n) => (
                   <option key={n} value={n}>
                     {n}
                   </option>
@@ -135,7 +138,7 @@ export function EntryInput({ onAdd, remainingBeats }: EntryInputProps) {
               value={duration}
               onChange={(e) => setDuration(e.target.value as DurationType)}
             >
-              {DURATION_OPTIONS.map((d) => (
+              {DURATIONS.map((d) => (
                 <option key={d} value={d}>
                   {d}
                 </option>
@@ -153,7 +156,7 @@ export function EntryInput({ onAdd, remainingBeats }: EntryInputProps) {
               value={duration}
               onChange={(e) => setDuration(e.target.value as DurationType)}
             >
-              {DURATION_OPTIONS.map((d) => (
+              {DURATIONS.map((d) => (
                 <option key={d} value={d}>
                   {d}
                 </option>
