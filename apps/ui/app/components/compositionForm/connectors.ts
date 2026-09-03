@@ -114,7 +114,11 @@ export function isConnectableSelection(
   }
 
   const entries = selection.entryIds.map((id) => structure.entriesById[id]);
-  if (entries.some((entry) => !entry || entry.type === 'rest')) {
+  if (
+    entries.some(
+      (entry) => !entry || entry.type === 'rest' || entry.type === 'clef'
+    )
+  ) {
     return null;
   }
 
@@ -178,7 +182,10 @@ export function canTie(
 ): boolean {
   const start = structure.entriesById[endpoints.startEntryId];
   const end = structure.entriesById[endpoints.endEntryId];
-  if (!start || !end || start.type === 'rest' || end.type === 'rest') {
+  if (!start || !end) {
+    return false;
+  }
+  if (start.type === 'rest' || start.type === 'clef') {
     return false;
   }
   if (start.type !== end.type) {

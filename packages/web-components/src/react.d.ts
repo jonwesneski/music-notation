@@ -91,6 +91,7 @@ declare module 'react' {
       };
       'music-clef': WebComponentNoChildrenProps & {
         clef?: ClefType;
+        onClick?: (e: MouseEvent) => void;
       };
       'music-rest': WebComponentNoChildrenProps & {
         duration?: DurationType;

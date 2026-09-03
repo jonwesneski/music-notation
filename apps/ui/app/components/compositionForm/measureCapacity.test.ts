@@ -1,12 +1,13 @@
+import type { DurationType } from '@one-step-at-a-time/web-components';
 import { describe, expect, it } from 'vitest';
 import {
   measureDuration,
   remainingDuration,
   usedDuration,
 } from './measureCapacity';
-import type { MusicEntry } from './types';
+import type { NoteEntry } from './types';
 
-const note = (id: string, duration: MusicEntry['duration']): MusicEntry => ({
+const note = (id: string, duration: DurationType): NoteEntry => ({
   id,
   type: 'note',
   value: 'C',

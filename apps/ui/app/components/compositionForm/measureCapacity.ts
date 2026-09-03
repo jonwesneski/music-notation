@@ -1,6 +1,7 @@
 import type { TimeSignature } from '@one-step-at-a-time/web-components';
 import { durationToFactor } from '@one-step-at-a-time/web-components';
 import type { MusicEntry } from './types';
+import { isPitchedEntry } from './types';
 
 // How much of a measure one whole note fills is 1.0; a 4/4 measure holds 1.0,
 // a 3/4 measure 0.75, a 6/8 measure 0.75, etc. Mirrors the library's
@@ -15,7 +16,8 @@ export function measureDuration(timeSig: TimeSignature): number {
 
 export function usedDuration(entries: MusicEntry[]): number {
   return entries.reduce(
-    (sum, entry) => sum + (durationToFactor[entry.duration] ?? 0),
+    (sum, entry) =>
+      sum + (isPitchedEntry(entry) ? durationToFactor[entry.duration] : 0),
     0
   );
 }

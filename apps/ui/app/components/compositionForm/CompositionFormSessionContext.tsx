@@ -22,7 +22,6 @@ import type {
 import { EMPTY_SELECTION, isSelectionEmpty } from './types';
 
 export type CompositionFormSession = {
-  lastActiveEntry: 'note' | 'chord' | 'rest';
   entryPanelTab: string | null;
   selection: Selection;
 };
@@ -118,7 +117,6 @@ export function CompositionFormSessionProvider({
   children,
 }: CompositionFormSessionProviderProps) {
   const [session, setSessionState] = useState<CompositionFormSession>({
-    lastActiveEntry: 'note',
     entryPanelTab: null,
     selection: EMPTY_SELECTION,
   });

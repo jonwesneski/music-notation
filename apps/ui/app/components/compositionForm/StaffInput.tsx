@@ -1,12 +1,19 @@
 import '@one-step-at-a-time/web-components';
 import { useFormContext } from 'react-hook-form';
+import { AddChordInput } from './AddChordInput';
+import { AddClefInput } from './AddClefInput';
+import { AddNoteInput } from './AddNoteInput';
+import { AddRestInput } from './AddRestInput';
 import { AnchoredTabPanel } from './AnchoredTabPanel';
 import { useCompositionFormSession } from './CompositionFormSessionContext';
-import { EntryInput } from './EntryInput';
 import { serializeGrace } from './grace';
 import { remainingDuration } from './measureCapacity';
 import { resolveTupletRuns } from './tuplets';
-import type { CompositionFormValues, MusicEntry } from './types';
+import type {
+  CompositionFormValues,
+  DraftMusicEntry,
+  MusicEntry,
+} from './types';
 import {
   useCompositionStructure,
   useConnectorAttributes,
@@ -40,6 +47,7 @@ export function StaffInput({ staffId, measureId }: StaffInputProps) {
   const entries = staff.entryIds.map((eid) => entriesById[eid]);
 
   const remainingBeats = remainingDuration(entries, timeSig);
+  const add = (entry: DraftMusicEntry) => addEntry(measureId, staffId, entry);
 
   const staffClass = `cursor-pointer rounded transition-shadow ${
     isSelected ? 'rainbow-selected' : ''
@@ -95,6 +103,16 @@ export function StaffInput({ staffId, measureId }: StaffInputProps) {
           ))}
         </music-chord>
       );
+    } else if (entry.type === 'clef') {
+      return (
+        <music-clef
+          key={entry.id}
+          ref={(el: HTMLElement | null) => registerEntryRef(entry.id, el)}
+          clef={entry.clef}
+          className={entryClass}
+          onClick={handleEntryClick}
+        />
+      );
     } else {
       return (
         <music-rest
@@ -144,13 +162,26 @@ export function StaffInput({ staffId, measureId }: StaffInputProps) {
         <AnchoredTabPanel
           tabs={[
             {
-              label: 'Staff Entries',
+              label: 'Note',
               content: (
-                <EntryInput
-                  onAdd={(entry) => addEntry(measureId, staffId, entry)}
-                  remainingBeats={remainingBeats}
-                />
+                <AddNoteInput onAdd={add} remainingBeats={remainingBeats} />
               ),
+            },
+            {
+              label: 'Chord',
+              content: (
+                <AddChordInput onAdd={add} remainingBeats={remainingBeats} />
+              ),
+            },
+            {
+              label: 'Rest',
+              content: (
+                <AddRestInput onAdd={add} remainingBeats={remainingBeats} />
+              ),
+            },
+            {
+              label: 'Clef Change',
+              content: <AddClefInput onAdd={add} />,
             },
           ]}
         />

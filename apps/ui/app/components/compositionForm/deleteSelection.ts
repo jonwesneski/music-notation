@@ -1,5 +1,6 @@
 import { findGroupMembers } from './staffGroups';
 import type { CompositionStructure, Selection } from './types';
+import { isPitchedEntry } from './types';
 
 export function removeSelectionFromStructure(
   structure: CompositionStructure,
@@ -66,7 +67,7 @@ export function removeSelectionFromStructure(
   // clear the dangling tupletId on the entries that were left in it.
   const survivingMembers = new Map<string, number>();
   for (const entry of Object.values(entriesById)) {
-    if (entry.tupletId) {
+    if (isPitchedEntry(entry) && entry.tupletId) {
       survivingMembers.set(
         entry.tupletId,
         (survivingMembers.get(entry.tupletId) ?? 0) + 1
@@ -81,7 +82,7 @@ export function removeSelectionFromStructure(
   entriesById = Object.fromEntries(
     Object.entries(entriesById).map(([id, entry]) => [
       id,
-      entry.tupletId && !tupletsById[entry.tupletId]
+      isPitchedEntry(entry) && entry.tupletId && !tupletsById[entry.tupletId]
         ? { ...entry, tupletId: null }
         : entry,
     ])

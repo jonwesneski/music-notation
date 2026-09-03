@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { removeSelectionFromStructure } from './deleteSelection';
-import type { CompositionStructure } from './types';
+import type { CompositionStructure, NoteEntry } from './types';
+
+const tupleted = (id: string, tupletId: string): NoteEntry => ({
+  id,
+  type: 'note',
+  value: 'C',
+  duration: 'eighth',
+  tupletId,
+});
 
 function buildStructure(): CompositionStructure {
   return {
@@ -155,9 +163,9 @@ describe('removeSelectionFromStructure', () => {
       ...base,
       entriesById: {
         ...base.entriesById,
-        e4: { ...base.entriesById.e4, tupletId: 't1' },
-        e5: { ...base.entriesById.e5, tupletId: 't1' },
-        e6: { ...base.entriesById.e6, tupletId: 't1' },
+        e4: tupleted('e4', 't1'),
+        e5: tupleted('e5', 't1'),
+        e6: tupleted('e6', 't1'),
       },
       tupletsById: { t1: { id: 't1', ratio: '3' } },
     };
@@ -169,7 +177,8 @@ describe('removeSelectionFromStructure', () => {
     });
 
     expect(result.tupletsById).toEqual({});
-    expect(result.entriesById.e6.tupletId).toBeNull();
+    const e6 = result.entriesById.e6;
+    expect(e6.type === 'note' && e6.tupletId).toBeNull();
   });
 
   it('keeps a tuplet whose members mostly survive', () => {
@@ -178,9 +187,9 @@ describe('removeSelectionFromStructure', () => {
       ...base,
       entriesById: {
         ...base.entriesById,
-        e4: { ...base.entriesById.e4, tupletId: 't1' },
-        e5: { ...base.entriesById.e5, tupletId: 't1' },
-        e6: { ...base.entriesById.e6, tupletId: 't1' },
+        e4: tupleted('e4', 't1'),
+        e5: tupleted('e5', 't1'),
+        e6: tupleted('e6', 't1'),
       },
       tupletsById: { t1: { id: 't1', ratio: '3' } },
     };
@@ -192,7 +201,33 @@ describe('removeSelectionFromStructure', () => {
     });
 
     expect(result.tupletsById).toHaveProperty('t1');
-    expect(result.entriesById.e5.tupletId).toBe('t1');
+    const e5 = result.entriesById.e5;
+    expect(e5.type === 'note' && e5.tupletId).toBe('t1');
+  });
+
+  it('deletes a mid-stream clef entry and leaves the staff valid', () => {
+    const base = buildStructure();
+    const structure: CompositionStructure = {
+      ...base,
+      stavesById: {
+        ...base.stavesById,
+        s3: { ...base.stavesById.s3, entryIds: ['e4', 'cl1', 'e5', 'e6'] },
+      },
+      entriesById: {
+        ...base.entriesById,
+        cl1: { id: 'cl1', type: 'clef', clef: 'bass' },
+      },
+    };
+
+    const result = removeSelectionFromStructure(structure, {
+      measureIds: [],
+      staffIds: [],
+      entryIds: ['cl1'],
+    });
+
+    expect(result.entriesById).not.toHaveProperty('cl1');
+    expect(result.stavesById.s3.entryIds).toEqual(['e4', 'e5', 'e6']);
+    expect(result.connectorsById).toHaveProperty('c2');
   });
 
   it('leaves one fresh empty measure behind when every measure is deleted', () => {

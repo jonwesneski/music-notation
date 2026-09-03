@@ -1,5 +1,6 @@
 import type {
   ArticulationType,
+  ClefType,
   ConnectorRole,
   DurationType,
   DynamicMarking,
@@ -78,12 +79,28 @@ export type RestEntry = TupletMembership & {
   type: 'rest';
   duration: DurationType;
 };
-export type MusicEntry = NoteEntry | ChordEntry | RestEntry;
-// Entry shape before an id is assigned (used when constructing entries in EntryInput)
+// A mid-stream clef change. Lives in `staff.entryIds` like any entry, but
+// carries no beat duration and cannot belong to a tuplet.
+export type ClefEntry = {
+  id: string;
+  type: 'clef';
+  clef: ClefType;
+};
+export type MusicEntry = NoteEntry | ChordEntry | RestEntry | ClefEntry;
+
+// note/chord/rest — an entry that occupies beat time and can carry markings /
+// tuplet membership. Excludes ClefEntry.
+export type PitchedEntry = NoteEntry | ChordEntry | RestEntry;
+export function isPitchedEntry(entry: MusicEntry): entry is PitchedEntry {
+  return entry.type !== 'clef';
+}
+
+// Entry shape before an id is assigned (used by the Add* panels)
 export type DraftMusicEntry =
   | Omit<NoteEntry, 'id'>
   | Omit<ChordEntry, 'id'>
-  | Omit<RestEntry, 'id'>;
+  | Omit<RestEntry, 'id'>
+  | Omit<ClefEntry, 'id'>;
 
 // Flat normalized nodes
 export type NormalizedMeasure = { id: string; staffIds: string[] };

@@ -31,7 +31,7 @@ function entryLabel(entry: MusicEntry | undefined): string {
   if (entry.type === 'chord') {
     return entry.notes.map((n) => n.value).join('/');
   }
-  return 'rest';
+  return entry.type;
 }
 
 export function ConnectorInput({

@@ -2,8 +2,10 @@ import type {
   CompositionStructure,
   MusicEntry,
   NormalizedTuplet,
+  PitchedEntry,
   Selection,
 } from './types';
+import { isPitchedEntry } from './types';
 
 // Tuplet resolution for the composition form. A tuplet groups a contiguous run
 // of entries within one staff; membership is a flat `tupletId` on each entry,
@@ -19,8 +21,8 @@ export type TupletRun = {
   entries: MusicEntry[];
 };
 
-const isClef = (entry: MusicEntry): boolean =>
-  (entry as { type: string }).type === 'clef';
+const tupletIdOf = (entry: MusicEntry): string | null =>
+  isPitchedEntry(entry) ? entry.tupletId ?? null : null;
 
 // Groups a staff's entries into consecutive runs for rendering: each run is
 // either a tuplet (all entries share one non-null tupletId, uninterrupted) or a
@@ -38,7 +40,7 @@ export function resolveTupletRuns(
     if (!entry) {
       continue;
     }
-    const tupletId = isClef(entry) ? null : entry.tupletId ?? null;
+    const tupletId = tupletIdOf(entry);
     if (current && current.tupletId === tupletId && tupletId !== null) {
       current.entries.push(entry);
       continue;
@@ -82,7 +84,7 @@ export function tupletCandidate(
       return null;
     }
     const entryIds = indices.map((item) => item.id);
-    if (entryIds.some((id) => isClef(structure.entriesById[id]))) {
+    if (entryIds.some((id) => !isPitchedEntry(structure.entriesById[id]))) {
       return null;
     }
     return { staffId: staff.id, entryIds };
@@ -96,7 +98,7 @@ export function tupletOfEntries(
   entryIds: string[]
 ): NormalizedTuplet | null {
   const ids = new Set(
-    entryIds.map((id) => structure.entriesById[id]?.tupletId ?? null)
+    entryIds.map((id) => tupletIdOf(structure.entriesById[id]))
   );
   if (ids.size !== 1) {
     return null;
@@ -115,18 +117,27 @@ export function setTuplet(
 ): CompositionStructure {
   const clearedTupletIds = new Set<string>();
   for (const id of entryIds) {
-    const existing = structure.entriesById[id]?.tupletId;
+    const existing = tupletIdOf(structure.entriesById[id]);
     if (existing) {
       clearedTupletIds.add(existing);
     }
   }
 
   const entriesById = { ...structure.entriesById };
+  const withTuplet = (entry: MusicEntry, tupletId: string | null): MusicEntry =>
+    isPitchedEntry(entry)
+      ? ({ ...entry, tupletId } satisfies PitchedEntry)
+      : entry;
+
   // Drop the stale tuplet from every entry that referenced it, not just the
   // selected ones, so a partial re-selection never leaves a 1-member tuplet.
   for (const [id, entry] of Object.entries(entriesById)) {
-    if (entry.tupletId && clearedTupletIds.has(entry.tupletId)) {
-      entriesById[id] = { ...entry, tupletId: null };
+    if (
+      isPitchedEntry(entry) &&
+      entry.tupletId &&
+      clearedTupletIds.has(entry.tupletId)
+    ) {
+      entriesById[id] = withTuplet(entry, null);
     }
   }
 
@@ -139,7 +150,7 @@ export function setTuplet(
     const newId = crypto.randomUUID();
     tupletsById[newId] = { id: newId, ratio };
     for (const id of entryIds) {
-      entriesById[id] = { ...entriesById[id], tupletId: newId };
+      entriesById[id] = withTuplet(entriesById[id], newId);
     }
   }
 

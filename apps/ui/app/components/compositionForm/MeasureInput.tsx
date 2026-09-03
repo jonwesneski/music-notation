@@ -2,6 +2,7 @@ import '@one-step-at-a-time/web-components';
 import { useFormContext } from 'react-hook-form';
 import { AddStaffInput } from './AddStaffInput';
 import { AnchoredTabPanel } from './AnchoredTabPanel';
+import { ClefEntryInput } from './ClefEntryInput';
 import { useCompositionFormSession } from './CompositionFormSessionContext';
 import { ConnectorInput } from './ConnectorInput';
 import { isConnectableSelection } from './connectors';
@@ -104,7 +105,12 @@ export function MeasureInput({ measureId }: MeasureInputProps) {
       ),
     });
   }
-  if (editableEntry) {
+  if (editableEntry?.type === 'clef') {
+    tabs.push({
+      label: 'Clef',
+      content: <ClefEntryInput entry={editableEntry} />,
+    });
+  } else if (editableEntry) {
     tabs.push({
       label: 'Edit',
       content: <EntryEditInput entry={editableEntry} />,

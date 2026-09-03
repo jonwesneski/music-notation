@@ -11,10 +11,10 @@ import {
   OctaveSelect,
   PitchSelect,
 } from './entryControls';
-import type { MusicEntry } from './types';
+import type { PitchedEntry } from './types';
 
 interface EntryEditInputProps {
-  entry: MusicEntry;
+  entry: PitchedEntry;
 }
 
 const labelClass = 'text-xs font-medium text-zinc-500';

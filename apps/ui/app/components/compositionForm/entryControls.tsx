@@ -1,3 +1,4 @@
+import { Button, Select } from '@/design-system';
 import type {
   DurationType,
   Note,
@@ -11,11 +12,10 @@ import {
   OCTAVES,
   STRESSES,
 } from '@one-step-at-a-time/web-components';
-import { Button, Select } from '@/design-system';
 import type { ChordNote, EntryMarkings } from './types';
 
-// Shared pitch / octave / duration / chord-note controls used by both the "add
-// entry" panel (EntryInput) and the "edit selected entry" panel (EntryEditInput).
+// Shared pitch / octave / duration / chord-note controls used by the Add* panels
+// (AddNoteInput / AddChordInput / AddRestInput) and by EntryEditInput.
 
 export function PitchSelect({
   value,

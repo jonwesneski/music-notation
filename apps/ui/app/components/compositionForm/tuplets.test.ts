@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import type { CompositionStructure, MusicEntry, Selection } from './types';
 import { resolveTupletRuns, setTuplet, tupletCandidate } from './tuplets';
+import type { CompositionStructure, MusicEntry, Selection } from './types';
+import { isPitchedEntry } from './types';
+
+const tupletIdOf = (
+  entriesById: Record<string, MusicEntry>,
+  id: string
+): string | null | undefined => {
+  const entry = entriesById[id];
+  return isPitchedEntry(entry) ? entry.tupletId : null;
+};
 
 const note = (id: string, tupletId?: string | null): MusicEntry => ({
   id,
@@ -70,7 +79,7 @@ describe('resolveTupletRuns', () => {
   it('breaks a tuplet run at a clef entry', () => {
     const entriesById: Record<string, MusicEntry> = {
       e1: note('e1', 't1'),
-      c1: { id: 'c1', type: 'clef', clef: 'bass' } as unknown as MusicEntry,
+      c1: { id: 'c1', type: 'clef', clef: 'bass' },
       e2: note('e2', 't1'),
     };
     const runs = resolveTupletRuns(['e1', 'c1', 'e2'], entriesById);
@@ -108,9 +117,11 @@ describe('tupletCandidate', () => {
 describe('setTuplet', () => {
   it('creates a tuplet and stamps every member', () => {
     const next = setTuplet(buildStructure(), ['e1', 'e2', 'e3'], '3');
-    const ids = ['e1', 'e2', 'e3'].map((id) => next.entriesById[id].tupletId);
+    const ids = ['e1', 'e2', 'e3'].map((id) =>
+      tupletIdOf(next.entriesById, id)
+    );
     expect(new Set(ids).size).toBe(1);
-    expect(ids[0]).not.toBeNull();
+    expect(ids[0]).toBeTruthy();
     expect(Object.values(next.tupletsById)[0].ratio).toBe('3');
   });
 
@@ -125,6 +136,6 @@ describe('setTuplet', () => {
     let next = setTuplet(buildStructure(), ['e1', 'e2', 'e3'], '3');
     next = setTuplet(next, ['e1', 'e2'], null);
     expect(next.tupletsById).toEqual({});
-    expect(next.entriesById.e3.tupletId).toBeNull();
+    expect(tupletIdOf(next.entriesById, 'e3')).toBeNull();
   });
 });
