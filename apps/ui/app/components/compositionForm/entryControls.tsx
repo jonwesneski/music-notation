@@ -3,9 +3,16 @@ import type {
   Note,
   Octave,
 } from '@one-step-at-a-time/web-components';
-import { DURATIONS, NOTES, OCTAVES } from '@one-step-at-a-time/web-components';
+import {
+  ARTICULATIONS,
+  DURATIONS,
+  DYNAMICS,
+  NOTES,
+  OCTAVES,
+  STRESSES,
+} from '@one-step-at-a-time/web-components';
 import { Button, Select } from '@/design-system';
-import type { ChordNote } from './types';
+import type { ChordNote, EntryMarkings } from './types';
 
 // Shared pitch / octave / duration / chord-note controls used by both the "add
 // entry" panel (EntryInput) and the "edit selected entry" panel (EntryEditInput).
@@ -85,6 +92,72 @@ export function DurationSelect({
         </option>
       ))}
     </Select>
+  );
+}
+
+const NONE = 'none';
+
+function OptionalSelect<T extends string>({
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  label: string;
+  options: readonly T[];
+  value: T | null | undefined;
+  onChange: (value: T | null) => void;
+}) {
+  return (
+    <label className="flex flex-col gap-0.5">
+      <span className="text-xs font-medium text-zinc-500">{label}</span>
+      <Select
+        value={value ?? NONE}
+        onChange={(e) =>
+          onChange(e.target.value === NONE ? null : (e.target.value as T))
+        }
+      >
+        <option value={NONE}>none</option>
+        {options.map((o) => (
+          <option key={o} value={o}>
+            {o}
+          </option>
+        ))}
+      </Select>
+    </label>
+  );
+}
+
+// dynamic / articulation / stress — the expression marks shared by notes and
+// chords. Edits are merged onto the entry by the caller.
+export function MarkingsFields({
+  markings,
+  onChange,
+}: {
+  markings: EntryMarkings;
+  onChange: (patch: EntryMarkings) => void;
+}) {
+  return (
+    <>
+      <OptionalSelect
+        label="Dynamic"
+        options={DYNAMICS}
+        value={markings.dynamic}
+        onChange={(dynamic) => onChange({ dynamic })}
+      />
+      <OptionalSelect
+        label="Articulation"
+        options={ARTICULATIONS}
+        value={markings.articulation}
+        onChange={(articulation) => onChange({ articulation })}
+      />
+      <OptionalSelect
+        label="Stress"
+        options={STRESSES}
+        value={markings.stress}
+        onChange={(stress) => onChange({ stress })}
+      />
+    </>
   );
 }
 

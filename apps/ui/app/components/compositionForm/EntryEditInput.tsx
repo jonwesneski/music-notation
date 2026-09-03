@@ -7,6 +7,7 @@ import { useCompositionFormSession } from './CompositionFormSessionContext';
 import {
   ChordNoteRows,
   DurationSelect,
+  MarkingsFields,
   OctaveSelect,
   PitchSelect,
 } from './entryControls';
@@ -66,6 +67,13 @@ export function EntryEditInput({ entry }: EntryEditInputProps) {
           }
         />
       </label>
+
+      {entry.type !== 'rest' && (
+        <MarkingsFields
+          markings={entry}
+          onChange={(patch) => updateEntry({ ...entry, ...patch })}
+        />
+      )}
     </div>
   );
 }

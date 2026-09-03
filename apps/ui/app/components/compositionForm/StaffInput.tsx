@@ -48,34 +48,38 @@ export function StaffInput({ staffId, measureId }: StaffInputProps) {
       selectEntry(measureId, staffId, entry.id, e);
     };
 
-    if (entry.type === 'note') {
-      return (
-        <music-note
-          key={entry.id}
-          ref={(el: HTMLElement | null) => registerEntryRef(entry.id, el)}
-          note={entry.value}
-          octave={entry.octave ?? undefined}
-          duration={entry.duration}
-          tie={connector?.tie}
-          slur={connector?.slur}
-          id={connector?.id}
-          for={connector?.for}
-          className={entryClass}
-          onClick={handleEntryClick}
-        />
-      );
-    } else if (entry.type === 'chord') {
+    if (entry.type === 'note' || entry.type === 'chord') {
+      const marks = {
+        tie: connector?.tie,
+        slur: connector?.slur,
+        id: connector?.id,
+        for: connector?.for,
+        dynamic: entry.dynamic ?? undefined,
+        articulation: entry.articulation ?? undefined,
+        stress: entry.stress ?? undefined,
+        className: entryClass,
+        onClick: handleEntryClick,
+      };
+      const setRef = (el: HTMLElement | null) => registerEntryRef(entry.id, el);
+
+      if (entry.type === 'note') {
+        return (
+          <music-note
+            key={entry.id}
+            ref={setRef}
+            note={entry.value}
+            octave={entry.octave ?? undefined}
+            duration={entry.duration}
+            {...marks}
+          />
+        );
+      }
       return (
         <music-chord
           key={entry.id}
-          ref={(el: HTMLElement | null) => registerEntryRef(entry.id, el)}
+          ref={setRef}
           duration={entry.duration}
-          tie={connector?.tie}
-          slur={connector?.slur}
-          id={connector?.id}
-          for={connector?.for}
-          className={entryClass}
-          onClick={handleEntryClick}
+          {...marks}
         >
           {entry.notes.map((n, j) => (
             <music-note key={j} note={n.value} octave={n.octave ?? undefined} />

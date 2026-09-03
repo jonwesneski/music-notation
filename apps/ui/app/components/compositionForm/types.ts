@@ -1,10 +1,13 @@
 import type {
+  ArticulationType,
   ConnectorRole,
   DurationType,
+  DynamicMarking,
   Mode,
   Note,
   Octave,
   StaffGroupType,
+  StressType,
   TimeSignature,
 } from '@one-step-at-a-time/web-components';
 import { DURATIONS, MODES, TIMES } from '@one-step-at-a-time/web-components';
@@ -23,14 +26,22 @@ export type StaffType = 'treble' | 'bass';
 // matches the library's optional `octave` attribute and `ChordNote` shape.
 export type ChordNote = { value: Note; octave?: Octave | null };
 
-export type NoteEntry = {
+// Expression marks shared by notes and chords. Every field is optional/nullable
+// and maps 1:1 to a `<music-note>` / `<music-chord>` attribute.
+export type EntryMarkings = {
+  dynamic?: DynamicMarking | null;
+  articulation?: ArticulationType | null;
+  stress?: StressType | null;
+};
+
+export type NoteEntry = EntryMarkings & {
   id: string;
   type: 'note';
   value: Note;
   octave?: Octave | null;
   duration: DurationType;
 };
-export type ChordEntry = {
+export type ChordEntry = EntryMarkings & {
   id: string;
   type: 'chord';
   notes: ChordNote[];
