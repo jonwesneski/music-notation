@@ -132,6 +132,11 @@ export const ChordSemitoneMapAliases: Record<
   '+7': '7#5',
 };
 
+/**
+ * Relative horizontal space each duration occupies, as a fraction of a whole
+ * note (`whole` = 1, `quarter` = 0.25, …). Exported so consumers can reproduce
+ * the staff's note spacing.
+ */
 export const durationToFactor: Record<DurationType, number> = {
   'double-whole': 2,
   whole: 1,

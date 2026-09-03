@@ -5,10 +5,10 @@ app names: one at a time, rest in time, walk in time, walk in the park
 
 ## Packages
 
-| Package                              | Description                                                     |
-| ------------------------------------ | --------------------------------------------------------------- |
-| `@one-step-at-a-time/web-components` | Web Components library for rendering music notation (SVG-based) |
-| `apps/ui`                            | Vite + TanStack Router app consuming the design system          |
+| Package                              | Description                                                                                                                 |
+| ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
+| `@one-step-at-a-time/web-components` | Web Components library for rendering music notation (SVG-based) — [docs](https://jonwesneski.github.io/one-step-at-a-time/) |
+| `apps/ui`                            | Vite + TanStack Router app consuming the design system                                                                      |
 
 ## Development
 

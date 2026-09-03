@@ -42,6 +42,40 @@ import {
 import { MUSIC_NOTE, NOTE_EVENTS, OCTAVES, STAFF_TAGS } from '../utils/consts';
 
 if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
+  /**
+   * A single note: notehead, stem, flag, ledger lines, plus optional
+   * articulations, dynamics, hairpins, ties/slurs and grace notes. Renders
+   * standalone or, inside a `<music-staff>`, is positioned and beamed by the
+   * staff. In an `editable` staff its notehead can be dragged to change pitch and
+   * its body dragged to reorder.
+   *
+   * @customElement music-note
+   * @attr {Note} note - Pitch letter with optional accidental, e.g. `C`, `F#`, `Bb`.
+   * @attr {Octave} octave - Scientific-pitch octave (2–6). Falls back to the staff's clef range when unset.
+   * @attr {DurationType} duration - Note value: `whole`, `half`, `quarter`, `eighth`, `sixteenth`, … Defaults to `quarter`.
+   * @attr {'start' | 'end'} tie - Marks this note as the start or end of a tie to the same pitch.
+   * @attr {'start' | 'end'} slur - Marks this note as the start or end of a slur.
+   * @attr {string} for - `id` of the matching start element, to disambiguate interleaved same-kind ties/slurs.
+   * @attr {DynamicMarking} dynamic - Dynamic marking under the note (`p`, `mf`, `ff`, `sfz`, …).
+   * @attr {'start' | 'end'} crescendo - Start or end of a crescendo hairpin spanning to another note.
+   * @attr {'start' | 'end'} decrescendo - Start or end of a decrescendo hairpin.
+   * @attr {'start' | 'end'} diminuendo - Alias of `decrescendo`.
+   * @attr {ArticulationType} articulation - Articulation/accent mark, e.g. `staccato`, `accent`, `marcato-tenuto`, `fermata`.
+   * @attr {'stressed' | 'unstressed'} stress - Schoenberg stress mark.
+   * @attr {string} grace - Comma-separated grace-note pitches preceding this note, e.g. `"F#,G"`.
+   * @attr {string} grace-octave - Comma-separated octaves aligned by index with `grace`; empty slots use this note's octave.
+   * @attr {string} grace-articulation - Comma-separated per-grace articulation aligned by index with `grace`; empty slots mean none.
+   * @attr {'acciaccatura' | 'appoggiatura'} grace-type - Grace-note style. Defaults to `acciaccatura`.
+   * @attr {GraceDuration} grace-duration - Note value drawn for the grace notes.
+   * @attr {'auto' | 'none'} grace-slur - Whether to draw the slur from the grace group to the main note. Defaults to `auto`.
+   * @attr {DynamicMarking} grace-dynamic - A single dynamic for the whole grace group, independent of `dynamic`.
+   *
+   * @example
+   * <music-staff clef="treble" time="4/4">
+   *   <music-note note="C" octave="5" duration="quarter" articulation="staccato"></music-note>
+   *   <music-note note="E" octave="5" duration="eighth"></music-note>
+   * </music-staff>
+   */
   class NoteElement extends HTMLElement implements INoteElement {
     static get observedAttributes(): string[] {
       return [

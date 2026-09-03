@@ -1,0 +1,5373 @@
+{
+  "schemaVersion": "1.0.0",
+  "readme": "",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/chord/chord.ts",
+      "declarations": [
+        {
+          "kind": "class",
+          "description": "A chord: several noteheads sharing one stem. Supply the notes either as a\nchord name via the `chord` attribute (e.g. `Cmaj7`) or as slotted\n`<music-note>` children. Supports the same articulations, dynamics, hairpins,\nties/slurs and grace notes as `<music-note>`. Renders standalone or spaced\nand beamed inside a `<music-staff>`.",
+          "name": "ChordElement",
+          "members": [
+            {
+              "kind": "field",
+              "name": "#standaloneYCoordinates",
+              "privacy": "private",
+              "static": true,
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "#standaloneOctaves",
+              "privacy": "private",
+              "type": {
+                "text": "Octave[]"
+              },
+              "static": true,
+              "readonly": true,
+              "default": "[4, 5, 6]"
+            },
+            {
+              "kind": "field",
+              "name": "#stemUp",
+              "privacy": "private",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "true"
+            },
+            {
+              "kind": "field",
+              "name": "#stemExtension",
+              "privacy": "private",
+              "type": {
+                "text": "number"
+              },
+              "default": "0"
+            },
+            {
+              "kind": "field",
+              "name": "#noFlags",
+              "privacy": "private",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false"
+            },
+            {
+              "kind": "field",
+              "name": "#staffYCoordinates",
+              "privacy": "private",
+              "type": {
+                "text": "number[] | null"
+              },
+              "default": "null"
+            },
+            {
+              "kind": "field",
+              "name": "#noteAccidentals",
+              "privacy": "private",
+              "type": {
+                "text": "(AccidentalType | null | undefined)[]"
+              },
+              "default": "[]"
+            },
+            {
+              "kind": "field",
+              "name": "#resolvedGraceAccidentals",
+              "privacy": "private",
+              "type": {
+                "text": "(AccidentalType | null)[] | null"
+              },
+              "default": "null"
+            },
+            {
+              "kind": "field",
+              "name": "#batchDepth",
+              "privacy": "private",
+              "type": {
+                "text": "number"
+              },
+              "default": "0"
+            },
+            {
+              "kind": "field",
+              "name": "#renderPending",
+              "privacy": "private",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false"
+            },
+            {
+              "kind": "field",
+              "name": "#childObserver",
+              "privacy": "private",
+              "type": {
+                "text": "MutationObserver | null"
+              },
+              "default": "null"
+            },
+            {
+              "kind": "field",
+              "name": "duration",
+              "type": {
+                "text": "DurationType"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "chord",
+              "type": {
+                "text": "Chord | null"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "notes",
+              "type": {
+                "text": "ChordNote[]"
+              },
+              "readonly": true
+            },
+            {
+              "kind": "field",
+              "name": "stemUp",
+              "type": {
+                "text": "boolean"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "stemExtension",
+              "type": {
+                "text": "number"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "noFlags",
+              "type": {
+                "text": "boolean"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "staffYCoordinates",
+              "type": {
+                "text": "number[] | null"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "noteAccidentals",
+              "type": {
+                "text": "(AccidentalType | null | undefined)[]"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "tie",
+              "type": {
+                "text": "ConnectorRole | null"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "slur",
+              "type": {
+                "text": "ConnectorRole | null"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "dynamic",
+              "type": {
+                "text": "DynamicMarking | null"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "crescendo",
+              "type": {
+                "text": "HairpinRole | null"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "decrescendo",
+              "type": {
+                "text": "HairpinRole | null"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "diminuendo",
+              "type": {
+                "text": "HairpinRole | null"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "articulation",
+              "type": {
+                "text": "ArticulationType | null"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "stress",
+              "type": {
+                "text": "StressType | null"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "grace",
+              "type": {
+                "text": "Note[] | null"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "graceOctave",
+              "type": {
+                "text": "(Octave | null)[] | null"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "graceArticulation",
+              "type": {
+                "text": "(ArticulationType | null)[] | null"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "graceType",
+              "type": {
+                "text": "GraceType"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "graceDuration",
+              "type": {
+                "text": "GraceDuration | null"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "graceSlur",
+              "type": {
+                "text": "GraceSlur"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "resolvedGraceAccidentals",
+              "type": {
+                "text": "(AccidentalType | null)[] | null"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "graceDynamic",
+              "type": {
+                "text": "DynamicMarking | null"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "batchUpdate",
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              },
+              "parameters": [
+                {
+                  "name": "fn",
+                  "type": {
+                    "text": "() => void"
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "#scheduleRender",
+              "privacy": "private",
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              }
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "privacy": "private",
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              }
+            },
+            {
+              "kind": "method",
+              "name": "#buildGraceDescriptors",
+              "privacy": "private",
+              "return": {
+                "type": {
+                  "text": "GraceNoteDescriptor[] | null"
+                }
+              },
+              "parameters": [
+                {
+                  "name": "notes",
+                  "type": {
+                    "text": "ChordNote[]"
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "#resolveStandaloneYCoordinates",
+              "privacy": "private",
+              "return": {
+                "type": {
+                  "text": "number[]"
+                }
+              }
+            },
+            {
+              "kind": "method",
+              "name": "#resolveStandaloneNoteAccidentals",
+              "privacy": "private",
+              "return": {
+                "type": {
+                  "text": "(AccidentalType | null | undefined)[]"
+                }
+              }
+            }
+          ],
+          "events": [
+            {
+              "type": {
+                "text": "CustomEvent"
+              }
+            }
+          ],
+          "attributes": [
+            {
+              "name": "duration",
+              "type": {
+                "text": "DurationType"
+              },
+              "description": "Note value for the chord. Defaults to `quarter`."
+            },
+            {
+              "name": "tie",
+              "type": {
+                "text": "'start' | 'end'"
+              },
+              "description": "Marks this chord as the start or end of a tie."
+            },
+            {
+              "name": "slur",
+              "type": {
+                "text": "'start' | 'end'"
+              },
+              "description": "Marks this chord as the start or end of a slur."
+            },
+            {
+              "name": "dynamic",
+              "type": {
+                "text": "DynamicMarking"
+              },
+              "description": "Dynamic marking under the chord."
+            },
+            {
+              "name": "crescendo",
+              "type": {
+                "text": "'start' | 'end'"
+              },
+              "description": "Start or end of a crescendo hairpin."
+            },
+            {
+              "name": "decrescendo",
+              "type": {
+                "text": "'start' | 'end'"
+              },
+              "description": "Start or end of a decrescendo hairpin."
+            },
+            {
+              "name": "diminuendo",
+              "type": {
+                "text": "'start' | 'end'"
+              },
+              "description": "Alias of `decrescendo`."
+            },
+            {
+              "name": "articulation",
+              "type": {
+                "text": "ArticulationType"
+              },
+              "description": "Articulation/accent mark."
+            },
+            {
+              "name": "stress",
+              "type": {
+                "text": "'stressed' | 'unstressed'"
+              },
+              "description": "Schoenberg stress mark."
+            },
+            {
+              "name": "grace",
+              "type": {
+                "text": "string"
+              },
+              "description": "Comma-separated grace-note pitches preceding the chord, e.g. `\"F#,G\"`."
+            },
+            {
+              "name": "grace-octave",
+              "type": {
+                "text": "string"
+              },
+              "description": "Comma-separated octaves aligned by index with `grace`."
+            },
+            {
+              "name": "grace-articulation",
+              "type": {
+                "text": "string"
+              },
+              "description": "Comma-separated per-grace articulation aligned by index with `grace`."
+            },
+            {
+              "name": "grace-type",
+              "type": {
+                "text": "'acciaccatura' | 'appoggiatura'"
+              },
+              "description": "Grace-note style. Defaults to `acciaccatura`."
+            },
+            {
+              "name": "grace-duration",
+              "type": {
+                "text": "GraceDuration"
+              },
+              "description": "Note value drawn for the grace notes."
+            },
+            {
+              "name": "grace-slur",
+              "type": {
+                "text": "'auto' | 'none'"
+              },
+              "description": "Whether to draw the slur from the grace group to the chord. Defaults to `auto`."
+            },
+            {
+              "name": "grace-dynamic",
+              "type": {
+                "text": "DynamicMarking"
+              },
+              "description": "A single dynamic for the whole grace group."
+            },
+            {
+              "type": {
+                "text": "Chord"
+              },
+              "description": "Chord name resolved into constituent pitches, e.g. `C`, `Am`, `Cmaj7`, `G/B`.",
+              "name": "chord"
+            },
+            {
+              "type": {
+                "text": "string"
+              },
+              "description": "`id` of the matching start element, to disambiguate interleaved same-kind ties/slurs.",
+              "name": "for"
+            }
+          ],
+          "superclass": {
+            "name": "HTMLElement"
+          },
+          "tagName": "music-chord",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "MUSIC_CHORD",
+          "declaration": {
+            "name": "ChordElement",
+            "module": "src/chord/chord.ts"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/clef/clef.ts",
+      "declarations": [
+        {
+          "kind": "class",
+          "description": "A clef glyph. Standalone it renders just the symbol; placed in a\n`<music-staff>`'s note stream it marks a mid-piece clef change (it reserves\nhorizontal space but consumes no beat duration).",
+          "name": "ClefElement",
+          "members": [
+            {
+              "kind": "field",
+              "name": "clef",
+              "type": {
+                "text": "ClefType"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "privacy": "private",
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              }
+            }
+          ],
+          "events": [
+            {
+              "type": {
+                "text": "CustomEvent"
+              }
+            }
+          ],
+          "attributes": [
+            {
+              "name": "clef",
+              "type": {
+                "text": "'treble' | 'bass'"
+              },
+              "description": "Which clef to draw. Defaults to `treble`."
+            }
+          ],
+          "superclass": {
+            "name": "HTMLElement"
+          },
+          "tagName": "music-clef",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "MUSIC_CLEF",
+          "declaration": {
+            "name": "ClefElement",
+            "module": "src/clef/clef.ts"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/composition/composition.ts",
+      "declarations": [
+        {
+          "kind": "class",
+          "description": "The top-level score container. Holds `<music-measure>` children, flows them\ninto rows with `flex-wrap`, and reflows on resize (clef/key/time visibility,\nbar-line connectors, cross-measure ties and slurs all recompute). Key\nsignature, mode and time set here are inherited by every descendant staff\nunless overridden lower down.",
+          "name": "CompositionElement",
+          "members": [
+            {
+              "kind": "field",
+              "name": "#observer",
+              "privacy": "private",
+              "type": {
+                "text": "MutationObserver | null"
+              },
+              "default": "null"
+            },
+            {
+              "kind": "field",
+              "name": "#resizeObserver",
+              "privacy": "private",
+              "type": {
+                "text": "ResizeObserver | null"
+              },
+              "default": "null"
+            },
+            {
+              "kind": "field",
+              "name": "#redrawScheduled",
+              "privacy": "private",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false"
+            },
+            {
+              "kind": "field",
+              "name": "#boundRedraw",
+              "privacy": "private",
+              "type": {
+                "text": "() => void"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "keySig",
+              "type": {
+                "text": "string"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "mode",
+              "type": {
+                "text": "string"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "time",
+              "type": {
+                "text": "string"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "privacy": "private",
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              }
+            },
+            {
+              "kind": "method",
+              "name": "#observeForRedraws",
+              "privacy": "private"
+            },
+            {
+              "kind": "method",
+              "name": "#scheduleRedraw",
+              "privacy": "private"
+            },
+            {
+              "kind": "method",
+              "name": "#computeMeasureRows",
+              "privacy": "private",
+              "return": {
+                "type": {
+                  "text": "HTMLElement[][]"
+                }
+              }
+            },
+            {
+              "kind": "method",
+              "name": "#redrawConnectors",
+              "privacy": "private"
+            },
+            {
+              "kind": "method",
+              "name": "#computeNotesAreaLeft",
+              "privacy": "private",
+              "return": {
+                "type": {
+                  "text": "number"
+                }
+              },
+              "parameters": [
+                {
+                  "name": "rootRect",
+                  "type": {
+                    "text": "DOMRect"
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "#computeNotesAreaLeftForStaff",
+              "privacy": "private",
+              "return": {
+                "type": {
+                  "text": "number"
+                }
+              },
+              "parameters": [
+                {
+                  "name": "staff",
+                  "type": {
+                    "text": "HTMLElement"
+                  }
+                },
+                {
+                  "name": "rootRect",
+                  "type": {
+                    "text": "DOMRect"
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "#getDynamicsBaselineY",
+              "privacy": "private",
+              "return": {
+                "type": {
+                  "text": "number"
+                }
+              },
+              "parameters": [
+                {
+                  "name": "element",
+                  "type": {
+                    "text": "Element"
+                  }
+                },
+                {
+                  "name": "rootRect",
+                  "type": {
+                    "text": "DOMRect"
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "#redrawHairpins",
+              "privacy": "private"
+            },
+            {
+              "kind": "method",
+              "name": "#updateDescribeVisibility",
+              "privacy": "private"
+            },
+            {
+              "kind": "method",
+              "name": "#updateClefContinuity",
+              "privacy": "private"
+            },
+            {
+              "kind": "method",
+              "name": "#updateTimeSignatureContinuity",
+              "privacy": "private"
+            },
+            {
+              "kind": "method",
+              "name": "#manageMeasureCount",
+              "privacy": "private"
+            },
+            {
+              "kind": "method",
+              "name": "#renumberMeasures",
+              "privacy": "private"
+            }
+          ],
+          "attributes": [
+            {
+              "type": {
+                "text": "Note"
+              },
+              "description": "Key-signature tonic inherited by child measures/staves (e.g. `C`, `F#`, `Bb`). Defaults to `C`.",
+              "name": "keysig"
+            },
+            {
+              "type": {
+                "text": "'major' | 'minor'"
+              },
+              "description": "Key-signature mode. Defaults to `major`.",
+              "name": "mode"
+            },
+            {
+              "type": {
+                "text": "TimeSignature"
+              },
+              "description": "Beats per measure (e.g. `4/4`, `6/8`). Defaults to `4/4`.",
+              "name": "time"
+            }
+          ],
+          "superclass": {
+            "name": "HTMLElement"
+          },
+          "tagName": "music-composition",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "MUSIC_COMPOSITION",
+          "declaration": {
+            "name": "CompositionElement",
+            "module": "src/composition/composition.ts"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/guitarNote/guitarNote.ts",
+      "declarations": [
+        {
+          "kind": "class",
+          "description": "A single tablature note — a fret number on a string — with optional\nleft-hand technique connectors to the next note. Used inside a\n`<music-staff-guitar-tab>`.",
+          "name": "GuitarNoteElement",
+          "members": [
+            {
+              "kind": "field",
+              "name": "fret",
+              "type": {
+                "text": "GuitarFret"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "string",
+              "type": {
+                "text": "number"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "duration",
+              "type": {
+                "text": "DurationType"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "tie",
+              "type": {
+                "text": "ConnectorRole | null"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "slur",
+              "type": {
+                "text": "ConnectorRole | null"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "hammerOn",
+              "type": {
+                "text": "ConnectorRole | null"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "pullOff",
+              "type": {
+                "text": "ConnectorRole | null"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "slide",
+              "type": {
+                "text": "ConnectorRole | null"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "privacy": "private",
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              }
+            }
+          ],
+          "events": [
+            {
+              "type": {
+                "text": "CustomEvent"
+              }
+            }
+          ],
+          "attributes": [
+            {
+              "name": "fret",
+              "type": {
+                "text": "number | 'x'"
+              },
+              "description": "Fret number, or `x` for a muted/dead note."
+            },
+            {
+              "name": "string",
+              "type": {
+                "text": "number"
+              },
+              "description": "String number, 1 = highest. Defaults to `1`."
+            },
+            {
+              "name": "duration",
+              "type": {
+                "text": "DurationType"
+              },
+              "description": "Note value. Defaults to `quarter`."
+            },
+            {
+              "name": "tie",
+              "type": {
+                "text": "'start' | 'end'"
+              },
+              "description": "Start or end of a tie to the same fret/string."
+            },
+            {
+              "name": "slur",
+              "type": {
+                "text": "'start' | 'end'"
+              },
+              "description": "Start or end of a slur."
+            },
+            {
+              "name": "hammer-on",
+              "type": {
+                "text": "'start' | 'end'"
+              },
+              "description": "Start or end of a hammer-on to the next note."
+            },
+            {
+              "name": "pull-off",
+              "type": {
+                "text": "'start' | 'end'"
+              },
+              "description": "Start or end of a pull-off to the next note."
+            },
+            {
+              "name": "slide",
+              "type": {
+                "text": "'start' | 'end'"
+              },
+              "description": "Start or end of a slide to the next note."
+            }
+          ],
+          "superclass": {
+            "name": "HTMLElement"
+          },
+          "tagName": "music-guitar-note",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "MUSIC_GUITAR_NOTE",
+          "declaration": {
+            "name": "GuitarNoteElement",
+            "module": "src/guitarNote/guitarNote.ts"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/measure/measure.ts",
+      "declarations": [
+        {
+          "kind": "class",
+          "description": "One bar of music. Groups one or more staves (a single staff, or a grand\nstaff / choir when it holds several), draws the vertical bar-line connector\nthrough them, and sizes itself to the widest staff's minimum width. Key\nsignature, mode and time inherited from a parent `<music-composition>` can be\noverridden here to start a mid-piece change. Works standalone.",
+          "name": "MeasureElement",
+          "members": [
+            {
+              "kind": "field",
+              "name": "#staffConnectorObserver",
+              "privacy": "private",
+              "type": {
+                "text": "ResizeObserver"
+              },
+              "default": "new ResizeObserver( this.#boundUpdateConnectorVisibility )"
+            },
+            {
+              "kind": "field",
+              "name": "#staffMinWidths",
+              "privacy": "private",
+              "default": "new Map<EventTarget, number>()"
+            },
+            {
+              "kind": "field",
+              "name": "#onStaffMinWidth",
+              "privacy": "private"
+            },
+            {
+              "kind": "field",
+              "name": "#boundUpdateConnectorVisibility",
+              "privacy": "private",
+              "type": {
+                "text": "() => void"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "number",
+              "type": {
+                "text": "number | null"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "keySig",
+              "type": {
+                "text": "string"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "mode",
+              "type": {
+                "text": "string"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "time",
+              "type": {
+                "text": "string | null"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "privacy": "private",
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              }
+            },
+            {
+              "kind": "method",
+              "name": "#updateConnectorVisibility",
+              "privacy": "private"
+            },
+            {
+              "kind": "method",
+              "name": "#isFirstInRow",
+              "privacy": "private",
+              "return": {
+                "type": {
+                  "text": "boolean"
+                }
+              },
+              "parameters": [
+                {
+                  "name": "allMeasures",
+                  "type": {
+                    "text": "Element[]"
+                  }
+                },
+                {
+                  "name": "currentIndex",
+                  "type": {
+                    "text": "number"
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "#renderGroupConnectors",
+              "privacy": "private",
+              "parameters": [
+                {
+                  "name": "isFirstInRow",
+                  "type": {
+                    "text": "boolean"
+                  }
+                }
+              ]
+            }
+          ],
+          "attributes": [
+            {
+              "name": "number",
+              "type": {
+                "text": "number"
+              },
+              "description": "Bar number shown above the measure."
+            },
+            {
+              "name": "keysig",
+              "type": {
+                "text": "Note"
+              },
+              "description": "Overrides the inherited key-signature tonic from this bar on."
+            },
+            {
+              "name": "mode",
+              "type": {
+                "text": "'major' | 'minor'"
+              },
+              "description": "Overrides the inherited key-signature mode."
+            },
+            {
+              "name": "time",
+              "type": {
+                "text": "TimeSignature"
+              },
+              "description": "Overrides the inherited time signature from this bar on."
+            }
+          ],
+          "superclass": {
+            "name": "HTMLElement"
+          },
+          "tagName": "music-measure",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "music-measure",
+          "declaration": {
+            "name": "MeasureElement",
+            "module": "src/measure/measure.ts"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/note/note.ts",
+      "declarations": [
+        {
+          "kind": "class",
+          "description": "A single note: notehead, stem, flag, ledger lines, plus optional\narticulations, dynamics, hairpins, ties/slurs and grace notes. Renders\nstandalone or, inside a `<music-staff>`, is positioned and beamed by the\nstaff. In an `editable` staff its notehead can be dragged to change pitch and\nits body dragged to reorder.",
+          "name": "NoteElement",
+          "members": [
+            {
+              "kind": "field",
+              "name": "#stemUp",
+              "privacy": "private",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "true"
+            },
+            {
+              "kind": "field",
+              "name": "#stemExtension",
+              "privacy": "private",
+              "type": {
+                "text": "number"
+              },
+              "default": "0"
+            },
+            {
+              "kind": "field",
+              "name": "#noFlags",
+              "privacy": "private",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false"
+            },
+            {
+              "kind": "field",
+              "name": "#noStem",
+              "privacy": "private",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false"
+            },
+            {
+              "kind": "field",
+              "name": "#showAccidental",
+              "privacy": "private",
+              "type": {
+                "text": "AccidentalType | null | undefined"
+              },
+              "default": "undefined"
+            },
+            {
+              "kind": "field",
+              "name": "#staffY",
+              "privacy": "private",
+              "type": {
+                "text": "number | null"
+              },
+              "default": "null"
+            },
+            {
+              "kind": "field",
+              "name": "#resolvedGraceAccidentals",
+              "privacy": "private",
+              "type": {
+                "text": "(AccidentalType | null)[] | null"
+              },
+              "default": "null"
+            },
+            {
+              "kind": "field",
+              "name": "#batchDepth",
+              "privacy": "private",
+              "type": {
+                "text": "number"
+              },
+              "default": "0"
+            },
+            {
+              "kind": "field",
+              "name": "#renderPending",
+              "privacy": "private",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false"
+            },
+            {
+              "kind": "field",
+              "name": "duration",
+              "type": {
+                "text": "DurationType"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "note",
+              "type": {
+                "text": "Note"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "octave",
+              "type": {
+                "text": "Octave | null"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "stemUp",
+              "type": {
+                "text": "boolean"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "stemExtension",
+              "type": {
+                "text": "number"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "noFlags",
+              "type": {
+                "text": "boolean"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "noStem",
+              "type": {
+                "text": "boolean"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "tie",
+              "type": {
+                "text": "ConnectorRole | null"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "showAccidental",
+              "type": {
+                "text": "AccidentalType | null | undefined"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "staffY",
+              "type": {
+                "text": "number | null"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "slur",
+              "type": {
+                "text": "ConnectorRole | null"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "dynamic",
+              "type": {
+                "text": "DynamicMarking | null"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "crescendo",
+              "type": {
+                "text": "HairpinRole | null"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "decrescendo",
+              "type": {
+                "text": "HairpinRole | null"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "diminuendo",
+              "type": {
+                "text": "HairpinRole | null"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "articulation",
+              "type": {
+                "text": "ArticulationType | null"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "stress",
+              "type": {
+                "text": "StressType | null"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "grace",
+              "type": {
+                "text": "Note[] | null"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "graceOctave",
+              "type": {
+                "text": "(Octave | null)[] | null"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "graceArticulation",
+              "type": {
+                "text": "(ArticulationType | null)[] | null"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "graceType",
+              "type": {
+                "text": "GraceType"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "graceDuration",
+              "type": {
+                "text": "GraceDuration | null"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "graceSlur",
+              "type": {
+                "text": "GraceSlur"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "resolvedGraceAccidentals",
+              "type": {
+                "text": "(AccidentalType | null)[] | null"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "graceDynamic",
+              "type": {
+                "text": "DynamicMarking | null"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "batchUpdate",
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              },
+              "parameters": [
+                {
+                  "name": "fn",
+                  "type": {
+                    "text": "() => void"
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "#scheduleRender",
+              "privacy": "private",
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              }
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "privacy": "private",
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              }
+            },
+            {
+              "kind": "method",
+              "name": "#appendGraceNotes",
+              "privacy": "private",
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              },
+              "parameters": [
+                {
+                  "name": "noteSvg",
+                  "type": {
+                    "text": "SVGElement"
+                  }
+                },
+                {
+                  "name": "accidental",
+                  "type": {
+                    "text": "AccidentalType | undefined"
+                  }
+                }
+              ]
+            }
+          ],
+          "events": [
+            {
+              "type": {
+                "text": "CustomEvent"
+              }
+            }
+          ],
+          "attributes": [
+            {
+              "name": "duration",
+              "type": {
+                "text": "DurationType"
+              },
+              "description": "Note value: `whole`, `half`, `quarter`, `eighth`, `sixteenth`, … Defaults to `quarter`."
+            },
+            {
+              "name": "note",
+              "type": {
+                "text": "Note"
+              },
+              "description": "Pitch letter with optional accidental, e.g. `C`, `F#`, `Bb`."
+            },
+            {
+              "name": "octave",
+              "type": {
+                "text": "Octave"
+              },
+              "description": "Scientific-pitch octave (2–6). Falls back to the staff's clef range when unset."
+            },
+            {
+              "name": "tie",
+              "type": {
+                "text": "'start' | 'end'"
+              },
+              "description": "Marks this note as the start or end of a tie to the same pitch."
+            },
+            {
+              "name": "slur",
+              "type": {
+                "text": "'start' | 'end'"
+              },
+              "description": "Marks this note as the start or end of a slur."
+            },
+            {
+              "name": "dynamic",
+              "type": {
+                "text": "DynamicMarking"
+              },
+              "description": "Dynamic marking under the note (`p`, `mf`, `ff`, `sfz`, …)."
+            },
+            {
+              "name": "crescendo",
+              "type": {
+                "text": "'start' | 'end'"
+              },
+              "description": "Start or end of a crescendo hairpin spanning to another note."
+            },
+            {
+              "name": "decrescendo",
+              "type": {
+                "text": "'start' | 'end'"
+              },
+              "description": "Start or end of a decrescendo hairpin."
+            },
+            {
+              "name": "diminuendo",
+              "type": {
+                "text": "'start' | 'end'"
+              },
+              "description": "Alias of `decrescendo`."
+            },
+            {
+              "name": "articulation",
+              "type": {
+                "text": "ArticulationType"
+              },
+              "description": "Articulation/accent mark, e.g. `staccato`, `accent`, `marcato-tenuto`, `fermata`."
+            },
+            {
+              "name": "stress",
+              "type": {
+                "text": "'stressed' | 'unstressed'"
+              },
+              "description": "Schoenberg stress mark."
+            },
+            {
+              "name": "grace",
+              "type": {
+                "text": "string"
+              },
+              "description": "Comma-separated grace-note pitches preceding this note, e.g. `\"F#,G\"`."
+            },
+            {
+              "name": "grace-octave",
+              "type": {
+                "text": "string"
+              },
+              "description": "Comma-separated octaves aligned by index with `grace`; empty slots use this note's octave."
+            },
+            {
+              "name": "grace-articulation",
+              "type": {
+                "text": "string"
+              },
+              "description": "Comma-separated per-grace articulation aligned by index with `grace`; empty slots mean none."
+            },
+            {
+              "name": "grace-type",
+              "type": {
+                "text": "'acciaccatura' | 'appoggiatura'"
+              },
+              "description": "Grace-note style. Defaults to `acciaccatura`."
+            },
+            {
+              "name": "grace-duration",
+              "type": {
+                "text": "GraceDuration"
+              },
+              "description": "Note value drawn for the grace notes."
+            },
+            {
+              "name": "grace-slur",
+              "type": {
+                "text": "'auto' | 'none'"
+              },
+              "description": "Whether to draw the slur from the grace group to the main note. Defaults to `auto`."
+            },
+            {
+              "name": "grace-dynamic",
+              "type": {
+                "text": "DynamicMarking"
+              },
+              "description": "A single dynamic for the whole grace group, independent of `dynamic`."
+            },
+            {
+              "type": {
+                "text": "string"
+              },
+              "description": "`id` of the matching start element, to disambiguate interleaved same-kind ties/slurs.",
+              "name": "for"
+            }
+          ],
+          "superclass": {
+            "name": "HTMLElement"
+          },
+          "tagName": "music-note",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "MUSIC_NOTE",
+          "declaration": {
+            "name": "NoteElement",
+            "module": "src/note/note.ts"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/rest/rest.ts",
+      "declarations": [
+        {
+          "kind": "class",
+          "description": "A rest of a given duration. Renders its glyph standalone or spaced inside a\n`<music-staff>`.",
+          "name": "RestElement",
+          "members": [
+            {
+              "kind": "field",
+              "name": "duration",
+              "type": {
+                "text": "DurationType"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "privacy": "private",
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              }
+            }
+          ],
+          "events": [
+            {
+              "type": {
+                "text": "CustomEvent"
+              }
+            }
+          ],
+          "attributes": [
+            {
+              "name": "duration",
+              "type": {
+                "text": "DurationType"
+              },
+              "description": "Rest length: `whole`, `half`, `quarter`, `eighth`, `sixteenth`, … Defaults to `quarter`."
+            }
+          ],
+          "superclass": {
+            "name": "HTMLElement"
+          },
+          "tagName": "music-rest",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "MUSIC_REST",
+          "declaration": {
+            "name": "RestElement",
+            "module": "src/rest/rest.ts"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/staff/staff.ts",
+      "declarations": [
+        {
+          "kind": "class",
+          "description": "A five-line classical staff. Reads slotted `<music-note>`, `<music-chord>`,\n`<music-rest>`, `<music-tuplet>` and `<music-clef>` children and engraves them\nwith beams, accidentals, ledger lines and spacing. Usable inside a\n`<music-measure>` / `<music-composition>` or on its own.",
+          "name": "StaffElement",
+          "members": [
+            {
+              "kind": "field",
+              "name": "clef",
+              "type": {
+                "text": "ClefType"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "ownClef",
+              "type": {
+                "text": "ClefType | null"
+              },
+              "privacy": "protected",
+              "readonly": true,
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "yCoordinates",
+              "type": {
+                "text": "YCoordinates"
+              },
+              "readonly": true,
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "octaves",
+              "type": {
+                "text": "Octave[]"
+              },
+              "readonly": true,
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "getKeyYCoordinates",
+              "privacy": "public",
+              "return": {
+                "type": {
+                  "text": "{ useSharps: boolean; coordinates: number[] }"
+                }
+              },
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "clefSvg",
+              "type": {
+                "text": "string"
+              },
+              "privacy": "protected",
+              "readonly": true,
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#mutationObservers",
+              "privacy": "private",
+              "type": {
+                "text": "MutationObserver[]"
+              },
+              "default": "[]",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#effectiveMode",
+              "privacy": "private",
+              "type": {
+                "text": "Mode"
+              },
+              "default": "this.resolveInheritedValue( COMMON_ATTRIBUTES.MODE, 'major' )",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#effectiveKeySig",
+              "privacy": "private",
+              "type": {
+                "text": "Note"
+              },
+              "default": "this.resolveInheritedValue( COMMON_ATTRIBUTES.KEY_SIG, 'C' )",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#describeContainer",
+              "privacy": "private",
+              "type": {
+                "text": "SVGGElement"
+              },
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#beamsContainer",
+              "privacy": "private",
+              "type": {
+                "text": "SVGSVGElement"
+              },
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#tupletContainer",
+              "privacy": "private",
+              "type": {
+                "text": "SVGSVGElement"
+              },
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#dynamicsContainer",
+              "privacy": "private",
+              "type": {
+                "text": "SVGSVGElement"
+              },
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#beamRenderer",
+              "privacy": "private",
+              "type": {
+                "text": "ReturnType<BeamsBuilder['buildRenderer']> | null"
+              },
+              "default": "null",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#currentElements",
+              "privacy": "private",
+              "type": {
+                "text": "NoteChordOrRestElementType[]"
+              },
+              "default": "[]",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#noteTimingDragHandler",
+              "privacy": "private",
+              "type": {
+                "text": "NoteTimingDragHandler | null"
+              },
+              "default": "null",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#notePitchDragHandler",
+              "privacy": "private",
+              "type": {
+                "text": "PitchDragHandler | null"
+              },
+              "default": "null",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#boundPointerDown",
+              "privacy": "private",
+              "type": {
+                "text": "((e: PointerEvent) => void) | null"
+              },
+              "default": "null",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#describeEndX",
+              "privacy": "private",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#showDescribe",
+              "privacy": "private",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "true",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#clefChangeAtBoundary",
+              "privacy": "private",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#timeChangeAtBoundary",
+              "privacy": "private",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#tupletGroups",
+              "privacy": "private",
+              "type": {
+                "text": "TupletGroup[]"
+              },
+              "default": "[]",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#tupletsByIndex",
+              "privacy": "private",
+              "type": {
+                "text": "Map<number, TupletElementType[]>"
+              },
+              "default": "new Map()",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#clefMarkers",
+              "privacy": "private",
+              "type": {
+                "text": "ClefMarkerPlacement[]"
+              },
+              "default": "[]",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#noteXPositions",
+              "privacy": "private",
+              "type": {
+                "text": "Map<number, number>"
+              },
+              "default": "new Map()",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#firstGraceHeadXPositions",
+              "privacy": "private",
+              "type": {
+                "text": "Map<number, number>"
+              },
+              "default": "new Map()",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#stemDirections",
+              "privacy": "private",
+              "type": {
+                "text": "boolean[]"
+              },
+              "default": "[]",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#beamedIndicesSnapshot",
+              "privacy": "private",
+              "type": {
+                "text": "Set<number>"
+              },
+              "default": "new Set()",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#noteStaffYCoordsSnapshot",
+              "privacy": "private",
+              "type": {
+                "text": "Map<NoteElementType, number>"
+              },
+              "default": "new Map()",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#chordStaffYCoordsSnapshot",
+              "privacy": "private",
+              "type": {
+                "text": "Map<ChordElementType, number[]>"
+              },
+              "default": "new Map()",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#boundDrawConnectors",
+              "privacy": "private",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#boundRenderDynamics",
+              "privacy": "private",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#boundNoteYChange",
+              "privacy": "private",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#boundClefMarkerChange",
+              "privacy": "private",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "describeEndX",
+              "type": {
+                "text": "number"
+              },
+              "privacy": "protected",
+              "readonly": true,
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "showDescribe",
+              "type": {
+                "text": "boolean"
+              },
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "clefChangeAtBoundary",
+              "type": {
+                "text": "boolean"
+              },
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "timeChangeAtBoundary",
+              "type": {
+                "text": "boolean"
+              },
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "staffLineCount",
+              "type": {
+                "text": "number"
+              },
+              "readonly": true,
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "additionalStyles",
+              "type": {
+                "text": "string"
+              },
+              "privacy": "protected",
+              "description": "Override in subclasses to inject additional CSS into the shadow DOM style block.",
+              "readonly": true,
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "editable",
+              "type": {
+                "text": "boolean"
+              },
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "managed",
+              "type": {
+                "text": "boolean"
+              },
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "keySig",
+              "type": {
+                "text": "Note"
+              },
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "mode",
+              "type": {
+                "text": "Mode"
+              },
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "onConnectedCallback",
+              "privacy": "protected",
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              },
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "#enableDrag",
+              "privacy": "private",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "#disableDrag",
+              "privacy": "private",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "#findPitchDragTarget",
+              "privacy": "private",
+              "return": {
+                "type": {
+                  "text": "{\n    element: HTMLElement | null;\n    elementIndex: number;\n    chordNoteIndex: number | null;\n  }"
+                }
+              },
+              "parameters": [
+                {
+                  "name": "svgTarget",
+                  "type": {
+                    "text": "Element"
+                  }
+                },
+                {
+                  "name": "elements",
+                  "type": {
+                    "text": "HTMLElement[]"
+                  }
+                }
+              ],
+              "description": "Identify which slotted element and (for chords) which notehead index\ncorresponds to a clicked SVG target.",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "#findChordNoteIndex",
+              "privacy": "private",
+              "return": {
+                "type": {
+                  "text": "number | null"
+                }
+              },
+              "parameters": [
+                {
+                  "name": "svgTarget",
+                  "type": {
+                    "text": "Element"
+                  }
+                },
+                {
+                  "name": "chordElement",
+                  "type": {
+                    "text": "HTMLElement"
+                  }
+                }
+              ],
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "#onPitchLivePreview",
+              "privacy": "private",
+              "parameters": [
+                {
+                  "name": "elementIndex",
+                  "type": {
+                    "text": "number"
+                  }
+                },
+                {
+                  "name": "note",
+                  "type": {
+                    "text": "Note"
+                  }
+                },
+                {
+                  "name": "octave",
+                  "type": {
+                    "text": "Octave"
+                  }
+                },
+                {
+                  "name": "chordNoteIndex",
+                  "type": {
+                    "text": "number | null"
+                  }
+                }
+              ],
+              "description": "Live preview callback: temporarily update the element's pitch during drag.",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "#buildDescribe",
+              "privacy": "private",
+              "parameters": [
+                {
+                  "name": "clefSvgStr",
+                  "type": {
+                    "text": "string"
+                  }
+                }
+              ],
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "#refreshDescribe",
+              "privacy": "private",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "refreshInheritedAttrs",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "#appendKeySignatureSvg",
+              "privacy": "private",
+              "parameters": [
+                {
+                  "name": "svg",
+                  "type": {
+                    "text": "SVGElement"
+                  }
+                },
+                {
+                  "name": "xOffset",
+                  "type": {
+                    "text": "number"
+                  }
+                }
+              ],
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "#appendTimeSignatureSvgIfNecessary",
+              "privacy": "private",
+              "parameters": [
+                {
+                  "name": "parentSvg",
+                  "type": {
+                    "text": "SVGElement"
+                  }
+                },
+                {
+                  "name": "xOffset",
+                  "type": {
+                    "text": "number"
+                  }
+                }
+              ],
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "onDisconnectedCallback",
+              "privacy": "protected",
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              },
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "onHandleSlotChange",
+              "privacy": "protected",
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              },
+              "parameters": [
+                {
+                  "name": "event",
+                  "type": {
+                    "text": "Event"
+                  }
+                }
+              ],
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "#renderNotes",
+              "privacy": "private",
+              "parameters": [
+                {
+                  "name": "elements",
+                  "type": {
+                    "text": "NoteChordOrRestElementType[]"
+                  }
+                }
+              ],
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "#resolveChordStaffYCoordinates",
+              "privacy": "private",
+              "return": {
+                "type": {
+                  "text": "number[]"
+                }
+              },
+              "parameters": [
+                {
+                  "name": "notes",
+                  "type": {
+                    "text": "ChordNote[]"
+                  }
+                },
+                {
+                  "name": "elementIndex",
+                  "type": {
+                    "text": "number"
+                  }
+                }
+              ],
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "#activeClefAt",
+              "privacy": "private",
+              "return": {
+                "type": {
+                  "text": "ClefType | null"
+                }
+              },
+              "parameters": [
+                {
+                  "name": "elementIndex",
+                  "type": {
+                    "text": "number"
+                  }
+                }
+              ],
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "#renderDataForIndex",
+              "privacy": "private",
+              "return": {
+                "type": {
+                  "text": "{\n    yCoordinates: YCoordinates;\n    octaves: Octave[];\n  }"
+                }
+              },
+              "parameters": [
+                {
+                  "name": "elementIndex",
+                  "type": {
+                    "text": "number"
+                  }
+                }
+              ],
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "effectiveStartClef",
+              "type": {
+                "text": "ClefType | null"
+              },
+              "privacy": "public",
+              "readonly": true,
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "effectiveEndClef",
+              "type": {
+                "text": "ClefType | null"
+              },
+              "privacy": "public",
+              "readonly": true,
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "noteToYCoordinate",
+              "privacy": "public",
+              "return": {
+                "type": {
+                  "text": "number"
+                }
+              },
+              "parameters": [
+                {
+                  "name": "note",
+                  "type": {
+                    "text": "Note"
+                  }
+                },
+                {
+                  "name": "octave",
+                  "optional": true,
+                  "type": {
+                    "text": "Octave"
+                  }
+                },
+                {
+                  "name": "elementIndex",
+                  "optional": true,
+                  "type": {
+                    "text": "number"
+                  }
+                }
+              ],
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "#spaceElements",
+              "privacy": "private",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "#renderDynamics",
+              "privacy": "private",
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              },
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "#estimateAboveStaffBudget",
+              "privacy": "private",
+              "return": {
+                "type": {
+                  "text": "number"
+                }
+              },
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "onStaffResize",
+              "privacy": "protected",
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              },
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "staffContainer",
+              "type": {
+                "text": "HTMLDivElement"
+              },
+              "privacy": "protected",
+              "readonly": true,
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "staffResizeObserver",
+              "type": {
+                "text": "ResizeObserver"
+              },
+              "privacy": "protected",
+              "readonly": true,
+              "default": "new ResizeObserver((entries) => { const newWidth = entries[0].contentRect.width; if (newWidth !== this.#lastStaffWidth) { this.#lastStaffWidth = newWidth; this.onStaffResize(); } })",
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#lastStaffWidth",
+              "privacy": "private",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "transcribeContainer",
+              "type": {
+                "text": "SVGSVGElement"
+              },
+              "privacy": "protected",
+              "readonly": true,
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#standaloneConnectorsOverlay",
+              "privacy": "private",
+              "type": {
+                "text": "SVGSVGElement"
+              },
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#initialSlotSyncDone",
+              "privacy": "private",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#slotChangeHandler",
+              "privacy": "private",
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "effectiveTimeSig",
+              "type": {
+                "text": "[BeatsInMeasure, BeatTypeInMeasure]"
+              },
+              "privacy": "protected",
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "group",
+              "type": {
+                "text": "StaffGroupType | null"
+              },
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "groupId",
+              "type": {
+                "text": "string | null"
+              },
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "dispatchGroupAttributeChange",
+              "privacy": "protected",
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              },
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "resolveInheritedValue",
+              "privacy": "protected",
+              "return": {
+                "type": {
+                  "text": "string"
+                }
+              },
+              "parameters": [
+                {
+                  "name": "attributeName",
+                  "type": {
+                    "text": "string"
+                  }
+                },
+                {
+                  "name": "defaultValue",
+                  "type": {
+                    "text": "string"
+                  }
+                }
+              ],
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "convertTotimeInts",
+              "privacy": "protected",
+              "return": {
+                "type": {
+                  "text": "[BeatsInMeasure, BeatTypeInMeasure]"
+                }
+              },
+              "parameters": [
+                {
+                  "name": "time",
+                  "type": {
+                    "text": "string"
+                  }
+                }
+              ],
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "time",
+              "type": {
+                "text": "TimeSignature"
+              },
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "privacy": "protected",
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "staffHeight",
+              "type": {
+                "text": "number"
+              },
+              "readonly": true,
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "#buildStaffLines",
+              "privacy": "private",
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              },
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "#buildTranscribe",
+              "privacy": "private",
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "upgradeAssignedElements",
+              "privacy": "protected",
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              },
+              "parameters": [
+                {
+                  "name": "elements",
+                  "type": {
+                    "text": "Iterable<Element>"
+                  }
+                }
+              ],
+              "description": "Force-upgrade slotted `<music-*>` children (and any nested inside a\n`<music-tuplet>`) before the staff reads their getters. When a staff is\nbuilt from parsed HTML markup its `connectedCallback` runs — and dispatches\nthe first `slotchange` — before its already-present children upgrade, so\nwithout this their getters (`grace`, `note`, `duration`, …) are `undefined`.\n`customElements.upgrade()` is synchronous and a no-op on an already-upgraded\nor unregistered element.",
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "drawConnectorsWhenStandalone",
+              "privacy": "protected",
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              },
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            }
+          ],
+          "attributes": [
+            {
+              "name": "clef",
+              "type": {
+                "text": "'treble' | 'bass'"
+              },
+              "description": "Clef for the staff. Defaults to `treble`."
+            },
+            {
+              "type": {
+                "text": "Note"
+              },
+              "description": "Key-signature tonic (e.g. `C`, `F#`, `Bb`). Inherited from a parent measure/composition when unset.",
+              "name": "keysig"
+            },
+            {
+              "type": {
+                "text": "'major' | 'minor'"
+              },
+              "description": "Key-signature mode. Inherited when unset. Defaults to `major`.",
+              "name": "mode"
+            },
+            {
+              "type": {
+                "text": "TimeSignature"
+              },
+              "description": "Beats per measure (e.g. `4/4`, `6/8`). Inherited when unset.",
+              "name": "time"
+            },
+            {
+              "name": "editable",
+              "type": {
+                "text": "boolean"
+              },
+              "description": "Enables pitch and timing drag interactions on slotted notes.",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "name": "managed",
+              "type": {
+                "text": "boolean"
+              },
+              "description": "With `editable`, emit reorder/pitch events instead of mutating the DOM (for framework-controlled state).",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "name": "group",
+              "type": {
+                "text": "'grand' | 'bracket'"
+              },
+              "description": "Joins this staff to its next sibling under a brace or bracket connector.",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "name": "group-id",
+              "type": {
+                "text": "string"
+              },
+              "description": "Shared identifier letting a `group=\"bracket\"` connector span more than two contiguous staves.",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            }
+          ],
+          "superclass": {
+            "name": "StaffClassicalElementBase",
+            "module": "/src/staffClassicalBase"
+          },
+          "tagName": "music-staff",
+          "customElement": true,
+          "events": [
+            {
+              "type": {
+                "text": "CustomEvent"
+              },
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "music-staff",
+          "declaration": {
+            "name": "StaffElement",
+            "module": "src/staff/staff.ts"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "MUSIC_STAFF",
+          "declaration": {
+            "name": "anonymous_0",
+            "module": "src/staff/staff.ts"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/staffGuitarTab/staffGuitarTab.ts",
+      "declarations": [
+        {
+          "kind": "class",
+          "description": "A six-line guitar tablature staff. Reads slotted `<music-guitar-note>`\nchildren and places them by string and fret. Carries a `time` value (for\nspacing) but never draws a time-signature glyph. Usable inside a\n`<music-measure>` / `<music-composition>` or on its own.",
+          "name": "StaffGuitarTabElement",
+          "members": [
+            {
+              "kind": "field",
+              "name": "#tabSvg",
+              "privacy": "private",
+              "static": true,
+              "default": "` <svg class=\"clef\" y=\"20\" height=\"80px\" width=\"80px\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" xmlns:svg=\"http://www.w3.org/2000/svg\" version=\"1.1\"> <text x=\"40\" font-size=\"20\" text-anchor=\"middle\" fill=\"currentColor\" font-weight=\"bold\"> <tspan x=\"20\" dy=\"20\">T</tspan> <tspan x=\"20\" dy=\"20\">A</tspan> <tspan x=\"18\" dy=\"20\">B</tspan> </text> </svg> `"
+            },
+            {
+              "kind": "field",
+              "name": "#describeContainer",
+              "privacy": "private",
+              "type": {
+                "text": "SVGGElement"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#describeEndX",
+              "privacy": "private",
+              "type": {
+                "text": "number"
+              },
+              "default": "0"
+            },
+            {
+              "kind": "field",
+              "name": "#showDescribe",
+              "privacy": "private",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "true"
+            },
+            {
+              "kind": "field",
+              "name": "#currentElements",
+              "privacy": "private",
+              "type": {
+                "text": "GuitarNoteElementType[]"
+              },
+              "default": "[]"
+            },
+            {
+              "kind": "field",
+              "name": "showDescribe",
+              "type": {
+                "text": "boolean"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#yCoordinates",
+              "privacy": "private",
+              "type": {
+                "text": "Record<number, number>"
+              },
+              "default": "{ 6: STAFF_LINE_START, 5: STAFF_LINE_START + STAFF_LINE_SPACING, 4: STAFF_LINE_START + STAFF_LINE_SPACING * 2, 3: STAFF_LINE_START + STAFF_LINE_SPACING * 3, 2: STAFF_LINE_START + STAFF_LINE_SPACING * 4, 1: STAFF_LINE_START + STAFF_LINE_SPACING * 5, }"
+            },
+            {
+              "kind": "field",
+              "name": "staffLineCount",
+              "type": {
+                "text": "number"
+              },
+              "readonly": true,
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "additionalStyles",
+              "type": {
+                "text": "string"
+              },
+              "privacy": "protected",
+              "description": "Override in subclasses to inject additional CSS into the shadow DOM style block.",
+              "readonly": true,
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "refreshInheritedAttrs"
+            },
+            {
+              "kind": "method",
+              "name": "onConnectedCallback",
+              "privacy": "protected",
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              },
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "#refreshDescribe",
+              "privacy": "private"
+            },
+            {
+              "kind": "method",
+              "name": "onDisconnectedCallback",
+              "privacy": "protected",
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              },
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "onHandleSlotChange",
+              "privacy": "protected",
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              },
+              "parameters": [
+                {
+                  "name": "event",
+                  "type": {
+                    "text": "Event"
+                  }
+                }
+              ],
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "#renderNotes",
+              "privacy": "private",
+              "parameters": [
+                {
+                  "name": "assignedElements",
+                  "type": {
+                    "text": "GuitarNoteElementType[]"
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "#spaceElements",
+              "privacy": "private",
+              "parameters": [
+                {
+                  "name": "assignedElements",
+                  "type": {
+                    "text": "GuitarNoteElementType[]"
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "onStaffResize",
+              "privacy": "protected",
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              },
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "staffContainer",
+              "type": {
+                "text": "HTMLDivElement"
+              },
+              "privacy": "protected",
+              "readonly": true,
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "staffResizeObserver",
+              "type": {
+                "text": "ResizeObserver"
+              },
+              "privacy": "protected",
+              "readonly": true,
+              "default": "new ResizeObserver((entries) => { const newWidth = entries[0].contentRect.width; if (newWidth !== this.#lastStaffWidth) { this.#lastStaffWidth = newWidth; this.onStaffResize(); } })",
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#lastStaffWidth",
+              "privacy": "private",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "transcribeContainer",
+              "type": {
+                "text": "SVGSVGElement"
+              },
+              "privacy": "protected",
+              "readonly": true,
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#standaloneConnectorsOverlay",
+              "privacy": "private",
+              "type": {
+                "text": "SVGSVGElement"
+              },
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#initialSlotSyncDone",
+              "privacy": "private",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#slotChangeHandler",
+              "privacy": "private",
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "effectiveTimeSig",
+              "type": {
+                "text": "[BeatsInMeasure, BeatTypeInMeasure]"
+              },
+              "privacy": "protected",
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "group",
+              "type": {
+                "text": "StaffGroupType | null"
+              },
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "groupId",
+              "type": {
+                "text": "string | null"
+              },
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "dispatchGroupAttributeChange",
+              "privacy": "protected",
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              },
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "resolveInheritedValue",
+              "privacy": "protected",
+              "return": {
+                "type": {
+                  "text": "string"
+                }
+              },
+              "parameters": [
+                {
+                  "name": "attributeName",
+                  "type": {
+                    "text": "string"
+                  }
+                },
+                {
+                  "name": "defaultValue",
+                  "type": {
+                    "text": "string"
+                  }
+                }
+              ],
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "convertTotimeInts",
+              "privacy": "protected",
+              "return": {
+                "type": {
+                  "text": "[BeatsInMeasure, BeatTypeInMeasure]"
+                }
+              },
+              "parameters": [
+                {
+                  "name": "time",
+                  "type": {
+                    "text": "string"
+                  }
+                }
+              ],
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "time",
+              "type": {
+                "text": "TimeSignature"
+              },
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "privacy": "protected",
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "staffHeight",
+              "type": {
+                "text": "number"
+              },
+              "readonly": true,
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "#buildStaffLines",
+              "privacy": "private",
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              },
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "#buildTranscribe",
+              "privacy": "private",
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "upgradeAssignedElements",
+              "privacy": "protected",
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              },
+              "parameters": [
+                {
+                  "name": "elements",
+                  "type": {
+                    "text": "Iterable<Element>"
+                  }
+                }
+              ],
+              "description": "Force-upgrade slotted `<music-*>` children (and any nested inside a\n`<music-tuplet>`) before the staff reads their getters. When a staff is\nbuilt from parsed HTML markup its `connectedCallback` runs — and dispatches\nthe first `slotchange` — before its already-present children upgrade, so\nwithout this their getters (`grace`, `note`, `duration`, …) are `undefined`.\n`customElements.upgrade()` is synchronous and a no-op on an already-upgraded\nor unregistered element.",
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "drawConnectorsWhenStandalone",
+              "privacy": "protected",
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              },
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            }
+          ],
+          "events": [
+            {
+              "type": {
+                "text": "CustomEvent"
+              },
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            }
+          ],
+          "attributes": [
+            {
+              "name": "group",
+              "type": {
+                "text": "'grand' | 'bracket'"
+              },
+              "description": "Joins this staff to its next sibling under a brace or bracket connector."
+            },
+            {
+              "name": "group-id",
+              "type": {
+                "text": "string"
+              },
+              "description": "Shared identifier letting a `group=\"bracket\"` connector span more than two contiguous staves."
+            },
+            {
+              "type": {
+                "text": "TimeSignature"
+              },
+              "description": "Beats per measure, used for note spacing. Inherited from a parent measure/composition when unset.",
+              "name": "time"
+            }
+          ],
+          "superclass": {
+            "name": "StaffElementBase",
+            "module": "/src/staffBase"
+          },
+          "tagName": "music-staff-guitar-tab",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "music-staff-guitar-tab",
+          "declaration": {
+            "name": "StaffGuitarTabElement",
+            "module": "src/staffGuitarTab/staffGuitarTab.ts"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "MUSIC_STAFF_GUITAR_TAB",
+          "declaration": {
+            "name": "anonymous_0",
+            "module": "src/staffGuitarTab/staffGuitarTab.ts"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/staffVocal/lyrics.ts",
+      "declarations": [
+        {
+          "kind": "class",
+          "description": "One verse of lyrics for a `<music-staff-vocal>`. Its text content is split on\nspaces into words and on `-` into syllables (`Ky-ri-e`); a trailing `_` on a\nsyllable marks a melisma. The vocal staff positions each syllable under the\nmatching note.",
+          "name": "MusicLyricsElement",
+          "members": [
+            {
+              "kind": "field",
+              "name": "#syllablePositions",
+              "privacy": "private",
+              "type": {
+                "text": "LyricSyllablePosition[]"
+              },
+              "default": "[]"
+            },
+            {
+              "kind": "field",
+              "name": "#lyricContainer",
+              "privacy": "private",
+              "type": {
+                "text": "SVGSVGElement | null"
+              },
+              "default": "null"
+            },
+            {
+              "kind": "field",
+              "name": "verse",
+              "type": {
+                "text": "string"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "syllables",
+              "type": {
+                "text": "LyricSyllablePosition[]"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "updatePositions"
+            },
+            {
+              "kind": "method",
+              "name": "#render",
+              "privacy": "private"
+            }
+          ],
+          "attributes": [
+            {
+              "type": {
+                "text": "string"
+              },
+              "description": "Verse number, used to stack multiple verses. Defaults to `1`.",
+              "name": "verse"
+            }
+          ],
+          "superclass": {
+            "name": "SSRSafeHTMLElement",
+            "module": "src/staffVocal/lyrics.ts"
+          },
+          "tagName": "music-lyrics",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "MusicLyricsElement",
+          "declaration": {
+            "name": "MusicLyricsElement",
+            "module": "src/staffVocal/lyrics.ts"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "music-lyrics",
+          "declaration": {
+            "name": "MusicLyricsElement",
+            "module": "src/staffVocal/lyrics.ts"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/staffVocal/staffVocal.ts",
+      "declarations": [
+        {
+          "kind": "class",
+          "description": "A vocal staff for one of the six standard voice types. Behaves like\n`<music-staff>` (notes, beams, accidentals, key/time signatures) and\nadditionally lays out slotted `<music-lyrics>` syllables beneath the notes.\nUsable inside a `<music-measure>` / `<music-composition>` or on its own.",
+          "name": "StaffVocalElement",
+          "members": [
+            {
+              "kind": "field",
+              "name": "#slottedElements",
+              "privacy": "private",
+              "type": {
+                "text": "NoteChordOrRestElementType[]"
+              },
+              "default": "[]"
+            },
+            {
+              "kind": "field",
+              "name": "#sopranoYCoordinates",
+              "privacy": "private",
+              "static": true
+            },
+            {
+              "kind": "field",
+              "name": "#mezzoYCoordinates",
+              "privacy": "private",
+              "static": true
+            },
+            {
+              "kind": "field",
+              "name": "#altoYCoordinates",
+              "privacy": "private",
+              "static": true
+            },
+            {
+              "kind": "field",
+              "name": "#tenorYCoordinates",
+              "privacy": "private",
+              "static": true
+            },
+            {
+              "kind": "field",
+              "name": "#baritoneYCoordinates",
+              "privacy": "private",
+              "static": true
+            },
+            {
+              "kind": "field",
+              "name": "#bassYCoordinates",
+              "privacy": "private",
+              "static": true
+            },
+            {
+              "kind": "field",
+              "name": "#trebleSharps",
+              "privacy": "private",
+              "type": {
+                "text": "NoteLetterOctave[]"
+              },
+              "static": true,
+              "default": "[ 'F5', 'C5', 'G5', 'D5', 'A4', 'E5', 'B4', ]"
+            },
+            {
+              "kind": "field",
+              "name": "#trebleFlats",
+              "privacy": "private",
+              "type": {
+                "text": "NoteLetterOctave[]"
+              },
+              "static": true,
+              "default": "[ 'B4', 'E5', 'A4', 'D5', 'G4', 'C5', 'F4', ]"
+            },
+            {
+              "kind": "field",
+              "name": "#trebleMajorSharpYCoordinates",
+              "privacy": "private",
+              "type": {
+                "text": "KeySignatureYCoordinates"
+              },
+              "static": true
+            },
+            {
+              "kind": "field",
+              "name": "#trebleMajorFlatYCoordinates",
+              "privacy": "private",
+              "type": {
+                "text": "KeySignatureYCoordinates"
+              },
+              "static": true
+            },
+            {
+              "kind": "field",
+              "name": "#trebleMinorSharpYCoordinates",
+              "privacy": "private",
+              "type": {
+                "text": "KeySignatureYCoordinates"
+              },
+              "static": true,
+              "default": "{ E: StaffVocalElement.#trebleMajorSharpYCoordinates.G, B: StaffVocalElement.#trebleMajorSharpYCoordinates.D, ['F#']: StaffVocalElement.#trebleMajorSharpYCoordinates.A, ['C#']: StaffVocalElement.#trebleMajorSharpYCoordinates.E, ['G#']: StaffVocalElement.#trebleMajorSharpYCoordinates.B, ['D#']: StaffVocalElement.#trebleMajorSharpYCoordinates['F#'], ['A#']: StaffVocalElement.#trebleMajorSharpYCoordinates['C#'], }"
+            },
+            {
+              "kind": "field",
+              "name": "#trebleMinorFlatYCoordinates",
+              "privacy": "private",
+              "type": {
+                "text": "KeySignatureYCoordinates"
+              },
+              "static": true,
+              "default": "{ D: StaffVocalElement.#trebleMajorFlatYCoordinates.F, G: StaffVocalElement.#trebleMajorFlatYCoordinates.Bb, C: StaffVocalElement.#trebleMajorFlatYCoordinates.Eb, F: StaffVocalElement.#trebleMajorFlatYCoordinates.Ab, Bb: StaffVocalElement.#trebleMajorFlatYCoordinates.Db, Eb: StaffVocalElement.#trebleMajorFlatYCoordinates.Gb, Ab: StaffVocalElement.#trebleMajorFlatYCoordinates.Cb, }"
+            },
+            {
+              "kind": "field",
+              "name": "#tenorSharps",
+              "privacy": "private",
+              "type": {
+                "text": "NoteLetterOctave[]"
+              },
+              "static": true,
+              "default": "[ 'F4', 'C4', 'G4', 'D4', 'A3', 'E4', 'B3', ]"
+            },
+            {
+              "kind": "field",
+              "name": "#tenorFlats",
+              "privacy": "private",
+              "type": {
+                "text": "NoteLetterOctave[]"
+              },
+              "static": true,
+              "default": "[ 'B3', 'E4', 'A3', 'D4', 'G3', 'C4', 'F3', ]"
+            },
+            {
+              "kind": "field",
+              "name": "#tenorMajorSharpYCoordinates",
+              "privacy": "private",
+              "type": {
+                "text": "KeySignatureYCoordinates"
+              },
+              "static": true
+            },
+            {
+              "kind": "field",
+              "name": "#tenorMajorFlatYCoordinates",
+              "privacy": "private",
+              "type": {
+                "text": "KeySignatureYCoordinates"
+              },
+              "static": true
+            },
+            {
+              "kind": "field",
+              "name": "#tenorMinorSharpYCoordinates",
+              "privacy": "private",
+              "type": {
+                "text": "KeySignatureYCoordinates"
+              },
+              "static": true,
+              "default": "{ E: StaffVocalElement.#tenorMajorSharpYCoordinates.G, B: StaffVocalElement.#tenorMajorSharpYCoordinates.D, ['F#']: StaffVocalElement.#tenorMajorSharpYCoordinates.A, ['C#']: StaffVocalElement.#tenorMajorSharpYCoordinates.E, ['G#']: StaffVocalElement.#tenorMajorSharpYCoordinates.B, ['D#']: StaffVocalElement.#tenorMajorSharpYCoordinates['F#'], ['A#']: StaffVocalElement.#tenorMajorSharpYCoordinates['C#'], }"
+            },
+            {
+              "kind": "field",
+              "name": "#tenorMinorFlatYCoordinates",
+              "privacy": "private",
+              "type": {
+                "text": "KeySignatureYCoordinates"
+              },
+              "static": true,
+              "default": "{ D: StaffVocalElement.#tenorMajorFlatYCoordinates.F, G: StaffVocalElement.#tenorMajorFlatYCoordinates.Bb, C: StaffVocalElement.#tenorMajorFlatYCoordinates.Eb, F: StaffVocalElement.#tenorMajorFlatYCoordinates.Ab, Bb: StaffVocalElement.#tenorMajorFlatYCoordinates.Db, Eb: StaffVocalElement.#tenorMajorFlatYCoordinates.Gb, Ab: StaffVocalElement.#tenorMajorFlatYCoordinates.Cb, }"
+            },
+            {
+              "kind": "field",
+              "name": "#bassSharps",
+              "privacy": "private",
+              "type": {
+                "text": "NoteLetterOctave[]"
+              },
+              "static": true,
+              "default": "[ 'F3', 'C3', 'G3', 'D3', 'A2', 'E3', 'B2', ]"
+            },
+            {
+              "kind": "field",
+              "name": "#bassFlats",
+              "privacy": "private",
+              "type": {
+                "text": "NoteLetterOctave[]"
+              },
+              "static": true,
+              "default": "[ 'B2', 'E3', 'A2', 'D3', 'G2', 'C3', 'F2', ]"
+            },
+            {
+              "kind": "field",
+              "name": "#bassMajorSharpYCoordinates",
+              "privacy": "private",
+              "type": {
+                "text": "KeySignatureYCoordinates"
+              },
+              "static": true
+            },
+            {
+              "kind": "field",
+              "name": "#bassMajorFlatYCoordinates",
+              "privacy": "private",
+              "type": {
+                "text": "KeySignatureYCoordinates"
+              },
+              "static": true
+            },
+            {
+              "kind": "field",
+              "name": "#bassMinorSharpYCoordinates",
+              "privacy": "private",
+              "type": {
+                "text": "KeySignatureYCoordinates"
+              },
+              "static": true,
+              "default": "{ E: StaffVocalElement.#bassMajorSharpYCoordinates.G, B: StaffVocalElement.#bassMajorSharpYCoordinates.D, ['F#']: StaffVocalElement.#bassMajorSharpYCoordinates.A, ['C#']: StaffVocalElement.#bassMajorSharpYCoordinates.E, ['G#']: StaffVocalElement.#bassMajorSharpYCoordinates.B, ['D#']: StaffVocalElement.#bassMajorSharpYCoordinates['F#'], ['A#']: StaffVocalElement.#bassMajorSharpYCoordinates['C#'], }"
+            },
+            {
+              "kind": "field",
+              "name": "#bassMinorFlatYCoordinates",
+              "privacy": "private",
+              "type": {
+                "text": "KeySignatureYCoordinates"
+              },
+              "static": true,
+              "default": "{ D: StaffVocalElement.#bassMajorFlatYCoordinates.F, G: StaffVocalElement.#bassMajorFlatYCoordinates.Bb, C: StaffVocalElement.#bassMajorFlatYCoordinates.Eb, F: StaffVocalElement.#bassMajorFlatYCoordinates.Ab, Bb: StaffVocalElement.#bassMajorFlatYCoordinates.Db, Eb: StaffVocalElement.#bassMajorFlatYCoordinates.Gb, Ab: StaffVocalElement.#bassMajorFlatYCoordinates.Cb, }"
+            },
+            {
+              "kind": "field",
+              "name": "voice",
+              "type": {
+                "text": "Voice"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "yCoordinates",
+              "type": {
+                "text": "YCoordinates"
+              },
+              "readonly": true,
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "octaves",
+              "type": {
+                "text": "Octave[]"
+              },
+              "readonly": true,
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "clefSvg",
+              "type": {
+                "text": "string"
+              },
+              "privacy": "protected",
+              "readonly": true,
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "getKeyYCoordinates",
+              "privacy": "public",
+              "return": {
+                "type": {
+                  "text": "{ useSharps: boolean; coordinates: number[] }"
+                }
+              },
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "onHandleSlotChange",
+              "privacy": "protected",
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              },
+              "parameters": [
+                {
+                  "name": "event",
+                  "type": {
+                    "text": "Event"
+                  }
+                }
+              ],
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "onStaffResize",
+              "privacy": "protected",
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              },
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "#positionLyricsIfPresent",
+              "privacy": "private",
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              }
+            },
+            {
+              "kind": "method",
+              "name": "#parseLyricsText",
+              "privacy": "private",
+              "return": {
+                "type": {
+                  "text": "Array<{\n      text: string;\n      isMelisma: boolean;\n      isHyphenated: boolean;\n    }>"
+                }
+              },
+              "parameters": [
+                {
+                  "name": "text",
+                  "type": {
+                    "text": "string"
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "field",
+              "name": "#mutationObservers",
+              "privacy": "private",
+              "type": {
+                "text": "MutationObserver[]"
+              },
+              "default": "[]",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#effectiveMode",
+              "privacy": "private",
+              "type": {
+                "text": "Mode"
+              },
+              "default": "this.resolveInheritedValue( COMMON_ATTRIBUTES.MODE, 'major' )",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#effectiveKeySig",
+              "privacy": "private",
+              "type": {
+                "text": "Note"
+              },
+              "default": "this.resolveInheritedValue( COMMON_ATTRIBUTES.KEY_SIG, 'C' )",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#describeContainer",
+              "privacy": "private",
+              "type": {
+                "text": "SVGGElement"
+              },
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#beamsContainer",
+              "privacy": "private",
+              "type": {
+                "text": "SVGSVGElement"
+              },
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#tupletContainer",
+              "privacy": "private",
+              "type": {
+                "text": "SVGSVGElement"
+              },
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#dynamicsContainer",
+              "privacy": "private",
+              "type": {
+                "text": "SVGSVGElement"
+              },
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#beamRenderer",
+              "privacy": "private",
+              "type": {
+                "text": "ReturnType<BeamsBuilder['buildRenderer']> | null"
+              },
+              "default": "null",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#currentElements",
+              "privacy": "private",
+              "type": {
+                "text": "NoteChordOrRestElementType[]"
+              },
+              "default": "[]",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#noteTimingDragHandler",
+              "privacy": "private",
+              "type": {
+                "text": "NoteTimingDragHandler | null"
+              },
+              "default": "null",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#notePitchDragHandler",
+              "privacy": "private",
+              "type": {
+                "text": "PitchDragHandler | null"
+              },
+              "default": "null",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#boundPointerDown",
+              "privacy": "private",
+              "type": {
+                "text": "((e: PointerEvent) => void) | null"
+              },
+              "default": "null",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#describeEndX",
+              "privacy": "private",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#showDescribe",
+              "privacy": "private",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "true",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#clefChangeAtBoundary",
+              "privacy": "private",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#timeChangeAtBoundary",
+              "privacy": "private",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#tupletGroups",
+              "privacy": "private",
+              "type": {
+                "text": "TupletGroup[]"
+              },
+              "default": "[]",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#tupletsByIndex",
+              "privacy": "private",
+              "type": {
+                "text": "Map<number, TupletElementType[]>"
+              },
+              "default": "new Map()",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#clefMarkers",
+              "privacy": "private",
+              "type": {
+                "text": "ClefMarkerPlacement[]"
+              },
+              "default": "[]",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#noteXPositions",
+              "privacy": "private",
+              "type": {
+                "text": "Map<number, number>"
+              },
+              "default": "new Map()",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#firstGraceHeadXPositions",
+              "privacy": "private",
+              "type": {
+                "text": "Map<number, number>"
+              },
+              "default": "new Map()",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#stemDirections",
+              "privacy": "private",
+              "type": {
+                "text": "boolean[]"
+              },
+              "default": "[]",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#beamedIndicesSnapshot",
+              "privacy": "private",
+              "type": {
+                "text": "Set<number>"
+              },
+              "default": "new Set()",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#noteStaffYCoordsSnapshot",
+              "privacy": "private",
+              "type": {
+                "text": "Map<NoteElementType, number>"
+              },
+              "default": "new Map()",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#chordStaffYCoordsSnapshot",
+              "privacy": "private",
+              "type": {
+                "text": "Map<ChordElementType, number[]>"
+              },
+              "default": "new Map()",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#boundDrawConnectors",
+              "privacy": "private",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#boundRenderDynamics",
+              "privacy": "private",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#boundNoteYChange",
+              "privacy": "private",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#boundClefMarkerChange",
+              "privacy": "private",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "describeEndX",
+              "type": {
+                "text": "number"
+              },
+              "privacy": "protected",
+              "readonly": true,
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "showDescribe",
+              "type": {
+                "text": "boolean"
+              },
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "clefChangeAtBoundary",
+              "type": {
+                "text": "boolean"
+              },
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "timeChangeAtBoundary",
+              "type": {
+                "text": "boolean"
+              },
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "staffLineCount",
+              "type": {
+                "text": "number"
+              },
+              "readonly": true,
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "additionalStyles",
+              "type": {
+                "text": "string"
+              },
+              "privacy": "protected",
+              "description": "Override in subclasses to inject additional CSS into the shadow DOM style block.",
+              "readonly": true,
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "editable",
+              "type": {
+                "text": "boolean"
+              },
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "managed",
+              "type": {
+                "text": "boolean"
+              },
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "keySig",
+              "type": {
+                "text": "Note"
+              },
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "mode",
+              "type": {
+                "text": "Mode"
+              },
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "onConnectedCallback",
+              "privacy": "protected",
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              },
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "#enableDrag",
+              "privacy": "private",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "#disableDrag",
+              "privacy": "private",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "#findPitchDragTarget",
+              "privacy": "private",
+              "return": {
+                "type": {
+                  "text": "{\n    element: HTMLElement | null;\n    elementIndex: number;\n    chordNoteIndex: number | null;\n  }"
+                }
+              },
+              "parameters": [
+                {
+                  "name": "svgTarget",
+                  "type": {
+                    "text": "Element"
+                  }
+                },
+                {
+                  "name": "elements",
+                  "type": {
+                    "text": "HTMLElement[]"
+                  }
+                }
+              ],
+              "description": "Identify which slotted element and (for chords) which notehead index\ncorresponds to a clicked SVG target.",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "#findChordNoteIndex",
+              "privacy": "private",
+              "return": {
+                "type": {
+                  "text": "number | null"
+                }
+              },
+              "parameters": [
+                {
+                  "name": "svgTarget",
+                  "type": {
+                    "text": "Element"
+                  }
+                },
+                {
+                  "name": "chordElement",
+                  "type": {
+                    "text": "HTMLElement"
+                  }
+                }
+              ],
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "#onPitchLivePreview",
+              "privacy": "private",
+              "parameters": [
+                {
+                  "name": "elementIndex",
+                  "type": {
+                    "text": "number"
+                  }
+                },
+                {
+                  "name": "note",
+                  "type": {
+                    "text": "Note"
+                  }
+                },
+                {
+                  "name": "octave",
+                  "type": {
+                    "text": "Octave"
+                  }
+                },
+                {
+                  "name": "chordNoteIndex",
+                  "type": {
+                    "text": "number | null"
+                  }
+                }
+              ],
+              "description": "Live preview callback: temporarily update the element's pitch during drag.",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "#buildDescribe",
+              "privacy": "private",
+              "parameters": [
+                {
+                  "name": "clefSvgStr",
+                  "type": {
+                    "text": "string"
+                  }
+                }
+              ],
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "#refreshDescribe",
+              "privacy": "private",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "refreshInheritedAttrs",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "#appendKeySignatureSvg",
+              "privacy": "private",
+              "parameters": [
+                {
+                  "name": "svg",
+                  "type": {
+                    "text": "SVGElement"
+                  }
+                },
+                {
+                  "name": "xOffset",
+                  "type": {
+                    "text": "number"
+                  }
+                }
+              ],
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "#appendTimeSignatureSvgIfNecessary",
+              "privacy": "private",
+              "parameters": [
+                {
+                  "name": "parentSvg",
+                  "type": {
+                    "text": "SVGElement"
+                  }
+                },
+                {
+                  "name": "xOffset",
+                  "type": {
+                    "text": "number"
+                  }
+                }
+              ],
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "onDisconnectedCallback",
+              "privacy": "protected",
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              },
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "#renderNotes",
+              "privacy": "private",
+              "parameters": [
+                {
+                  "name": "elements",
+                  "type": {
+                    "text": "NoteChordOrRestElementType[]"
+                  }
+                }
+              ],
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "#resolveChordStaffYCoordinates",
+              "privacy": "private",
+              "return": {
+                "type": {
+                  "text": "number[]"
+                }
+              },
+              "parameters": [
+                {
+                  "name": "notes",
+                  "type": {
+                    "text": "ChordNote[]"
+                  }
+                },
+                {
+                  "name": "elementIndex",
+                  "type": {
+                    "text": "number"
+                  }
+                }
+              ],
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "#activeClefAt",
+              "privacy": "private",
+              "return": {
+                "type": {
+                  "text": "ClefType | null"
+                }
+              },
+              "parameters": [
+                {
+                  "name": "elementIndex",
+                  "type": {
+                    "text": "number"
+                  }
+                }
+              ],
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "#renderDataForIndex",
+              "privacy": "private",
+              "return": {
+                "type": {
+                  "text": "{\n    yCoordinates: YCoordinates;\n    octaves: Octave[];\n  }"
+                }
+              },
+              "parameters": [
+                {
+                  "name": "elementIndex",
+                  "type": {
+                    "text": "number"
+                  }
+                }
+              ],
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "ownClef",
+              "type": {
+                "text": "ClefType | null"
+              },
+              "privacy": "protected",
+              "readonly": true,
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "effectiveStartClef",
+              "type": {
+                "text": "ClefType | null"
+              },
+              "privacy": "public",
+              "readonly": true,
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "effectiveEndClef",
+              "type": {
+                "text": "ClefType | null"
+              },
+              "privacy": "public",
+              "readonly": true,
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "noteToYCoordinate",
+              "privacy": "public",
+              "return": {
+                "type": {
+                  "text": "number"
+                }
+              },
+              "parameters": [
+                {
+                  "name": "note",
+                  "type": {
+                    "text": "Note"
+                  }
+                },
+                {
+                  "name": "octave",
+                  "optional": true,
+                  "type": {
+                    "text": "Octave"
+                  }
+                },
+                {
+                  "name": "elementIndex",
+                  "optional": true,
+                  "type": {
+                    "text": "number"
+                  }
+                }
+              ],
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "#spaceElements",
+              "privacy": "private",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "#renderDynamics",
+              "privacy": "private",
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              },
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "#estimateAboveStaffBudget",
+              "privacy": "private",
+              "return": {
+                "type": {
+                  "text": "number"
+                }
+              },
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "staffContainer",
+              "type": {
+                "text": "HTMLDivElement"
+              },
+              "privacy": "protected",
+              "readonly": true,
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "staffResizeObserver",
+              "type": {
+                "text": "ResizeObserver"
+              },
+              "privacy": "protected",
+              "readonly": true,
+              "default": "new ResizeObserver((entries) => { const newWidth = entries[0].contentRect.width; if (newWidth !== this.#lastStaffWidth) { this.#lastStaffWidth = newWidth; this.onStaffResize(); } })",
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#lastStaffWidth",
+              "privacy": "private",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "transcribeContainer",
+              "type": {
+                "text": "SVGSVGElement"
+              },
+              "privacy": "protected",
+              "readonly": true,
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#standaloneConnectorsOverlay",
+              "privacy": "private",
+              "type": {
+                "text": "SVGSVGElement"
+              },
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#initialSlotSyncDone",
+              "privacy": "private",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "#slotChangeHandler",
+              "privacy": "private",
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "effectiveTimeSig",
+              "type": {
+                "text": "[BeatsInMeasure, BeatTypeInMeasure]"
+              },
+              "privacy": "protected",
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "group",
+              "type": {
+                "text": "StaffGroupType | null"
+              },
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "groupId",
+              "type": {
+                "text": "string | null"
+              },
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "dispatchGroupAttributeChange",
+              "privacy": "protected",
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              },
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "resolveInheritedValue",
+              "privacy": "protected",
+              "return": {
+                "type": {
+                  "text": "string"
+                }
+              },
+              "parameters": [
+                {
+                  "name": "attributeName",
+                  "type": {
+                    "text": "string"
+                  }
+                },
+                {
+                  "name": "defaultValue",
+                  "type": {
+                    "text": "string"
+                  }
+                }
+              ],
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "convertTotimeInts",
+              "privacy": "protected",
+              "return": {
+                "type": {
+                  "text": "[BeatsInMeasure, BeatTypeInMeasure]"
+                }
+              },
+              "parameters": [
+                {
+                  "name": "time",
+                  "type": {
+                    "text": "string"
+                  }
+                }
+              ],
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "time",
+              "type": {
+                "text": "TimeSignature"
+              },
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "privacy": "protected",
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "staffHeight",
+              "type": {
+                "text": "number"
+              },
+              "readonly": true,
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "#buildStaffLines",
+              "privacy": "private",
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              },
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "#buildTranscribe",
+              "privacy": "private",
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "upgradeAssignedElements",
+              "privacy": "protected",
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              },
+              "parameters": [
+                {
+                  "name": "elements",
+                  "type": {
+                    "text": "Iterable<Element>"
+                  }
+                }
+              ],
+              "description": "Force-upgrade slotted `<music-*>` children (and any nested inside a\n`<music-tuplet>`) before the staff reads their getters. When a staff is\nbuilt from parsed HTML markup its `connectedCallback` runs — and dispatches\nthe first `slotchange` — before its already-present children upgrade, so\nwithout this their getters (`grace`, `note`, `duration`, …) are `undefined`.\n`customElements.upgrade()` is synchronous and a no-op on an already-upgraded\nor unregistered element.",
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "drawConnectorsWhenStandalone",
+              "privacy": "protected",
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              },
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            }
+          ],
+          "events": [
+            {
+              "type": {
+                "text": "CustomEvent"
+              },
+              "inheritedFrom": {
+                "name": "StaffElementBase",
+                "module": "src/staffBase.ts"
+              }
+            }
+          ],
+          "attributes": [
+            {
+              "name": "voice",
+              "type": {
+                "text": "'soprano' | 'mezzo' | 'alto' | 'tenor' | 'baritone' | 'bass'"
+              },
+              "description": "Voice type, which selects the clef and range. Defaults to `soprano`."
+            },
+            {
+              "type": {
+                "text": "Note"
+              },
+              "description": "Key-signature tonic. Inherited from a parent measure/composition when unset.",
+              "name": "keysig"
+            },
+            {
+              "type": {
+                "text": "'major' | 'minor'"
+              },
+              "description": "Key-signature mode. Inherited when unset. Defaults to `major`.",
+              "name": "mode"
+            },
+            {
+              "type": {
+                "text": "TimeSignature"
+              },
+              "description": "Beats per measure. Inherited when unset.",
+              "name": "time"
+            },
+            {
+              "name": "editable",
+              "type": {
+                "text": "boolean"
+              },
+              "description": "Enables pitch and timing drag interactions on slotted notes.",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "name": "managed",
+              "type": {
+                "text": "boolean"
+              },
+              "description": "With `editable`, emit reorder/pitch events instead of mutating the DOM.",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "name": "group",
+              "type": {
+                "text": "'grand' | 'bracket'"
+              },
+              "description": "Joins this staff to its next sibling under a brace or bracket connector.",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "name": "group-id",
+              "type": {
+                "text": "string"
+              },
+              "description": "Shared identifier letting a `group=\"bracket\"` connector span more than two contiguous staves.",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            }
+          ],
+          "superclass": {
+            "name": "StaffClassicalElementBase",
+            "module": "/src/staffClassicalBase"
+          },
+          "tagName": "music-staff-vocal",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "music-staff-vocal",
+          "declaration": {
+            "name": "StaffVocalElement",
+            "module": "src/staffVocal/staffVocal.ts"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "music-staff-vocal",
+          "declaration": {
+            "name": "anonymous_0",
+            "module": "src/staffVocal/staffVocal.ts"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/tuplet/tuplet.ts",
+      "declarations": [
+        {
+          "kind": "class",
+          "description": "Wraps slotted `<music-note>` / `<music-chord>` / `<music-rest>` children as a\ntuplet (triplet, quintuplet, …). The staff reads the group and draws the\nbracket and numeral; the wrapper itself is layout-only.",
+          "name": "TupletElement",
+          "members": [
+            {
+              "kind": "field",
+              "name": "ratio",
+              "type": {
+                "text": "TupletRatio"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "flatElements",
+              "type": {
+                "text": "NoteChordOrRestElementType[]"
+              },
+              "readonly": true
+            }
+          ],
+          "attributes": [
+            {
+              "name": "ratio",
+              "type": {
+                "text": "TupletRatio"
+              },
+              "description": "Tuplet ratio: a bare count like `3` or a full `actual:normal` form like `3:2`. Defaults to `3`."
+            }
+          ],
+          "superclass": {
+            "name": "HTMLElement"
+          },
+          "tagName": "music-tuplet",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "MUSIC_TUPLET",
+          "declaration": {
+            "name": "TupletElement",
+            "module": "src/tuplet/tuplet.ts"
+          }
+        }
+      ]
+    }
+  ]
+}

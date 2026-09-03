@@ -56,6 +56,43 @@ import {
 } from '../utils/notationDimensions';
 
 if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
+  /**
+   * A chord: several noteheads sharing one stem. Supply the notes either as a
+   * chord name via the `chord` attribute (e.g. `Cmaj7`) or as slotted
+   * `<music-note>` children. Supports the same articulations, dynamics, hairpins,
+   * ties/slurs and grace notes as `<music-note>`. Renders standalone or spaced
+   * and beamed inside a `<music-staff>`.
+   *
+   * @customElement music-chord
+   * @attr {Chord} chord - Chord name resolved into constituent pitches, e.g. `C`, `Am`, `Cmaj7`, `G/B`.
+   * @attr {DurationType} duration - Note value for the chord. Defaults to `quarter`.
+   * @attr {'start' | 'end'} tie - Marks this chord as the start or end of a tie.
+   * @attr {'start' | 'end'} slur - Marks this chord as the start or end of a slur.
+   * @attr {string} for - `id` of the matching start element, to disambiguate interleaved same-kind ties/slurs.
+   * @attr {DynamicMarking} dynamic - Dynamic marking under the chord.
+   * @attr {'start' | 'end'} crescendo - Start or end of a crescendo hairpin.
+   * @attr {'start' | 'end'} decrescendo - Start or end of a decrescendo hairpin.
+   * @attr {'start' | 'end'} diminuendo - Alias of `decrescendo`.
+   * @attr {ArticulationType} articulation - Articulation/accent mark.
+   * @attr {'stressed' | 'unstressed'} stress - Schoenberg stress mark.
+   * @attr {string} grace - Comma-separated grace-note pitches preceding the chord, e.g. `"F#,G"`.
+   * @attr {string} grace-octave - Comma-separated octaves aligned by index with `grace`.
+   * @attr {string} grace-articulation - Comma-separated per-grace articulation aligned by index with `grace`.
+   * @attr {'acciaccatura' | 'appoggiatura'} grace-type - Grace-note style. Defaults to `acciaccatura`.
+   * @attr {GraceDuration} grace-duration - Note value drawn for the grace notes.
+   * @attr {'auto' | 'none'} grace-slur - Whether to draw the slur from the grace group to the chord. Defaults to `auto`.
+   * @attr {DynamicMarking} grace-dynamic - A single dynamic for the whole grace group.
+   *
+   * @example
+   * <music-staff clef="treble" time="4/4">
+   *   <music-chord chord="Cmaj7" duration="half"></music-chord>
+   *   <music-chord duration="quarter">
+   *     <music-note note="D" octave="4"></music-note>
+   *     <music-note note="F" octave="4"></music-note>
+   *     <music-note note="A" octave="4"></music-note>
+   *   </music-chord>
+   * </music-staff>
+   */
   class ChordElement extends HTMLElement implements IChordElement {
     static get observedAttributes(): string[] {
       return [

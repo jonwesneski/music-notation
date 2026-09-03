@@ -32,6 +32,27 @@ import {
 } from '../utils/notationDimensions';
 
 if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
+  /**
+   * The top-level score container. Holds `<music-measure>` children, flows them
+   * into rows with `flex-wrap`, and reflows on resize (clef/key/time visibility,
+   * bar-line connectors, cross-measure ties and slurs all recompute). Key
+   * signature, mode and time set here are inherited by every descendant staff
+   * unless overridden lower down.
+   *
+   * @customElement music-composition
+   * @attr {Note} keysig - Key-signature tonic inherited by child measures/staves (e.g. `C`, `F#`, `Bb`). Defaults to `C`.
+   * @attr {'major' | 'minor'} mode - Key-signature mode. Defaults to `major`.
+   * @attr {TimeSignature} time - Beats per measure (e.g. `4/4`, `6/8`). Defaults to `4/4`.
+   *
+   * @example
+   * <music-composition keysig="G" mode="major" time="4/4">
+   *   <music-measure>
+   *     <music-staff clef="treble">
+   *       <music-note note="G" octave="4" duration="quarter"></music-note>
+   *     </music-staff>
+   *   </music-measure>
+   * </music-composition>
+   */
   class CompositionElement extends HTMLElement {
     static get observedAttributes(): string[] {
       // All attributes need to be all lower case because jsdom lowers then

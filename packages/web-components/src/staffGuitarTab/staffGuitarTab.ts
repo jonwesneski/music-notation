@@ -18,6 +18,23 @@ import {
 } from '../utils/notationDimensions';
 
 if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
+  /**
+   * A six-line guitar tablature staff. Reads slotted `<music-guitar-note>`
+   * children and places them by string and fret. Carries a `time` value (for
+   * spacing) but never draws a time-signature glyph. Usable inside a
+   * `<music-measure>` / `<music-composition>` or on its own.
+   *
+   * @customElement music-staff-guitar-tab
+   * @attr {TimeSignature} time - Beats per measure, used for note spacing. Inherited from a parent measure/composition when unset.
+   * @attr {'grand' | 'bracket'} group - Joins this staff to its next sibling under a brace or bracket connector.
+   * @attr {string} group-id - Shared identifier letting a `group="bracket"` connector span more than two contiguous staves.
+   *
+   * @example
+   * <music-staff-guitar-tab time="4/4">
+   *   <music-guitar-note string="3" fret="0" duration="quarter"></music-guitar-note>
+   *   <music-guitar-note string="2" fret="1" duration="quarter"></music-guitar-note>
+   * </music-staff-guitar-tab>
+   */
   class StaffGuitarTabElement extends StaffElementBase {
     static #tabSvg = `
       <svg class="clef" y="20" height="80px" width="80px" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:svg="http://www.w3.org/2000/svg" version="1.1">
@@ -126,13 +143,13 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
 
     protected override onHandleSlotChange(event: Event): void {
       const slot = event.target as HTMLSlotElement;
-      const assignedElements = slot
-        .assignedElements({ flatten: true })
-        .filter(
-          (e) =>
-            e.nodeName === MUSIC_GUITAR_NOTE_NODE ||
-            e.nodeName === MUSIC_GUITAR_CHORD_NODE
-        ) as GuitarNoteElementType[];
+      const slotted = slot.assignedElements({ flatten: true });
+      this.upgradeAssignedElements(slotted);
+      const assignedElements = slotted.filter(
+        (e) =>
+          e.nodeName === MUSIC_GUITAR_NOTE_NODE ||
+          e.nodeName === MUSIC_GUITAR_CHORD_NODE
+      ) as GuitarNoteElementType[];
 
       this.#renderNotes(assignedElements);
     }

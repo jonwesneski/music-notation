@@ -894,3 +894,51 @@ test.describe(`${MUSIC_STAFF} mid-stream clef changes`, () => {
     }
   });
 });
+
+test.describe('staves authored as parsed HTML markup', () => {
+  test('render without console or page errors', async ({ page }) => {
+    const errors: string[] = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    page.on('console', (message) => {
+      if (message.type() === 'error') {
+        errors.push(message.text());
+      }
+    });
+
+    await page.goto('./parsed-markup.html');
+
+    // The initial render is driven by a deferred (microtask) slotchange, so it
+    // may already have fired by the time this listener could attach — poll the
+    // rendered output instead of racing the staff-notes-positioned event.
+    await page.waitForFunction(() => {
+      const notes = Array.from(document.querySelectorAll('music-note'));
+      return (
+        notes.length > 0 &&
+        notes.every((note) => note.shadowRoot?.querySelector('svg') != null)
+      );
+    });
+    await waitForRedrawCycle(page);
+
+    const rendered = await page.evaluate(() => {
+      const svgCount = (selector: string) =>
+        Array.from(document.querySelectorAll(selector)).filter(
+          (element) => element.shadowRoot?.querySelector('svg') != null
+        ).length;
+      return {
+        notesRendered: svgCount('music-note'),
+        totalNotes: document.querySelectorAll('music-note').length,
+        guitarTabRendered:
+          document
+            .querySelector('music-staff-guitar-tab')
+            ?.shadowRoot?.querySelector('svg') != null,
+        vocalRendered:
+          document.querySelector('music-staff-vocal')?.shadowRoot != null,
+      };
+    });
+
+    expect(errors).toEqual([]);
+    expect(rendered.notesRendered).toBe(rendered.totalNotes);
+    expect(rendered.guitarTabRendered).toBe(true);
+    expect(rendered.vocalRendered).toBe(true);
+  });
+});

@@ -16,6 +16,11 @@ type PitchDragState = {
   sortedPositions: [NoteLetterOctave, number][];
 };
 
+/**
+ * `detail` payload of the `note-pitch-change` event a `<music-staff editable>`
+ * dispatches when a notehead is dragged to a new pitch. `note` and `octave` are
+ * always carried as separate fields, never a combined string.
+ */
 export type PitchChangeDetail = {
   element: HTMLElement;
   elementIndex: number;

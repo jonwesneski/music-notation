@@ -5,6 +5,7 @@
     "module": "esnext",
     "moduleResolution": "bundler",
     "jsx": "preserve",
+    "resolveJsonModule": true,
     "types": ["node"],
     "paths": {
       "@/src/*": ["./src/*"]
@@ -18,7 +19,8 @@
     "src/**/*.stories.tsx",
     "src/**/*.stories.mdx",
     ".storybook/*.js",
-    ".storybook/*.ts"
+    ".storybook/*.ts",
+    "custom-elements.json"
   ],
   "references": [
     {

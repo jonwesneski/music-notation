@@ -10,6 +10,35 @@
         "command": "playwright test",
         "cwd": "packages/web-components"
       }
+    },
+    "analyze": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "cem analyze --config custom-elements-manifest.config.js",
+        "cwd": "packages/web-components"
+      },
+      "inputs": [
+        "{projectRoot}/src/**/*.ts",
+        "{projectRoot}/custom-elements-manifest.config.js"
+      ],
+      "outputs": ["{projectRoot}/custom-elements.json"],
+      "cache": true
+    },
+    "bundle": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "vite build",
+        "cwd": "packages/web-components"
+      },
+      "inputs": [
+        "{projectRoot}/src/**/*.ts",
+        "{projectRoot}/vite.config.ts",
+        "!{projectRoot}/src/**/*.test.ts",
+        "!{projectRoot}/src/**/*.browser-test.ts",
+        "!{projectRoot}/src/**/*.stories.ts"
+      ],
+      "outputs": ["{projectRoot}/dist/standalone"],
+      "cache": true
     }
   }
 }

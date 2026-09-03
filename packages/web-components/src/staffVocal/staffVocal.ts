@@ -30,6 +30,29 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
   const LYRICS_BASELINE_OFFSET = -25; // px below staff to first verse
   const LYRICS_VERSE_SPACING = 15; // px between verse lines
 
+  /**
+   * A vocal staff for one of the six standard voice types. Behaves like
+   * `<music-staff>` (notes, beams, accidentals, key/time signatures) and
+   * additionally lays out slotted `<music-lyrics>` syllables beneath the notes.
+   * Usable inside a `<music-measure>` / `<music-composition>` or on its own.
+   *
+   * @customElement music-staff-vocal
+   * @attr {'soprano' | 'mezzo' | 'alto' | 'tenor' | 'baritone' | 'bass'} voice - Voice type, which selects the clef and range. Defaults to `soprano`.
+   * @attr {Note} keysig - Key-signature tonic. Inherited from a parent measure/composition when unset.
+   * @attr {'major' | 'minor'} mode - Key-signature mode. Inherited when unset. Defaults to `major`.
+   * @attr {TimeSignature} time - Beats per measure. Inherited when unset.
+   * @attr {boolean} editable - Enables pitch and timing drag interactions on slotted notes.
+   * @attr {boolean} managed - With `editable`, emit reorder/pitch events instead of mutating the DOM.
+   * @attr {'grand' | 'bracket'} group - Joins this staff to its next sibling under a brace or bracket connector.
+   * @attr {string} group-id - Shared identifier letting a `group="bracket"` connector span more than two contiguous staves.
+   *
+   * @example
+   * <music-staff-vocal voice="tenor" keysig="G" mode="major" time="4/4">
+   *   <music-note note="G" octave="4" duration="quarter"></music-note>
+   *   <music-note note="A" octave="4" duration="quarter"></music-note>
+   *   <music-lyrics verse="1">A-men</music-lyrics>
+   * </music-staff-vocal>
+   */
   class StaffVocalElement extends StaffClassicalElementBase {
     #slottedElements: NoteChordOrRestElementType[] = [];
 

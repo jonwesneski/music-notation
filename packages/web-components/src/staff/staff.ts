@@ -6,6 +6,28 @@ import { MUSIC_STAFF } from '../utils/consts';
 import { parseClef } from '../utils/parsers';
 
 if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
+  /**
+   * A five-line classical staff. Reads slotted `<music-note>`, `<music-chord>`,
+   * `<music-rest>`, `<music-tuplet>` and `<music-clef>` children and engraves them
+   * with beams, accidentals, ledger lines and spacing. Usable inside a
+   * `<music-measure>` / `<music-composition>` or on its own.
+   *
+   * @customElement music-staff
+   * @attr {'treble' | 'bass'} clef - Clef for the staff. Defaults to `treble`.
+   * @attr {Note} keysig - Key-signature tonic (e.g. `C`, `F#`, `Bb`). Inherited from a parent measure/composition when unset.
+   * @attr {'major' | 'minor'} mode - Key-signature mode. Inherited when unset. Defaults to `major`.
+   * @attr {TimeSignature} time - Beats per measure (e.g. `4/4`, `6/8`). Inherited when unset.
+   * @attr {boolean} editable - Enables pitch and timing drag interactions on slotted notes.
+   * @attr {boolean} managed - With `editable`, emit reorder/pitch events instead of mutating the DOM (for framework-controlled state).
+   * @attr {'grand' | 'bracket'} group - Joins this staff to its next sibling under a brace or bracket connector.
+   * @attr {string} group-id - Shared identifier letting a `group="bracket"` connector span more than two contiguous staves.
+   *
+   * @example
+   * <music-staff clef="treble" keysig="G" mode="major" time="4/4">
+   *   <music-note note="G" octave="4" duration="quarter"></music-note>
+   *   <music-note note="B" octave="4" duration="quarter"></music-note>
+   * </music-staff>
+   */
   class StaffElement extends StaffClassicalElementBase {
     static override get observedAttributes(): string[] {
       return [...super.observedAttributes, 'clef'];

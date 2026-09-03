@@ -27,6 +27,27 @@ const parseFret = (value: string | null): GuitarFret => {
 };
 
 if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
+  /**
+   * A single tablature note — a fret number on a string — with optional
+   * left-hand technique connectors to the next note. Used inside a
+   * `<music-staff-guitar-tab>`.
+   *
+   * @customElement music-guitar-note
+   * @attr {number | 'x'} fret - Fret number, or `x` for a muted/dead note.
+   * @attr {number} string - String number, 1 = highest. Defaults to `1`.
+   * @attr {DurationType} duration - Note value. Defaults to `quarter`.
+   * @attr {'start' | 'end'} tie - Start or end of a tie to the same fret/string.
+   * @attr {'start' | 'end'} slur - Start or end of a slur.
+   * @attr {'start' | 'end'} hammer-on - Start or end of a hammer-on to the next note.
+   * @attr {'start' | 'end'} pull-off - Start or end of a pull-off to the next note.
+   * @attr {'start' | 'end'} slide - Start or end of a slide to the next note.
+   *
+   * @example
+   * <music-staff-guitar-tab time="4/4">
+   *   <music-guitar-note string="3" fret="0" duration="quarter" hammer-on="start"></music-guitar-note>
+   *   <music-guitar-note string="3" fret="2" duration="quarter" hammer-on="end"></music-guitar-note>
+   * </music-staff-guitar-tab>
+   */
   class GuitarNoteElement extends HTMLElement implements IGuitarNoteElement {
     static get observedAttributes(): string[] {
       return [
@@ -38,7 +59,6 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
         'hammer-on',
         'pull-off',
         'slide',
-        'bend',
       ];
     }
 

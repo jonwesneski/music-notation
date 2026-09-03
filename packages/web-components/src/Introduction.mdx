@@ -1,0 +1,43 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Introduction" />
+
+# @one-step-at-a-time/web-components
+
+A framework-agnostic **Web Components** library for rendering music notation as
+SVG in the browser. Every musical element is a native custom element built with
+TypeScript — there are no framework dependencies, so it runs in plain HTML or
+inside React, Vue, Svelte, Angular, or anything else.
+
+```html
+<music-composition keysig="G" mode="major" time="4/4">
+  <music-measure>
+    <music-staff clef="treble">
+      <music-note note="G" octave="4" duration="quarter"></music-note>
+      <music-note note="B" octave="4" duration="quarter"></music-note>
+      <music-note note="D" octave="5" duration="quarter"></music-note>
+      <music-note note="G" octave="5" duration="quarter"></music-note>
+    </music-staff>
+  </music-measure>
+</music-composition>
+```
+
+## Highlights
+
+- **Composable or standalone** — use a `<music-note>` on its own, a `<music-staff>`
+  without a measure, or the full `composition → measure → staff → note` hierarchy.
+- **Responsive** — measures reflow into rows as the container resizes; clefs, key
+  and time signatures, bar-line connectors, and cross-system ties/slurs recompute.
+- **Attribute-driven** — configure everything through HTML attributes; key
+  signature, mode, and time signature flow down from parent to child.
+- **Interactive** — an `editable` staff supports drag-to-repitch and
+  drag-to-reorder, dispatching plain DOM `CustomEvent`s.
+
+## Where to go next
+
+- **Guides → Getting Started** — install and render your first staff.
+- **Guides → Framework Integration** — React, vanilla JS, and the event reference.
+- **Guides → Concepts** — the element hierarchy, attribute inheritance, the SVG
+  coordinate model, and responsive layout.
+- **Components** — every element with a live playground and a generated
+  attribute reference (from `custom-elements.json`).

@@ -5,6 +5,19 @@ import { MUSIC_REST } from '../utils/consts';
 import { createRestSvg } from '../utils/svgCreator/rest';
 
 if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
+  /**
+   * A rest of a given duration. Renders its glyph standalone or spaced inside a
+   * `<music-staff>`.
+   *
+   * @customElement music-rest
+   * @attr {DurationType} duration - Rest length: `whole`, `half`, `quarter`, `eighth`, `sixteenth`, … Defaults to `quarter`.
+   *
+   * @example
+   * <music-staff clef="treble" time="4/4">
+   *   <music-note note="C" octave="4" duration="quarter"></music-note>
+   *   <music-rest duration="quarter"></music-rest>
+   * </music-staff>
+   */
   class RestElement extends HTMLElement implements IRestElement {
     static get observedAttributes(): string[] {
       return ['duration'];

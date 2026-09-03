@@ -5,6 +5,21 @@ import { CLEF_EVENTS, MUSIC_CLEF } from '../utils/consts';
 import { parseClef } from '../utils/parsers';
 
 if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
+  /**
+   * A clef glyph. Standalone it renders just the symbol; placed in a
+   * `<music-staff>`'s note stream it marks a mid-piece clef change (it reserves
+   * horizontal space but consumes no beat duration).
+   *
+   * @customElement music-clef
+   * @attr {'treble' | 'bass'} clef - Which clef to draw. Defaults to `treble`.
+   *
+   * @example
+   * <music-staff clef="treble">
+   *   <music-note note="C" octave="4" duration="quarter"></music-note>
+   *   <music-clef clef="bass"></music-clef>
+   *   <music-note note="C" octave="3" duration="quarter"></music-note>
+   * </music-staff>
+   */
   class ClefElement extends HTMLElement implements IClefElement {
     static get observedAttributes(): string[] {
       return ['clef'];

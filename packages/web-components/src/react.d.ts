@@ -1,14 +1,21 @@
+/**
+ * React JSX declarations for the custom elements. Opt in with a triple-slash
+ * reference or a `tsconfig` `types` entry:
+ *
+ *   /// <reference types="@one-step-at-a-time/web-components/react" />
+ */
 import 'react';
-import type { ConnectorRole, GuitarFret } from './types/elements';
 import type {
   ArticulationType,
   Chord,
   ClefType,
+  ConnectorRole,
   DurationType,
   DynamicMarking,
   GraceDuration,
   GraceSlur,
   GraceType,
+  GuitarFret,
   HairpinRole,
   Mode,
   Note,
@@ -18,7 +25,7 @@ import type {
   TimeSignature,
   TupletRatio,
   Voice,
-} from './types/theory';
+} from '@one-step-at-a-time/web-components';
 
 type WebComponentNoChildrenProps = {
   key?: React.Key;

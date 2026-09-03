@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>web-components parsed-markup fixture</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <!--
+      Staves and notes authored as literal markup so the elements exist in the
+      DOM before /src/index.ts finishes registering them — the scenario that a
+      programmatic build (createElement + appendChild) can't reproduce.
+    -->
+    <div id="host">
+      <music-staff clef="treble" time="4/4">
+        <music-note note="C" octave="5" duration="quarter"></music-note>
+        <music-note note="E" octave="5" duration="quarter"></music-note>
+        <music-chord chord="Cmaj7" duration="quarter"></music-chord>
+        <music-note
+          note="F#"
+          octave="5"
+          duration="quarter"
+          grace="E"
+        ></music-note>
+      </music-staff>
+
+      <music-composition keysig="G" mode="major" time="4/4">
+        <music-measure>
+          <music-staff clef="treble">
+            <music-tuplet ratio="3">
+              <music-note note="C" octave="5" duration="eighth"></music-note>
+              <music-note note="D" octave="5" duration="eighth"></music-note>
+              <music-note note="E" octave="5" duration="eighth"></music-note>
+            </music-tuplet>
+          </music-staff>
+        </music-measure>
+      </music-composition>
+
+      <music-staff-guitar-tab time="4/4">
+        <music-guitar-note
+          string="3"
+          fret="0"
+          duration="quarter"
+        ></music-guitar-note>
+        <music-guitar-note
+          string="2"
+          fret="1"
+          duration="quarter"
+        ></music-guitar-note>
+      </music-staff-guitar-tab>
+
+      <music-staff-vocal voice="soprano">
+        <music-note note="C" octave="5" duration="quarter"></music-note>
+        <music-note note="D" octave="5" duration="quarter"></music-note>
+        <music-lyrics verse="1">A-men</music-lyrics>
+      </music-staff-vocal>
+    </div>
+
+    <script type="module" src="/src/index.ts"></script>
+  </body>
+</html>

@@ -4,6 +4,7 @@ import '../index';
 
 const meta: Meta = {
   title: 'Components/StaffGuitarTab',
+  component: 'music-staff-guitar-tab',
   tags: ['autodocs'],
   render: () => html`<music-staff-guitar-tab> </music-staff-guitar-tab>`,
 };
