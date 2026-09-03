@@ -13,5 +13,26 @@ import './rest';
 
 export { durationToFactor } from './rules/theoryConsts';
 export * from './types/theory';
-export type { ConnectorRole } from './types/elements';
+export type { ConnectorRole, GuitarFret } from './types/elements';
 export type { PitchChangeDetail } from './utils/pitchDragHandler';
+
+/**
+ * Allowed-value arrays for the enumerated attributes, re-exported so app code can
+ * build pickers/controls without importing from deep paths.
+ */
+export {
+  ARTICULATIONS,
+  CLEFS,
+  DURATIONS,
+  DYNAMICS,
+  GRACE_DURATIONS,
+  GRACE_SLURS,
+  GRACE_TYPES,
+  MODES,
+  NOTES,
+  OCTAVES,
+  STAFF_GROUPS,
+  STRESSES,
+  TIMES,
+  VOICES,
+} from './utils/consts';

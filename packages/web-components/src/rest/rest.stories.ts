@@ -5,6 +5,7 @@ import { DURATIONS } from '../utils';
 
 const meta: Meta = {
   title: 'Components/MusicRest',
+  component: 'music-rest',
   tags: ['autodocs'],
 };
 export default meta;

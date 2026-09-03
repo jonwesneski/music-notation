@@ -15,6 +15,7 @@ import {
 
 const meta: Meta = {
   title: 'Components/Note',
+  component: 'music-note',
   tags: ['autodocs'],
 };
 export default meta;

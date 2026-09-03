@@ -5,6 +5,7 @@ import { CLEFS } from '../utils';
 
 const meta: Meta = {
   title: 'Components/MusicClef',
+  component: 'music-clef',
   tags: ['autodocs'],
 };
 export default meta;

@@ -4,6 +4,7 @@ import '../index';
 
 const meta: Meta = {
   title: 'Components/Tuplet',
+  component: 'music-tuplet',
   tags: ['autodocs'],
 };
 export default meta;

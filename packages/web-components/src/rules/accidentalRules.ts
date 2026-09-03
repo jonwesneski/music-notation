@@ -106,7 +106,7 @@ export function computeNoteAccidentals(
     hostElement: NoteElementType | ChordElementType
   ): void => {
     const graceNotes = hostElement.grace;
-    if (graceNotes === null || graceNotes.length === 0) {
+    if (graceNotes == null || graceNotes.length === 0) {
       return;
     }
     const resolved = graceNotes.map((graceNote) => {

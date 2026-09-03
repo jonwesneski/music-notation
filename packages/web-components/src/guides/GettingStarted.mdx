@@ -1,0 +1,73 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Guides/Getting Started" />
+
+# Getting Started
+
+## 1. Plain HTML, no build step
+
+Load the standalone bundle from a CDN and write the markup. This works in any
+modern browser with no tooling.
+
+```html
+<!DOCTYPE html>
+<html>
+  <body>
+    <music-staff clef="treble" time="4/4">
+      <music-note note="C" octave="5" duration="quarter"></music-note>
+      <music-note note="E" octave="5" duration="quarter"></music-note>
+      <music-note note="G" octave="5" duration="half"></music-note>
+    </music-staff>
+
+    <script
+      type="module"
+      src="https://cdn.jsdelivr.net/npm/@one-step-at-a-time/web-components/dist/standalone/music-notation.js"
+    ></script>
+  </body>
+</html>
+```
+
+For environments that cannot use ES modules, a classic-script build is published
+too:
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/@one-step-at-a-time/web-components"></script>
+```
+
+> The CDN URLs above resolve once the package has been published to npm.
+
+## 2. npm + a bundler
+
+```bash
+pnpm add @one-step-at-a-time/web-components
+# or: npm install / yarn add
+```
+
+Import the package once, at your app's entry point. The import has side effects —
+it calls `customElements.define()` for every element — so you do not import
+individual components.
+
+```ts
+import '@one-step-at-a-time/web-components';
+```
+
+After that, the `<music-*>` tags work anywhere in your markup.
+
+## 3. Import order
+
+`import '@one-step-at-a-time/web-components'` registers all elements in the
+correct order. If you import individual element modules yourself, register
+`music-staff` **before** `music-note` / `music-chord` — the note elements look up
+staff-provided coordinate helpers at definition time.
+
+## Styling
+
+Elements render SVG with `currentColor`, so they inherit `color` from their
+surroundings. Set `color` (or the CSS custom properties a component documents) on
+an ancestor to theme the notation.
+
+```css
+music-composition {
+  color: #1a1a1a;
+}
+```

@@ -40,7 +40,7 @@ one-step-at-a-time/
 │   └── web-components/
 │       └── src/               # All source code
 │           ├── index.ts       # Entry point (import order matters)
-│           ├── types.d.ts     # React JSX declarations for custom elements
+│           ├── react.d.ts     # React JSX declarations — published as the `/react` subpath
 │           ├── staffBase.ts          # Minimal abstract base (shadow DOM + lifecycle)
 │           ├── staffClassicalBase.ts # Thin orchestrator — wires rules + SVG + spacing
 │           ├── composition/
@@ -160,10 +160,14 @@ Features land in one of two shapes; steps are tagged accordingly:
    Type A: pass into the svgCreator call. Type B: dispatch the event from
    `attributeChangedCallback`. Note which elements apply — some features are note-only or
    chord-only. Ref: the `tie` / `dynamic` / `articulation` get/set blocks in `note.ts`.
-7. `[A][B]` **Check React JSX decls** — check whether `src/types.d.ts` needs updating; if the
-   feature adds a consumer-facing prop, add the optional prop to the `'music-note'` and
-   `'music-chord'` declarations (+ import the type). This file is _not_ enforced by
-   `implements`, so it silently drifts — check it explicitly.
+7. `[A][B]` **Check React JSX decls + element JSDoc** — check whether `src/react.d.ts` needs
+   updating; if the feature adds a consumer-facing prop, add the optional prop to the
+   `'music-note'` and `'music-chord'` declarations (+ import the type). This file is _not_
+   enforced by `implements`, so it silently drifts — check it explicitly. In the same pass,
+   update the element class's `@attr` JSDoc line (the `@customElement` block above the class
+   in `note.ts` / `chord.ts` / etc.) — kept in sync with `react.d.ts` and the source of the
+   generated `custom-elements.json`. For a new consumer-facing **event**, add a row to the
+   events table in `src/guides/FrameworkIntegration.mdx`.
 8. `[A]` **SVG (note-local)** — new `src/utils/svgCreator/<feature>.ts`, re-export from
    `svgCreator/index.ts`, and accept the prop in `svgCreator/note.ts` + `svgCreator/chord.ts`.
    Ref: `svgCreator/articulations.ts`.
@@ -207,7 +211,10 @@ Features land in one of two shapes; steps are tagged accordingly:
     constant in `notationDimensions.ts`; and any place the new code copies a rule instead of
     calling the existing pure function in `src/rules/`. Prefer extending an existing file over
     adding a parallel one.
-18. `[A][B]` **Format & test** — run `npx nx format:write`, then `npx nx test web-components`.
+18. `[A][B]` **Regenerate the manifest** — run `npx nx run web-components:analyze` and commit
+    the updated `custom-elements.json` (CI fails if it is stale). This is what feeds the
+    Storybook attribute tables and editor autocomplete.
+19. `[A][B]` **Format & test** — run `npx nx format:write`, then `npx nx test web-components`.
 
 **Common trap:** a plain new note/chord attribute does **not** touch `src/index.ts` or the
 staff base classes (`staffBase.ts`) — don't go looking for wiring there.
@@ -420,7 +427,14 @@ import '../index'; // registers all custom elements
 import { DURATIONS, NOTES, OCTAVES } from '../utils'; // for control option arrays
 ```
 
-**Meta shape:** `title: 'Components/...'`, `tags: ['autodocs']`, optional global `render`/`argTypes`/`args`.
+**Meta shape:** `title: 'Components/...'`, `component: '<tag-name>'` (e.g. `'music-note'` —
+links the story to its `custom-elements.json` entry so the Docs tab renders the attribute
+table), `tags: ['autodocs']`, optional global `render`/`argTypes`/`args`.
+
+**Consumer guides** are MDX under `src/*.mdx` / `src/guides/*.mdx` (`Introduction`,
+`Getting Started`, `Framework Integration`, `Concepts`). `.storybook/preview.ts` loads the
+manifest via `setCustomElementsManifest`. The whole Storybook is deployed to GitHub Pages by
+`.github/workflows/docs.yml`.
 
 **Story naming conventions:** `Standalone`, `InStaff`, key-signature variants (`CMajor`, `GMajor`, …), feature combos (`WithChords`, `WithAccidentals`, `WithTies`, etc.).
 
@@ -493,6 +507,6 @@ Integration tests for notes, chords, and rests live in their **component's own t
 - CSS custom properties: `--flex-staff-basis`, `--flex-staff-minw` for layout overrides
 - `currentColor` used in SVG so staff color inherits from CSS
 - **Always run `npx nx format:write` after every batch of file edits or new files** — do not skip this step
-- **Whenever a custom element's attributes change — added, renamed, removed, or retyped, on any element, not just note/chord — update `src/types.d.ts` in the same change.** It is not enforced by `implements` like `IXxxElement` in `types/elements.ts`, so it drifts silently otherwise.
+- **Whenever a custom element's attributes change — added, renamed, removed, or retyped, on any element, not just note/chord — update `src/react.d.ts` AND the element's `@attr` JSDoc block in the same change, then run `nx run web-components:analyze`.** Neither is enforced by `implements` like `IXxxElement` in `types/elements.ts`, so they drift silently otherwise; CI's stale-manifest check catches a missed `analyze` but not a missed `react.d.ts`.
 - Use full words when defining variables, functions, and classes; no abbreviations or uncommon acronyms
 - In test files (both `*.browser-test.ts` and `*.test.ts`), always use strong types from `types/theory.ts` and `types/elements.ts` instead of primitives — e.g. `DurationType` instead of `string` for durations, `Note` instead of `string` for note values like `'C'`

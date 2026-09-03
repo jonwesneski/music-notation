@@ -1,0 +1,95 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Guides/Concepts" />
+
+# Concepts
+
+## Element hierarchy
+
+```
+<music-composition>              score container, responsive reflow
+  └─ <music-measure>             one bar; groups staves, draws the bar-line
+      ├─ <music-staff>           five-line classical staff (clef: treble | bass)
+      │   ├─ <music-note>
+      │   ├─ <music-chord>       └─ <music-note> children, or a chord="Cmaj7" name
+      │   ├─ <music-rest>
+      │   ├─ <music-tuplet>      └─ wraps notes/chords/rests
+      │   └─ <music-clef>        mid-stream clef change (no beat duration)
+      ├─ <music-staff-guitar-tab>
+      └─ <music-staff-vocal>
+          └─ <music-lyrics>
+```
+
+## Composable and standalone
+
+You never need the full hierarchy. Any element can be used **standalone** — a
+`<music-note>` with no staff, a `<music-staff>` with no measure, a
+`<music-measure>` with no composition.
+
+Some capabilities need a parent and are silently absent without one:
+
+- **Attribute inheritance** (below) needs a parent measure/composition.
+- **Width-driven flex layout** — a staff sizing itself so notes don't collide
+  with the next measure — needs a `<music-measure>` parent.
+- **Ledger lines** need a staff to supply the vertical position.
+
+A standalone staff always shows its clef; a standalone note renders its own
+accidental from the pitch name.
+
+## Attribute inheritance
+
+`keysig`, `mode`, and `time` flow **down**: composition → measure → staff. Each
+level can override what it inherits, which is how you start a mid-piece key or
+time change.
+
+```html
+<music-composition keysig="C" mode="major" time="4/4">
+  <music-measure>
+    <music-staff clef="treble">…</music-staff>
+    <!-- C major, 4/4 -->
+  </music-measure>
+  <music-measure keysig="G" time="3/4">
+    <music-staff clef="treble">…</music-staff>
+    <!-- now G major, 3/4 -->
+  </music-measure>
+</music-composition>
+```
+
+Set the same attributes on the staff directly when you use it standalone.
+
+## Grand staff and choir brackets
+
+A grand staff (piano/harp) is just two `<music-staff>` siblings in one measure —
+there is no wrapper element. Add `group` to opt into the brace/bracket connector:
+
+```html
+<music-measure>
+  <music-staff clef="treble" group="grand">…</music-staff>
+  <music-staff clef="bass">…</music-staff>
+</music-measure>
+```
+
+- `group="grand"` — brace, always pairs with the next sibling (exactly two staves).
+- `group="bracket"` — bracket; add a shared `group-id` to span more than two
+  contiguous staves (e.g. an SATB choir).
+
+## Responsive layout
+
+`<music-composition>` lays measures out with `flex-wrap`, so they reflow into rows
+as the container resizes. On each resize the library recomputes, in order:
+
+1. note x-spacing within each staff,
+2. beams,
+3. bar-line connectors between staves,
+4. which measure is first in its row (only that one shows the clef / key / time),
+5. courtesy clefs and clef continuity across measure and row boundaries.
+
+Cross-measure and cross-row ties, slurs, and hairpins are redrawn to match.
+
+## Coordinates and theming
+
+- Notation is SVG. Vertical positions come from per-clef lookup tables keyed by
+  pitch + octave (`"C4"`, `"G5"`); horizontal spacing scales with note duration.
+- SVG strokes/fills use `currentColor`, so notation inherits `color` from its
+  container. Components that expose finer control document their CSS custom
+  properties in their **Docs** tab.

@@ -2,22 +2,72 @@
   "name": "@one-step-at-a-time/web-components",
   "version": "1.0.0",
   "private": true,
+  "description": "Framework-agnostic Web Components for rendering SVG music notation",
+  "keywords": [
+    "music-notation",
+    "sheet-music",
+    "web-components",
+    "custom-elements",
+    "svg",
+    "music"
+  ],
+  "homepage": "https://jonwesneski.github.io/one-step-at-a-time/",
+  "bugs": "https://github.com/jonwesneski/one-step-at-a-time/issues",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jonwesneski/one-step-at-a-time.git",
+    "directory": "packages/web-components"
+  },
+  "license": "MIT",
+  "author": "jonwesneski",
   "type": "module",
   "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "customElements": "custom-elements.json",
   "exports": {
     ".": {
       "one-step-at-a-time": "./src/index.ts",
       "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
       "default": "./dist/index.js"
-    }
+    },
+    "./standalone": "./dist/standalone/music-notation.js",
+    "./react": {
+      "types": "./src/react.d.ts"
+    },
+    "./custom-elements.json": "./custom-elements.json",
+    "./package.json": "./package.json"
   },
+  "unpkg": "./dist/standalone/music-notation.umd.cjs",
+  "jsdelivr": "./dist/standalone/music-notation.umd.cjs",
+  "browser": "./dist/standalone/music-notation.umd.cjs",
+  "sideEffects": true,
+  "files": [
+    "dist",
+    "custom-elements.json",
+    "src/react.d.ts"
+  ],
   "scripts": {
     "test": "jest"
   },
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  },
   "devDependencies": {
+    "@custom-elements-manifest/analyzer": "0.11.0",
     "@playwright/test": "^1.59.1",
     "@types/jest": "^30.0.0",
+    "@types/react": "^19",
     "eslint": "^8",
     "typescript": "^5"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

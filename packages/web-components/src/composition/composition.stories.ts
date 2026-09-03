@@ -4,6 +4,7 @@ import '../index';
 
 const meta: Meta = {
   title: 'Components/Composition',
+  component: 'music-composition',
   tags: ['autodocs'],
   render: (args) => html`
     <music-composition

@@ -1,3 +1,4 @@
+/** Note/rest value, from `double-whole` (breve) down to `hundredtwentyeighth`. */
 export type DurationType =
   | 'double-whole'
   | 'whole'
@@ -10,10 +11,12 @@ export type DurationType =
   | 'hundredtwentyeighth';
 
 export type NoteLetter = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G';
+/** Scientific-pitch octave number supported by the staves. */
 export type Octave = 2 | 3 | 4 | 5 | 6;
 export type Sharp = '#';
 export type Flat = 'b';
 
+/** A drawn accidental glyph. */
 export type AccidentalType =
   | 'sharp'
   | 'flat'
@@ -21,6 +24,7 @@ export type AccidentalType =
   | 'double-sharp'
   | 'double-flat';
 
+/** Pitch letter `A`–`G` with an optional accidental suffix (`#`, `b`, `##`, `bb`). */
 export type Note =
   | 'A'
   | 'A#'
@@ -74,6 +78,7 @@ type DominantType = '7' | '7sus4' | '7b5' | '9' | '7#9' | '11' | '13';
 type SuspendedType = 'sus2' | 'sus4';
 type AugmentedType = 'aug' | '+' | '7#5';
 type DimineshedType = 'dim' | 'dim7';
+/** Chord-quality suffix that follows the root, e.g. `''` (major), `min7`, `sus4`, `dim`. */
 export type ChordType =
   | MinorType
   | MajorType
@@ -96,11 +101,15 @@ type AllSlashChords = {
   }[Note];
 }[Note];
 
+/** A chord name: a root plus `ChordType`, optionally over a slash bass (`G/B`). */
 export type Chord = NormalChord | AllSlashChords;
 
+/** Numerator of a time signature (beats per measure). */
 export type BeatsInMeasure = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 9 | 12;
+/** Denominator of a time signature (which note value gets the beat). */
 export type BeatTypeInMeasure = 2 | 4 | 8;
 
+/** Time signature as a `"beats/beatType"` string, e.g. `4/4`, `6/8`. */
 export type TimeSignature =
   | '1/4'
   | '2/2'
@@ -121,6 +130,7 @@ export type TimeSignature =
 
 export type Mode = 'major' | 'minor';
 
+/** The six standard voice types for `<music-staff-vocal>`. */
 export type Voice =
   | 'soprano'
   | 'mezzo'
@@ -129,14 +139,21 @@ export type Voice =
   | 'baritone'
   | 'bass';
 
-// TODO: extend with 'alto' | 'tenor' | ... once CLEF_DEFINITIONS in
-// rules/clefRules.ts has data for them
+/**
+ * Clef available on a staff.
+ *
+ * TODO: extend with 'alto' | 'tenor' | ... once CLEF_DEFINITIONS in
+ * rules/clefRules.ts has data for them.
+ */
 export type ClefType = 'treble' | 'bass';
 
-// Connector drawn to the left of a staff and its implicit next sibling —
-// see StaffElementBase's `group` attribute and measure.ts's pairing logic.
+/**
+ * Kind of connector joining grouped staves: `grand` draws a brace (piano/harp),
+ * `bracket` draws a bracket (choir/section). See a staff's `group` attribute.
+ */
 export type StaffGroupType = 'grand' | 'bracket';
 
+/** Dynamic marking drawn under a note/chord. */
 export type DynamicMarking =
   | 'ppp'
   | 'pp'
@@ -152,6 +169,7 @@ export type DynamicMarking =
   | 'rfz'
   | 'fp';
 
+/** Which end of a hairpin (or tie/slur) an element marks. */
 export type HairpinRole = 'start' | 'end';
 
 export type HairpinKind = 'crescendo' | 'decrescendo';
@@ -167,6 +185,10 @@ export type ArticulationLength =
   | 'tenuto-staccatissimo'
   | 'fermata';
 
+/**
+ * Articulation mark on a note/chord. Combines an optional accent prefix
+ * (`accent-` / `marcato-`) with a length/hold token (`staccato`, `tenuto`, …).
+ */
 export type ArticulationType =
   // length / hold only (no accent)
   | 'staccato'
@@ -193,19 +215,25 @@ export type ArticulationType =
   | 'marcato-tenuto-staccatissimo'
   | 'marcato-fermata';
 
-// Schoenberg stress family
+/** Schoenberg stress family. */
 export type StressType = 'stressed' | 'unstressed';
 
-// Grace notes never consume beat budget.
+/** Grace-note style. Grace notes never consume beat budget. */
 export type GraceType = 'acciaccatura' | 'appoggiatura';
 
+/** Note value a grace note is drawn with. */
 export type GraceDuration = Extract<
   DurationType,
   'half' | 'quarter' | 'eighth' | 'sixteenth' | 'thirtysecond' | 'sixtyfourth'
 >;
 
+/** Whether the slur from a grace group to its main note is drawn (`auto`) or not (`none`). */
 export type GraceSlur = 'auto' | 'none';
 
+/**
+ * Tuplet ratio: either a bare actual count (`'3'` → triplet) or a full
+ * `actual:normal` form (`'3:2'`).
+ */
 export type TupletRatio =
   // Simple form (numeral only — normal count inferred by defaultNormalCount)
   | '2'

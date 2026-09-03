@@ -4,6 +4,23 @@ import { MUSIC_TUPLET } from '../utils/consts';
 import { flattenSlotElements } from '../utils/slotElements';
 
 if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
+  /**
+   * Wraps slotted `<music-note>` / `<music-chord>` / `<music-rest>` children as a
+   * tuplet (triplet, quintuplet, …). The staff reads the group and draws the
+   * bracket and numeral; the wrapper itself is layout-only.
+   *
+   * @customElement music-tuplet
+   * @attr {TupletRatio} ratio - Tuplet ratio: a bare count like `3` or a full `actual:normal` form like `3:2`. Defaults to `3`.
+   *
+   * @example
+   * <music-staff clef="treble" time="4/4">
+   *   <music-tuplet ratio="3">
+   *     <music-note note="C" octave="5" duration="eighth"></music-note>
+   *     <music-note note="D" octave="5" duration="eighth"></music-note>
+   *     <music-note note="E" octave="5" duration="eighth"></music-note>
+   *   </music-tuplet>
+   * </music-staff>
+   */
   class TupletElement extends HTMLElement implements ITupletElement {
     static get observedAttributes(): string[] {
       return ['ratio'];

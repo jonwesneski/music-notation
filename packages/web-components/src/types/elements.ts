@@ -21,6 +21,7 @@ import {
 
 export type NoteLetterOctave = `${NoteLetter}${Octave}`;
 
+/** Which end of a tie, slur, or technique connector an element marks. */
 export type ConnectorRole = 'start' | 'end';
 
 export interface INoteElement {

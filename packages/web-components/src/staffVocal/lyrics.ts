@@ -12,6 +12,22 @@ const SSRSafeHTMLElement: typeof HTMLElement =
     ? HTMLElement
     : (class {} as unknown as typeof HTMLElement);
 
+/**
+ * One verse of lyrics for a `<music-staff-vocal>`. Its text content is split on
+ * spaces into words and on `-` into syllables (`Ky-ri-e`); a trailing `_` on a
+ * syllable marks a melisma. The vocal staff positions each syllable under the
+ * matching note.
+ *
+ * @customElement music-lyrics
+ * @attr {string} verse - Verse number, used to stack multiple verses. Defaults to `1`.
+ *
+ * @example
+ * <music-staff-vocal voice="soprano">
+ *   <music-note note="C" octave="5" duration="quarter"></music-note>
+ *   <music-note note="D" octave="5" duration="quarter"></music-note>
+ *   <music-lyrics verse="1">Ky-ri</music-lyrics>
+ * </music-staff-vocal>
+ */
 export class MusicLyricsElement
   extends SSRSafeHTMLElement
   implements ILyricsElement

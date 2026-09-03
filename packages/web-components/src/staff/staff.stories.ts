@@ -7,6 +7,7 @@ const HAIRPIN_ROLES = ['start', 'end'] as const;
 
 const meta: Meta = {
   title: 'Components/Staff',
+  component: 'music-staff',
   tags: ['autodocs'],
   render: (args) => html`
     <music-staff

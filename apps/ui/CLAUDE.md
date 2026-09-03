@@ -172,7 +172,8 @@ active tab is remembered by label in `session.entryPanelTab`.
 **6. Rendering to web-components.** JSX renders the custom elements directly
 (`<music-composition>` → `<music-measure>` → `<music-staff>` →
 `<music-note>`/`<music-chord>`/`<music-rest>`). No wrapper components. The JSX prop
-contract is declared in `packages/web-components/src/types.d.ts`. Conventions:
+contract is declared in `packages/web-components/src/react.d.ts` (published as the
+`@one-step-at-a-time/web-components/react` subpath). Conventions:
 
 - pass `value ?? undefined` so a cleared value removes the attribute;
 - to derive per-element props from the **whole** structure (not just one node),

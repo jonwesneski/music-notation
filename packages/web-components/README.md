@@ -1,25 +1,97 @@
 # @one-step-at-a-time/web-components
 
-Web Components library for rendering music notation in the browser.
+Framework-agnostic **Web Components** for rendering music notation as SVG in the
+browser. Every musical element is a native custom element — no framework
+dependencies, so it works in plain HTML or inside React, Vue, Svelte, or Angular.
 
-## Staff Class Hierarchy
+**[Documentation & live playground →](https://jonwesneski.github.io/one-step-at-a-time/)**
 
-```
-StaffElementBase              (staffBase.ts)         — shadow DOM, lifecycle, abstract render()
-├── StaffClassicalElementBase (staffClassicalBase.ts) — key sig, time sig, note Y-coords, beam/note rendering
-│   ├── StaffElement          (staff/staff.ts)        — clef-driven staff (`clef` attribute: treble/bass), <music-clef> mid-stream clef changes
-│   └── StaffVocalElement     (staffVocal.ts)         — voice-driven staff, lyrics
-└── StaffGuitarTabElement     (staffGuitarTab.ts)     — 6-line tab staff, no music theory
-```
-
-Clef data (Y-coordinate maps, octave ranges, key-signature tables, SVG glyphs) lives in `rules/clefRules.ts`, keyed by `ClefType`. A `<music-clef>` element placed inside a `<music-staff>`'s note stream marks a mid-piece clef change — it reserves horizontal space but does not consume beat duration.
-
-## Drawing
-
-to help draw svgs use the SMuFL design. Run:
+## Install
 
 ```bash
-packages/web-components/download-smufl-font.sh
+pnpm add @one-step-at-a-time/web-components
 ```
 
-once you have it prompt ai to use it
+## Quick start (bundler)
+
+Import the package once at your entry point — the import registers every element:
+
+```ts
+import '@one-step-at-a-time/web-components';
+```
+
+```html
+<music-composition keysig="G" mode="major" time="4/4">
+  <music-measure>
+    <music-staff clef="treble">
+      <music-note note="G" octave="4" duration="quarter"></music-note>
+      <music-note note="B" octave="4" duration="quarter"></music-note>
+      <music-note note="D" octave="5" duration="quarter"></music-note>
+      <music-note note="G" octave="5" duration="quarter"></music-note>
+    </music-staff>
+  </music-measure>
+</music-composition>
+```
+
+## No build step (CDN)
+
+```html
+<script
+  type="module"
+  src="https://cdn.jsdelivr.net/npm/@one-step-at-a-time/web-components/dist/standalone/music-notation.js"
+></script>
+```
+
+For environments without ES modules, a classic-script build is published too:
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/@one-step-at-a-time/web-components"></script>
+```
+
+## React
+
+```tsx
+/// <reference types="@one-step-at-a-time/web-components/react" />
+import '@one-step-at-a-time/web-components';
+
+<music-staff clef="treble" time="4/4">
+  <music-note note="C" octave="5" duration="quarter" />
+</music-staff>;
+```
+
+Custom events (`note-pitch-change`, `note-reorder`, …) need `useRef` +
+`addEventListener` — see the **Framework Integration** guide.
+
+## Elements
+
+| Element                    | Purpose                                                          |
+| -------------------------- | ---------------------------------------------------------------- |
+| `<music-composition>`      | Score container; responsive reflow of measures                   |
+| `<music-measure>`          | One bar; groups staves and draws the bar-line                    |
+| `<music-staff>`            | Five-line classical staff (`clef` = `treble` \| `bass`)          |
+| `<music-staff-guitar-tab>` | Six-line guitar tablature staff                                  |
+| `<music-staff-vocal>`      | Vocal staff (six voice types) with lyric layout                  |
+| `<music-lyrics>`           | One verse of lyrics for a vocal staff                            |
+| `<music-clef>`             | Clef glyph; standalone or a mid-stream clef change               |
+| `<music-note>`             | A single note with articulations, dynamics, ties, grace notes    |
+| `<music-chord>`            | Several noteheads on one stem (`chord="Cmaj7"` or slotted notes) |
+| `<music-rest>`             | A rest of a given duration                                       |
+| `<music-tuplet>`           | Wraps notes/chords/rests as a tuplet                             |
+| `<music-guitar-note>`      | A fret-on-string tablature note                                  |
+
+Every element's attributes, and a live playground, are in the
+[documentation](https://jonwesneski.github.io/one-step-at-a-time/).
+
+## Browser support
+
+Modern evergreen browsers. Uses native Custom Elements and Shadow DOM — no
+polyfills.
+
+## Contributing
+
+See [`CLAUDE.md`](./CLAUDE.md) for architecture, the feature-adding workflow, and
+the test tiers.
+
+## License
+
+MIT

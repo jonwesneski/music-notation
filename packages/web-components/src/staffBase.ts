@@ -14,6 +14,7 @@ import {
   COMMON_ATTRIBUTES,
   MUSIC_COMPOSITION,
   MUSIC_MEASURE,
+  MUSIC_TUPLET_NODE,
   STAFF_EVENTS,
 } from './utils/consts';
 import {
@@ -40,7 +41,13 @@ export abstract class StaffElementBase extends _MaybeHTMLElement {
 
   protected readonly transcribeContainer: SVGSVGElement;
   #standaloneConnectorsOverlay: SVGSVGElement;
-  #slotChangeHandler = (event: Event) => this.onHandleSlotChange(event);
+  // True once a slotchange (real or the deferred synthetic kick) has been
+  // handled — guards against rendering the initial content twice.
+  #initialSlotSyncDone = false;
+  #slotChangeHandler = (event: Event) => {
+    this.#initialSlotSyncDone = true;
+    this.onHandleSlotChange(event);
+  };
 
   protected effectiveTimeSig: [BeatsInMeasure, BeatTypeInMeasure];
 
@@ -197,7 +204,20 @@ export abstract class StaffElementBase extends _MaybeHTMLElement {
     if (slot && this.isConnected) {
       slot.addEventListener('slotchange', this.#slotChangeHandler);
       this.onConnectedCallback();
-      slot.dispatchEvent(new Event('slotchange'));
+      // Deferred to a microtask so it runs after the synchronous module-load
+      // stack unwinds — when a staff is built from parsed markup, its sibling
+      // element modules (music-note, music-chord, …) finish registering in that
+      // same synchronous pass, so an immediate dispatch would read not-yet-
+      // upgraded children. The browser's own initial slotchange also fires
+      // after imports settle; #initialSlotSyncDone keeps whichever loses the
+      // race from re-rendering.
+      queueMicrotask(() => {
+        if (this.#initialSlotSyncDone || !this.isConnected) {
+          return;
+        }
+        this.#initialSlotSyncDone = true;
+        slot.dispatchEvent(new Event('slotchange'));
+      });
     }
   }
 
@@ -245,6 +265,27 @@ export abstract class StaffElementBase extends _MaybeHTMLElement {
   protected abstract onConnectedCallback(): void;
 
   protected abstract onHandleSlotChange(event: Event): void;
+
+  /**
+   * Force-upgrade slotted `<music-*>` children (and any nested inside a
+   * `<music-tuplet>`) before the staff reads their getters. When a staff is
+   * built from parsed HTML markup its `connectedCallback` runs — and dispatches
+   * the first `slotchange` — before its already-present children upgrade, so
+   * without this their getters (`grace`, `note`, `duration`, …) are `undefined`.
+   * `customElements.upgrade()` is synchronous and a no-op on an already-upgraded
+   * or unregistered element.
+   */
+  protected upgradeAssignedElements(elements: Iterable<Element>): void {
+    for (const element of elements) {
+      if (!element.nodeName.startsWith('MUSIC-')) {
+        continue;
+      }
+      customElements.upgrade(element);
+      if (element.nodeName === MUSIC_TUPLET_NODE) {
+        this.upgradeAssignedElements(element.children);
+      }
+    }
+  }
 
   protected drawConnectorsWhenStandalone(): void {
     if (this.closest(MUSIC_COMPOSITION)) {

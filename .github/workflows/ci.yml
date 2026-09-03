@@ -52,8 +52,14 @@ jobs:
       - name: Prettier/Format Check
         run: pnpm exec nx format:check  --base="remotes/origin/main"
 
+      - name: Custom Elements Manifest up to date
+        run: |
+          pnpm exec nx run web-components:analyze
+          git diff --exit-code packages/web-components/custom-elements.json \
+            || (echo "::error::custom-elements.json is stale — run 'nx run web-components:analyze' and commit it" && exit 1)
+
       - name: Lint, Build, Typecheck, Test
-        run: pnpm exec nx run-many -t lint build typecheck test
+        run: pnpm exec nx run-many -t lint build typecheck test build-storybook
 
       - name: Browser Tests
         env:

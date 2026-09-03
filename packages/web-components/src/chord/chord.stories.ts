@@ -28,6 +28,7 @@ const CHORDS = [
 
 const meta: Meta = {
   title: 'Components/Chord',
+  component: 'music-chord',
   tags: ['autodocs'],
 };
 export default meta;

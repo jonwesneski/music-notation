@@ -40,6 +40,26 @@ function staffSlotHeightPx(staff: StaffElementBaseType): number {
 }
 
 if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
+  /**
+   * One bar of music. Groups one or more staves (a single staff, or a grand
+   * staff / choir when it holds several), draws the vertical bar-line connector
+   * through them, and sizes itself to the widest staff's minimum width. Key
+   * signature, mode and time inherited from a parent `<music-composition>` can be
+   * overridden here to start a mid-piece change. Works standalone.
+   *
+   * @customElement music-measure
+   * @attr {number} number - Bar number shown above the measure.
+   * @attr {Note} keysig - Overrides the inherited key-signature tonic from this bar on.
+   * @attr {'major' | 'minor'} mode - Overrides the inherited key-signature mode.
+   * @attr {TimeSignature} time - Overrides the inherited time signature from this bar on.
+   *
+   * @example
+   * <music-measure number="1">
+   *   <music-staff clef="treble">
+   *     <music-note note="C" octave="4" duration="whole"></music-note>
+   *   </music-staff>
+   * </music-measure>
+   */
   class MeasureElement extends HTMLElement {
     static get observedAttributes(): string[] {
       return ['number', 'keysig', 'mode', 'time'];

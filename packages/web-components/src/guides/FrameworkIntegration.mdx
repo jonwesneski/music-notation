@@ -1,0 +1,117 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Guides/Framework Integration" />
+
+# Framework Integration
+
+These are native custom elements, so they work in any framework that can render
+HTML. Register them once at your entry point:
+
+```ts
+import '@one-step-at-a-time/web-components';
+```
+
+## Vanilla JS
+
+```js
+const staff = document.createElement('music-staff');
+staff.setAttribute('clef', 'treble');
+
+const note = document.createElement('music-note');
+note.note = 'C';
+note.octave = 5;
+note.duration = 'quarter';
+staff.append(note);
+
+document.body.append(staff);
+
+note.addEventListener('note-click', (e) => {
+  console.log(e.detail.value, e.detail.duration);
+});
+```
+
+Attributes and their matching JS properties are interchangeable — `note.note = 'C'`
+is the same as `note.setAttribute('note', 'C')`.
+
+## React
+
+React 19 forwards unknown props to custom elements as attributes, so the markup
+reads naturally. Add the JSX types with a triple-slash reference (or a `tsconfig`
+`types` entry):
+
+```tsx
+/// <reference types="@one-step-at-a-time/web-components/react" />
+import '@one-step-at-a-time/web-components';
+
+export function CMajorScale() {
+  return (
+    <music-staff clef="treble" time="4/4">
+      <music-note note="C" octave="4" duration="quarter" />
+      <music-note note="E" octave="4" duration="quarter" />
+      <music-note note="G" octave="4" duration="half" />
+    </music-staff>
+  );
+}
+```
+
+Custom events are **not** auto-wired by prop name (only `onClick` maps to the
+native `click` event). Use a ref:
+
+```tsx
+import { useEffect, useRef } from 'react';
+import type { PitchChangeDetail } from '@one-step-at-a-time/web-components';
+
+function EditableStaff() {
+  const ref = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const onPitch = (e: Event) => {
+      const detail = (e as CustomEvent<PitchChangeDetail>).detail;
+      console.log(
+        `${detail.fromNote}${detail.fromOctave} → ${detail.toNote}${detail.toOctave}`
+      );
+    };
+    el.addEventListener('note-pitch-change', onPitch);
+    return () => el.removeEventListener('note-pitch-change', onPitch);
+  }, []);
+
+  return (
+    <music-staff ref={ref} clef="treble" editable managed>
+      <music-note note="C" octave="5" duration="quarter" />
+    </music-staff>
+  );
+}
+```
+
+Pass `managed` when your framework owns the note order: the staff then emits
+`note-reorder` / `note-pitch-change` instead of mutating the DOM, and you update
+your own state from the event.
+
+## Vue / Angular / Svelte
+
+- **Vue** — mark `music-*` as custom elements in your build
+  (`compilerOptions.isCustomElement` in `@vitejs/plugin-vue`), then use `v-bind`
+  and `v-on` as normal.
+- **Angular** — add `CUSTOM_ELEMENTS_SCHEMA` to the module/component.
+- **Svelte** — works out of the box; use `on:note-pitch-change`.
+
+## Events
+
+All events bubble and cross shadow-DOM boundaries (`composed: true`). Reorder and
+pitch events only fire on a staff with the `editable` attribute.
+
+| Event                                                   | Fired by      | `detail`                                                             | When                                                                               |
+| ------------------------------------------------------- | ------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `note-click`                                            | `music-note`  | `{ value: Note, duration: DurationType, originalEvent: MouseEvent }` | Notehead/glyph clicked                                                             |
+| `note-pointerdown` / `note-pointerup`                   | `music-note`  | `{ value, duration, originalEvent: PointerEvent }`                   | Pointer pressed / released on the note                                             |
+| `chord-click` / `chord-pointerdown` / `chord-pointerup` | `music-chord` | `{ originalEvent }`                                                  | Same, for a chord                                                                  |
+| `note-pitch-drag-start`                                 | `music-note`  | —                                                                    | A notehead pitch drag begins (`editable`)                                          |
+| `note-pitch-change`                                     | `music-note`  | `PitchChangeDetail`                                                  | A notehead is dropped at a new pitch (`editable`)                                  |
+| `note-drag-start`                                       | `music-note`  | — (cancelable)                                                       | A horizontal reorder drag begins (`editable`); call `preventDefault()` to block it |
+| `note-reorder`                                          | `music-note`  | `{ fromIndex: number, toIndex: number }`                             | A note is dropped at a new position (`editable`)                                   |
+| `note-drag-end`                                         | `music-note`  | —                                                                    | A reorder drag ends (`editable`)                                                   |
+
+`<music-rest>` reuses the `note-click` / `note-pointerdown` / `note-pointerup`
+event names, with `detail` `{ duration: DurationType, originalEvent }`.

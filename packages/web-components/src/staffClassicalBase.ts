@@ -687,16 +687,16 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
 
   protected onHandleSlotChange(event: Event) {
     const slot = event.target as HTMLSlotElement;
-    const assigned = slot
-      .assignedElements()
-      .filter(
-        (e) =>
-          e.nodeName === MUSIC_NOTE_NODE ||
-          e.nodeName === MUSIC_CHORD_NODE ||
-          e.nodeName === MUSIC_REST_NODE ||
-          e.nodeName === MUSIC_TUPLET_NODE ||
-          e.nodeName === MUSIC_CLEF_NODE
-      );
+    const assignedElements = slot.assignedElements();
+    this.upgradeAssignedElements(assignedElements);
+    const assigned = assignedElements.filter(
+      (e) =>
+        e.nodeName === MUSIC_NOTE_NODE ||
+        e.nodeName === MUSIC_CHORD_NODE ||
+        e.nodeName === MUSIC_REST_NODE ||
+        e.nodeName === MUSIC_TUPLET_NODE ||
+        e.nodeName === MUSIC_CLEF_NODE
+    );
 
     const { flatElements, tupletsByIndex, clefMarkers } =
       flattenSlotElements(assigned);
