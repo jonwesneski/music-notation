@@ -52,6 +52,8 @@ export function StaffInput({ staffId, measureId }: StaffInputProps) {
       const marks = {
         tie: connector?.tie,
         slur: connector?.slur,
+        crescendo: connector?.crescendo,
+        decrescendo: connector?.decrescendo,
         id: connector?.id,
         for: connector?.for,
         dynamic: entry.dynamic ?? undefined,

@@ -318,14 +318,17 @@ export function CompositionInput() {
     }
   }
 
+  // `family` scopes a clear (kind === null) to just tie/slur or just hairpins,
+  // so removing the slur over a pair leaves its crescendo alone.
   function setConnector(
     startEntryId: string,
     endEntryId: string,
-    kind: ConnectorKind | null
+    kind: ConnectorKind | null,
+    family: ConnectorKind[]
   ) {
     const s = getStructure();
     if (kind === null) {
-      const existing = connectorBetween(s, startEntryId, endEntryId);
+      const existing = connectorBetween(s, startEntryId, endEntryId, family);
       if (!existing) {
         return;
       }

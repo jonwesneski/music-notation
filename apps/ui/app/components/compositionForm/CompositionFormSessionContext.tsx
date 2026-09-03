@@ -66,7 +66,8 @@ type CompositionFormSessionContextValue = {
   setConnector: (
     startEntryId: string,
     endEntryId: string,
-    kind: ConnectorKind | null
+    kind: ConnectorKind | null,
+    family: ConnectorKind[]
   ) => void;
 };
 
@@ -92,7 +93,8 @@ type CompositionFormSessionProviderProps = {
   onSetConnector: (
     startEntryId: string,
     endEntryId: string,
-    kind: ConnectorKind | null
+    kind: ConnectorKind | null,
+    family: ConnectorKind[]
   ) => void;
   children: React.ReactNode;
 };

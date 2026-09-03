@@ -20,9 +20,18 @@ export type ConnectorEndpoints = { startEntryId: string; endEntryId: string };
 export type ConnectorEntryAttributes = {
   tie?: ConnectorRole;
   slur?: ConnectorRole;
+  crescendo?: ConnectorRole;
+  decrescendo?: ConnectorRole;
   id?: string;
   for?: string;
 };
+
+// tie/slur use the id/for LIFO-stack disambiguation; hairpins are paired by the
+// library's nearest-end rule and take only the role attribute.
+const HAIRPIN_KINDS: ConnectorKind[] = ['crescendo', 'decrescendo'];
+export function isHairpinKind(kind: ConnectorKind): boolean {
+  return HAIRPIN_KINDS.includes(kind);
+}
 
 type EntryStaffContext = {
   measureId: string;
@@ -143,7 +152,8 @@ export function isConnectableSelection(
 export function connectorBetween(
   structure: CompositionStructure,
   startEntryId: string,
-  endEntryId: string
+  endEntryId: string,
+  kinds?: ConnectorKind[]
 ): NormalizedConnector | null {
   return (
     structure.connectorOrder
@@ -152,7 +162,8 @@ export function connectorBetween(
         (connector) =>
           connector &&
           connector.startEntryId === startEntryId &&
-          connector.endEntryId === endEntryId
+          connector.endEntryId === endEntryId &&
+          (kinds === undefined || kinds.includes(connector.kind))
       ) ?? null
   );
 }
@@ -260,12 +271,18 @@ export function resolveConnectorAttributes(
 
   for (const span of spans) {
     const { connector } = span;
-    const role = (value: ConnectorRole): ConnectorEntryAttributes =>
-      connector.kind === 'tie' ? { tie: value } : { slur: value };
+    const role = (value: ConnectorRole): ConnectorEntryAttributes => ({
+      [connector.kind]: value,
+    });
 
     patch(connector.startEntryId, role('start'));
     patch(connector.endEntryId, role('end'));
 
+    // Hairpins are paired by the library's nearest-end rule and never take
+    // id/for; only tie/slur need the explicit LIFO-stack disambiguation.
+    if (isHairpinKind(connector.kind)) {
+      continue;
+    }
     const needsExplicitPairing = spans.some(
       (other) =>
         other !== span &&
@@ -281,19 +298,25 @@ export function resolveConnectorAttributes(
   return result;
 }
 
-// Adds a connector between the endpoints, replacing any existing connector with
-// the same endpoints (retarget / change kind) and dropping any other same-kind
-// connector that already starts at startEntryId or ends at endEntryId — the
-// renderer allows only one tie and one slur role per element.
+// Adds a connector between the endpoints, replacing any existing connector of
+// the same family (tie/slur, or hairpin) on the same endpoints — so a slur and
+// a crescendo can coexist over one pair, but not a tie and a slur — and
+// dropping any other same-kind connector that already starts at startEntryId or
+// ends at endEntryId, since the renderer allows only one role of each kind per
+// element.
 export function upsertConnector(
   structure: CompositionStructure,
   startEntryId: string,
   endEntryId: string,
   kind: ConnectorKind
 ): CompositionStructure {
+  const sameFamily = (other: ConnectorKind) =>
+    isHairpinKind(other) === isHairpinKind(kind);
+
   const removed = new Set<string>();
   for (const [id, connector] of Object.entries(structure.connectorsById)) {
     const samePair =
+      sameFamily(connector.kind) &&
       connector.startEntryId === startEntryId &&
       connector.endEntryId === endEntryId;
     const sameKindEndpointClash =

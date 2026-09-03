@@ -84,7 +84,7 @@ export function MeasureInput({ measureId }: MeasureInputProps) {
   }
   if (connectorEndpoints) {
     tabs.push({
-      label: 'Ties & Slurs',
+      label: 'Connections',
       content: (
         <ConnectorInput
           endpoints={connectorEndpoints}

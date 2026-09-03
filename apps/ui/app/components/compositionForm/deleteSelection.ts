@@ -62,7 +62,7 @@ export function removeSelectionFromStructure(
     )
   );
 
-  // Drop any tie/slur whose start or end entry is gone.
+  // Drop any tie/slur/hairpin whose start or end entry is gone.
   const connectorsById = Object.fromEntries(
     Object.entries(structure.connectorsById).filter(
       ([, connector]) =>

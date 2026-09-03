@@ -69,12 +69,16 @@ export type NormalizedStaff = {
   groupId: string | null;
 };
 
-export type ConnectorKind = 'tie' | 'slur';
+// tie / slur pair by document order with id/for disambiguation for interleaving
+// spans; crescendo / decrescendo are hairpins the library pairs by nearest end
+// of the same kind (no id/for). `diminuendo` is not modelled — it is a display
+// label that writes `decrescendo` (the library treats it as a pure alias).
+export type ConnectorKind = 'tie' | 'slur' | 'crescendo' | 'decrescendo';
 
-// A tie or slur between two note/chord entries. References entry ids only, so it
-// is independent of which staff/measure the endpoints live in (a slur or tie may
-// span a barline). startEntryId is always earlier than endEntryId in document
-// order (measure → staff → entry).
+// A tie / slur / hairpin between two note/chord entries. References entry ids
+// only, so it is independent of which staff/measure the endpoints live in (any
+// of them may span a barline). startEntryId is always earlier than endEntryId in
+// document order (measure → staff → entry).
 export type NormalizedConnector = {
   id: string;
   kind: ConnectorKind;

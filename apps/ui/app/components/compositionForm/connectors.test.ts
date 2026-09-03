@@ -208,6 +208,27 @@ describe('upsertConnector / removeConnector / connectorBetween', () => {
     expect(next.connectorOrder).toHaveLength(2);
   });
 
+  it('keeps a slur and a crescendo over the same pair (different families)', () => {
+    let next = upsertConnector(buildStructure(), 'e1', 'e3', 'slur');
+    next = upsertConnector(next, 'e1', 'e3', 'crescendo');
+    expect(next.connectorOrder).toHaveLength(2);
+    expect(connectorBetween(next, 'e1', 'e3', ['tie', 'slur'])?.kind).toBe(
+      'slur'
+    );
+    expect(
+      connectorBetween(next, 'e1', 'e3', ['crescendo', 'decrescendo'])?.kind
+    ).toBe('crescendo');
+  });
+
+  it('replaces a crescendo with a decrescendo over the same pair', () => {
+    let next = upsertConnector(buildStructure(), 'e1', 'e3', 'crescendo');
+    next = upsertConnector(next, 'e1', 'e3', 'decrescendo');
+    expect(next.connectorOrder).toHaveLength(1);
+    expect(
+      connectorBetween(next, 'e1', 'e3', ['crescendo', 'decrescendo'])?.kind
+    ).toBe('decrescendo');
+  });
+
   it('removes a connector by id', () => {
     const added = upsertConnector(buildStructure(), 'e1', 'e3', 'slur');
     const [id] = added.connectorOrder;
@@ -252,5 +273,15 @@ describe('resolveConnectorAttributes', () => {
       tie: 'start',
       slur: 'start',
     });
+  });
+
+  it('emits hairpin roles without id/for even when hairpins interleave', () => {
+    let structure = upsertConnector(buildStructure(), 'e1', 'e3', 'crescendo');
+    structure = upsertConnector(structure, 'e2', 'e4', 'decrescendo');
+    const attrs = resolveConnectorAttributes(structure);
+    expect(attrs.get('e1')).toEqual({ crescendo: 'start' });
+    expect(attrs.get('e3')).toEqual({ crescendo: 'end' });
+    expect(attrs.get('e2')).toEqual({ decrescendo: 'start' });
+    expect(attrs.get('e4')).toEqual({ decrescendo: 'end' });
   });
 });
