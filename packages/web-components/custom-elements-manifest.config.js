@@ -107,13 +107,18 @@ function staffSubclassesPlugin() {
  * chain, but the published manifest should only describe the custom elements.
  * Drop every module that neither declares a custom element nor exports a
  * custom-element definition.
+ *
+ * Also sorts the surviving modules by path: the analyzer walks the file glob
+ * asynchronously and emits modules in completion order, which varies run to
+ * run — without this the committed `custom-elements.json` and a fresh
+ * regeneration disagree on ordering and the CI freshness check fails.
  */
 function keepOnlyElementModulesPlugin() {
   return {
     name: 'keep-only-element-modules',
     packageLinkPhase({ customElementsManifest }) {
-      customElementsManifest.modules = customElementsManifest.modules.filter(
-        (mod) => {
+      customElementsManifest.modules = customElementsManifest.modules
+        .filter((mod) => {
           const declaresElement = (mod.declarations ?? []).some(
             (d) => d.customElement
           );
@@ -121,8 +126,8 @@ function keepOnlyElementModulesPlugin() {
             (e) => e.kind === 'custom-element-definition'
           );
           return declaresElement || exportsElement;
-        }
-      );
+        })
+        .sort((a, b) => a.path.localeCompare(b.path));
     },
   };
 }

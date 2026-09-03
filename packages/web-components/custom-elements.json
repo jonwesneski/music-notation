@@ -510,67 +510,18 @@
     },
     {
       "kind": "javascript-module",
-      "path": "src/guitarNote/guitarNote.ts",
+      "path": "src/clef/clef.ts",
       "declarations": [
         {
           "kind": "class",
-          "description": "A single tablature note — a fret number on a string — with optional\nleft-hand technique connectors to the next note. Used inside a\n`<music-staff-guitar-tab>`.",
-          "name": "GuitarNoteElement",
+          "description": "A clef glyph. Standalone it renders just the symbol; placed in a\n`<music-staff>`'s note stream it marks a mid-piece clef change (it reserves\nhorizontal space but consumes no beat duration).",
+          "name": "ClefElement",
           "members": [
             {
               "kind": "field",
-              "name": "fret",
+              "name": "clef",
               "type": {
-                "text": "GuitarFret"
-              }
-            },
-            {
-              "kind": "field",
-              "name": "string",
-              "type": {
-                "text": "number"
-              }
-            },
-            {
-              "kind": "field",
-              "name": "duration",
-              "type": {
-                "text": "DurationType"
-              }
-            },
-            {
-              "kind": "field",
-              "name": "tie",
-              "type": {
-                "text": "ConnectorRole | null"
-              }
-            },
-            {
-              "kind": "field",
-              "name": "slur",
-              "type": {
-                "text": "ConnectorRole | null"
-              }
-            },
-            {
-              "kind": "field",
-              "name": "hammerOn",
-              "type": {
-                "text": "ConnectorRole | null"
-              }
-            },
-            {
-              "kind": "field",
-              "name": "pullOff",
-              "type": {
-                "text": "ConnectorRole | null"
-              }
-            },
-            {
-              "kind": "field",
-              "name": "slide",
-              "type": {
-                "text": "ConnectorRole | null"
+                "text": "ClefType"
               }
             },
             {
@@ -593,76 +544,27 @@
           ],
           "attributes": [
             {
-              "name": "fret",
+              "name": "clef",
               "type": {
-                "text": "number | 'x'"
+                "text": "'treble' | 'bass'"
               },
-              "description": "Fret number, or `x` for a muted/dead note."
-            },
-            {
-              "name": "string",
-              "type": {
-                "text": "number"
-              },
-              "description": "String number, 1 = highest. Defaults to `1`."
-            },
-            {
-              "name": "duration",
-              "type": {
-                "text": "DurationType"
-              },
-              "description": "Note value. Defaults to `quarter`."
-            },
-            {
-              "name": "tie",
-              "type": {
-                "text": "'start' | 'end'"
-              },
-              "description": "Start or end of a tie to the same fret/string."
-            },
-            {
-              "name": "slur",
-              "type": {
-                "text": "'start' | 'end'"
-              },
-              "description": "Start or end of a slur."
-            },
-            {
-              "name": "hammer-on",
-              "type": {
-                "text": "'start' | 'end'"
-              },
-              "description": "Start or end of a hammer-on to the next note."
-            },
-            {
-              "name": "pull-off",
-              "type": {
-                "text": "'start' | 'end'"
-              },
-              "description": "Start or end of a pull-off to the next note."
-            },
-            {
-              "name": "slide",
-              "type": {
-                "text": "'start' | 'end'"
-              },
-              "description": "Start or end of a slide to the next note."
+              "description": "Which clef to draw. Defaults to `treble`."
             }
           ],
           "superclass": {
             "name": "HTMLElement"
           },
-          "tagName": "music-guitar-note",
+          "tagName": "music-clef",
           "customElement": true
         }
       ],
       "exports": [
         {
           "kind": "custom-element-definition",
-          "name": "MUSIC_GUITAR_NOTE",
+          "name": "MUSIC_CLEF",
           "declaration": {
-            "name": "GuitarNoteElement",
-            "module": "src/guitarNote/guitarNote.ts"
+            "name": "ClefElement",
+            "module": "src/clef/clef.ts"
           }
         }
       ]
@@ -907,18 +809,67 @@
     },
     {
       "kind": "javascript-module",
-      "path": "src/clef/clef.ts",
+      "path": "src/guitarNote/guitarNote.ts",
       "declarations": [
         {
           "kind": "class",
-          "description": "A clef glyph. Standalone it renders just the symbol; placed in a\n`<music-staff>`'s note stream it marks a mid-piece clef change (it reserves\nhorizontal space but consumes no beat duration).",
-          "name": "ClefElement",
+          "description": "A single tablature note — a fret number on a string — with optional\nleft-hand technique connectors to the next note. Used inside a\n`<music-staff-guitar-tab>`.",
+          "name": "GuitarNoteElement",
           "members": [
             {
               "kind": "field",
-              "name": "clef",
+              "name": "fret",
               "type": {
-                "text": "ClefType"
+                "text": "GuitarFret"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "string",
+              "type": {
+                "text": "number"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "duration",
+              "type": {
+                "text": "DurationType"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "tie",
+              "type": {
+                "text": "ConnectorRole | null"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "slur",
+              "type": {
+                "text": "ConnectorRole | null"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "hammerOn",
+              "type": {
+                "text": "ConnectorRole | null"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "pullOff",
+              "type": {
+                "text": "ConnectorRole | null"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "slide",
+              "type": {
+                "text": "ConnectorRole | null"
               }
             },
             {
@@ -941,27 +892,76 @@
           ],
           "attributes": [
             {
-              "name": "clef",
+              "name": "fret",
               "type": {
-                "text": "'treble' | 'bass'"
+                "text": "number | 'x'"
               },
-              "description": "Which clef to draw. Defaults to `treble`."
+              "description": "Fret number, or `x` for a muted/dead note."
+            },
+            {
+              "name": "string",
+              "type": {
+                "text": "number"
+              },
+              "description": "String number, 1 = highest. Defaults to `1`."
+            },
+            {
+              "name": "duration",
+              "type": {
+                "text": "DurationType"
+              },
+              "description": "Note value. Defaults to `quarter`."
+            },
+            {
+              "name": "tie",
+              "type": {
+                "text": "'start' | 'end'"
+              },
+              "description": "Start or end of a tie to the same fret/string."
+            },
+            {
+              "name": "slur",
+              "type": {
+                "text": "'start' | 'end'"
+              },
+              "description": "Start or end of a slur."
+            },
+            {
+              "name": "hammer-on",
+              "type": {
+                "text": "'start' | 'end'"
+              },
+              "description": "Start or end of a hammer-on to the next note."
+            },
+            {
+              "name": "pull-off",
+              "type": {
+                "text": "'start' | 'end'"
+              },
+              "description": "Start or end of a pull-off to the next note."
+            },
+            {
+              "name": "slide",
+              "type": {
+                "text": "'start' | 'end'"
+              },
+              "description": "Start or end of a slide to the next note."
             }
           ],
           "superclass": {
             "name": "HTMLElement"
           },
-          "tagName": "music-clef",
+          "tagName": "music-guitar-note",
           "customElement": true
         }
       ],
       "exports": [
         {
           "kind": "custom-element-definition",
-          "name": "MUSIC_CLEF",
+          "name": "MUSIC_GUITAR_NOTE",
           "declaration": {
-            "name": "ClefElement",
-            "module": "src/clef/clef.ts"
+            "name": "GuitarNoteElement",
+            "module": "src/guitarNote/guitarNote.ts"
           }
         }
       ]
@@ -3599,58 +3599,6 @@
     },
     {
       "kind": "javascript-module",
-      "path": "src/tuplet/tuplet.ts",
-      "declarations": [
-        {
-          "kind": "class",
-          "description": "Wraps slotted `<music-note>` / `<music-chord>` / `<music-rest>` children as a\ntuplet (triplet, quintuplet, …). The staff reads the group and draws the\nbracket and numeral; the wrapper itself is layout-only.",
-          "name": "TupletElement",
-          "members": [
-            {
-              "kind": "field",
-              "name": "ratio",
-              "type": {
-                "text": "TupletRatio"
-              }
-            },
-            {
-              "kind": "field",
-              "name": "flatElements",
-              "type": {
-                "text": "NoteChordOrRestElementType[]"
-              },
-              "readonly": true
-            }
-          ],
-          "attributes": [
-            {
-              "name": "ratio",
-              "type": {
-                "text": "TupletRatio"
-              },
-              "description": "Tuplet ratio: a bare count like `3` or a full `actual:normal` form like `3:2`. Defaults to `3`."
-            }
-          ],
-          "superclass": {
-            "name": "HTMLElement"
-          },
-          "tagName": "music-tuplet",
-          "customElement": true
-        }
-      ],
-      "exports": [
-        {
-          "kind": "custom-element-definition",
-          "name": "MUSIC_TUPLET",
-          "declaration": {
-            "name": "TupletElement",
-            "module": "src/tuplet/tuplet.ts"
-          }
-        }
-      ]
-    },
-    {
-      "kind": "javascript-module",
       "path": "src/staffVocal/lyrics.ts",
       "declarations": [
         {
@@ -5365,6 +5313,58 @@
           "declaration": {
             "name": "anonymous_0",
             "module": "src/staffVocal/staffVocal.ts"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/tuplet/tuplet.ts",
+      "declarations": [
+        {
+          "kind": "class",
+          "description": "Wraps slotted `<music-note>` / `<music-chord>` / `<music-rest>` children as a\ntuplet (triplet, quintuplet, …). The staff reads the group and draws the\nbracket and numeral; the wrapper itself is layout-only.",
+          "name": "TupletElement",
+          "members": [
+            {
+              "kind": "field",
+              "name": "ratio",
+              "type": {
+                "text": "TupletRatio"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "flatElements",
+              "type": {
+                "text": "NoteChordOrRestElementType[]"
+              },
+              "readonly": true
+            }
+          ],
+          "attributes": [
+            {
+              "name": "ratio",
+              "type": {
+                "text": "TupletRatio"
+              },
+              "description": "Tuplet ratio: a bare count like `3` or a full `actual:normal` form like `3:2`. Defaults to `3`."
+            }
+          ],
+          "superclass": {
+            "name": "HTMLElement"
+          },
+          "tagName": "music-tuplet",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "MUSIC_TUPLET",
+          "declaration": {
+            "name": "TupletElement",
+            "module": "src/tuplet/tuplet.ts"
           }
         }
       ]
