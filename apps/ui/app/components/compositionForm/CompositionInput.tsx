@@ -20,6 +20,7 @@ import {
   upsertConnector,
 } from './connectors';
 import { DragSelectOverlay } from './DragSelectOverlay';
+import { applyEntryUpdate } from './entryEdits';
 import { MeasureInput } from './MeasureInput';
 import { findGroupMembers } from './staffGroups';
 import type {
@@ -27,6 +28,7 @@ import type {
   CompositionStructure,
   ConnectorKind,
   DraftMusicEntry,
+  MusicEntry,
   StaffType,
 } from './types';
 import { isSelectionEmpty } from './types';
@@ -308,6 +310,14 @@ export function CompositionInput() {
     });
   }
 
+  function updateEntry(entry: MusicEntry) {
+    const s = getStructure();
+    const next = applyEntryUpdate(s, entry);
+    if (next !== s) {
+      record(next);
+    }
+  }
+
   function setConnector(
     startEntryId: string,
     endEntryId: string,
@@ -333,6 +343,7 @@ export function CompositionInput() {
       onAddStaff={addStaff}
       onSetStaffGroup={setStaffGroup}
       onAddEntry={addEntry}
+      onUpdateEntry={updateEntry}
       onSetConnector={setConnector}
     >
       <FormProvider {...methods}>

@@ -95,6 +95,15 @@ export function isSelectionEmpty(selection: Selection): boolean {
   );
 }
 
+// Exactly one entry and nothing else — the selection an entry editor needs.
+export function isSingleEntrySelection(selection: Selection): boolean {
+  return (
+    selection.entryIds.length === 1 &&
+    selection.measureIds.length === 0 &&
+    selection.staffIds.length === 0
+  );
+}
+
 // Root form shape (BasicInfo fields + structure)
 export type CompositionFormValues = {
   title: string;

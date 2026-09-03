@@ -5,9 +5,11 @@ import { AnchoredTabPanel } from './AnchoredTabPanel';
 import { useCompositionFormSession } from './CompositionFormSessionContext';
 import { isConnectableSelection } from './connectors';
 import { ConnectorInput } from './ConnectorInput';
+import { EntryEditInput } from './EntryEditInput';
 import { StaffGroupInput } from './StaffGroupInput';
 import { StaffInput } from './StaffInput';
 import type { CompositionFormValues } from './types';
+import { isSingleEntrySelection } from './types';
 import { useCompositionStructure } from './useCompositionStructure';
 
 interface MeasureInputProps {
@@ -49,6 +51,19 @@ export function MeasureInput({ measureId }: MeasureInputProps) {
       ? selectionEndpoints
       : null;
 
+  // The edit panel shows for a lone selected entry, mounted by the measure that
+  // actually contains it (mirrors how the connector panel binds to its start).
+  const selectedEntryId = isSingleEntrySelection(session.selection)
+    ? session.selection.entryIds[0]
+    : null;
+  const editableEntry =
+    selectedEntryId &&
+    measure.staffIds.some((sid) =>
+      structure.stavesById[sid]?.entryIds.includes(selectedEntryId)
+    )
+      ? structure.entriesById[selectedEntryId]
+      : null;
+
   const tabs = [];
   if (isMeasureSelected) {
     tabs.push({
@@ -80,6 +95,12 @@ export function MeasureInput({ measureId }: MeasureInputProps) {
       ),
     });
   }
+  if (editableEntry) {
+    tabs.push({
+      label: 'Edit',
+      content: <EntryEditInput entry={editableEntry} />,
+    });
+  }
 
   return (
     <music-measure
@@ -87,7 +108,10 @@ export function MeasureInput({ measureId }: MeasureInputProps) {
       className={`cursor-pointer rounded transition-shadow ${
         isMeasureSelected ? 'rainbow-selected' : ''
       } ${
-        isMeasureSelected || containsSelectedStaff || connectorEndpoints
+        isMeasureSelected ||
+        containsSelectedStaff ||
+        connectorEndpoints ||
+        editableEntry
           ? 'pb-10'
           : ''
       }`}

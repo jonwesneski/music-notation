@@ -12,6 +12,7 @@ import type {
   CompositionStructure,
   ConnectorKind,
   DraftMusicEntry,
+  MusicEntry,
   Selection,
   StaffType,
 } from './types';
@@ -61,6 +62,7 @@ type CompositionFormSessionContextValue = {
     staffId: string,
     entry: DraftMusicEntry
   ) => void;
+  updateEntry: (entry: MusicEntry) => void;
   setConnector: (
     startEntryId: string,
     endEntryId: string,
@@ -86,6 +88,7 @@ type CompositionFormSessionProviderProps = {
     staffId: string,
     entry: DraftMusicEntry
   ) => void;
+  onUpdateEntry: (entry: MusicEntry) => void;
   onSetConnector: (
     startEntryId: string,
     endEntryId: string,
@@ -102,6 +105,7 @@ export function CompositionFormSessionProvider({
   onAddStaff,
   onSetStaffGroup,
   onAddEntry,
+  onUpdateEntry,
   onSetConnector,
   children,
 }: CompositionFormSessionProviderProps) {
@@ -230,6 +234,7 @@ export function CompositionFormSessionProvider({
         addStaff: onAddStaff,
         setStaffGroup: onSetStaffGroup,
         addEntry: onAddEntry,
+        updateEntry: onUpdateEntry,
         setConnector: onSetConnector,
       }}
     >

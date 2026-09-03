@@ -1,12 +1,9 @@
 import type { DurationType, Note } from '@one-step-at-a-time/web-components';
-import {
-  durationToFactor,
-  DURATIONS,
-  NOTES,
-} from '@one-step-at-a-time/web-components';
+import { durationToFactor } from '@one-step-at-a-time/web-components';
 import { useState } from 'react';
-import { Button, Radio, Select } from '@/design-system';
+import { Button, Radio } from '@/design-system';
 import { useCompositionFormSession } from './CompositionFormSessionContext';
+import { ChordNoteRows, DurationSelect, PitchSelect } from './entryControls';
 import type { DraftMusicEntry } from './types';
 
 interface EntryInputProps {
@@ -21,10 +18,7 @@ export function EntryInput({ onAdd, remainingBeats }: EntryInputProps) {
 
   const [noteValue, setNoteValue] = useState<Note>('C');
   const [duration, setDuration] = useState<DurationType>('quarter');
-  const [chordNotes, setChordNotes] = useState<Array<{ value: Note }>>([
-    { value: 'C' },
-    { value: 'E' },
-  ]);
+  const [chordNotes, setChordNotes] = useState<Note[]>(['C', 'E']);
 
   const canAdd = durationToFactor[duration] <= remainingBeats;
 
@@ -33,11 +27,7 @@ export function EntryInput({ onAdd, remainingBeats }: EntryInputProps) {
   }
 
   function handleChordAdd() {
-    onAdd({
-      type: 'chord',
-      notes: chordNotes.map((n) => n.value),
-      duration,
-    });
+    onAdd({ type: 'chord', notes: chordNotes, duration });
   }
 
   function handleRestAdd() {
@@ -80,26 +70,8 @@ export function EntryInput({ onAdd, remainingBeats }: EntryInputProps) {
       <div className="p-3 flex flex-col gap-2">
         {activeEntry === 'note' && (
           <>
-            <Select
-              value={noteValue}
-              onChange={(e) => setNoteValue(e.target.value as Note)}
-            >
-              {NOTES.map((n) => (
-                <option key={n} value={n}>
-                  {n}
-                </option>
-              ))}
-            </Select>
-            <Select
-              value={duration}
-              onChange={(e) => setDuration(e.target.value as DurationType)}
-            >
-              {DURATIONS.map((d) => (
-                <option key={d} value={d}>
-                  {d}
-                </option>
-              ))}
-            </Select>
+            <PitchSelect value={noteValue} onChange={setNoteValue} />
+            <DurationSelect value={duration} onChange={setDuration} />
             <Button type="button" disabled={!canAdd} onClick={handleNoteAdd}>
               Add
             </Button>
@@ -108,42 +80,8 @@ export function EntryInput({ onAdd, remainingBeats }: EntryInputProps) {
 
         {activeEntry === 'chord' && (
           <>
-            {chordNotes.map((note, i) => (
-              <Select
-                key={i}
-                value={note.value}
-                onChange={(e) =>
-                  setChordNotes((prev) =>
-                    prev.map((n, idx) =>
-                      idx === i ? { value: e.target.value as Note } : n
-                    )
-                  )
-                }
-              >
-                {NOTES.map((n) => (
-                  <option key={n} value={n}>
-                    {n}
-                  </option>
-                ))}
-              </Select>
-            ))}
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => setChordNotes((prev) => [...prev, { value: 'C' }])}
-            >
-              + Add Note
-            </Button>
-            <Select
-              value={duration}
-              onChange={(e) => setDuration(e.target.value as DurationType)}
-            >
-              {DURATIONS.map((d) => (
-                <option key={d} value={d}>
-                  {d}
-                </option>
-              ))}
-            </Select>
+            <ChordNoteRows notes={chordNotes} onChange={setChordNotes} />
+            <DurationSelect value={duration} onChange={setDuration} />
             <Button type="button" disabled={!canAdd} onClick={handleChordAdd}>
               Add
             </Button>
@@ -152,16 +90,7 @@ export function EntryInput({ onAdd, remainingBeats }: EntryInputProps) {
 
         {activeEntry === 'rest' && (
           <>
-            <Select
-              value={duration}
-              onChange={(e) => setDuration(e.target.value as DurationType)}
-            >
-              {DURATIONS.map((d) => (
-                <option key={d} value={d}>
-                  {d}
-                </option>
-              ))}
-            </Select>
+            <DurationSelect value={duration} onChange={setDuration} />
             <Button type="button" disabled={!canAdd} onClick={handleRestAdd}>
               Add
             </Button>
