@@ -3,6 +3,7 @@ import { useFormContext } from 'react-hook-form';
 import { AnchoredTabPanel } from './AnchoredTabPanel';
 import { useCompositionFormSession } from './CompositionFormSessionContext';
 import { EntryInput } from './EntryInput';
+import { serializeGrace } from './grace';
 import { remainingDuration } from './measureCapacity';
 import type { CompositionFormValues } from './types';
 import { useConnectorAttributes } from './useCompositionStructure';
@@ -59,6 +60,7 @@ export function StaffInput({ staffId, measureId }: StaffInputProps) {
         dynamic: entry.dynamic ?? undefined,
         articulation: entry.articulation ?? undefined,
         stress: entry.stress ?? undefined,
+        ...serializeGrace(entry.grace),
         className: entryClass,
         onClick: handleEntryClick,
       };

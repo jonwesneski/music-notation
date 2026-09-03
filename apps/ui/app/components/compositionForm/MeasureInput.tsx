@@ -3,9 +3,10 @@ import { useFormContext } from 'react-hook-form';
 import { AddStaffInput } from './AddStaffInput';
 import { AnchoredTabPanel } from './AnchoredTabPanel';
 import { useCompositionFormSession } from './CompositionFormSessionContext';
-import { isConnectableSelection } from './connectors';
 import { ConnectorInput } from './ConnectorInput';
+import { isConnectableSelection } from './connectors';
 import { EntryEditInput } from './EntryEditInput';
+import { GraceInput } from './GraceInput';
 import { StaffGroupInput } from './StaffGroupInput';
 import { StaffInput } from './StaffInput';
 import type { CompositionFormValues } from './types';
@@ -100,6 +101,12 @@ export function MeasureInput({ measureId }: MeasureInputProps) {
       label: 'Edit',
       content: <EntryEditInput entry={editableEntry} />,
     });
+    if (editableEntry.type !== 'rest') {
+      tabs.push({
+        label: 'Grace',
+        content: <GraceInput entry={editableEntry} />,
+      });
+    }
   }
 
   return (

@@ -3,6 +3,9 @@ import type {
   ConnectorRole,
   DurationType,
   DynamicMarking,
+  GraceDuration,
+  GraceSlur,
+  GraceType,
   Mode,
   Note,
   Octave,
@@ -26,12 +29,26 @@ export type StaffType = 'treble' | 'bass';
 // matches the library's optional `octave` attribute and `ChordNote` shape.
 export type ChordNote = { value: Note; octave?: Octave | null };
 
+// A grace-note group preceding a note/chord. `octaves` / `articulations` are
+// aligned by index with `notes` (a null slot = "no value for that grace note").
+// Serialized to the seven `grace-*` attributes by grace.ts.
+export type GraceGroup = {
+  notes: Note[];
+  octaves?: (Octave | null)[];
+  articulations?: (ArticulationType | null)[];
+  type?: GraceType;
+  duration?: GraceDuration;
+  slur?: GraceSlur;
+  dynamic?: DynamicMarking;
+};
+
 // Expression marks shared by notes and chords. Every field is optional/nullable
 // and maps 1:1 to a `<music-note>` / `<music-chord>` attribute.
 export type EntryMarkings = {
   dynamic?: DynamicMarking | null;
   articulation?: ArticulationType | null;
   stress?: StressType | null;
+  grace?: GraceGroup | null;
 };
 
 export type NoteEntry = EntryMarkings & {
