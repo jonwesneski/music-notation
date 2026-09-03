@@ -1,9 +1,14 @@
-import type { DurationType, Note } from '@one-step-at-a-time/web-components';
-import { DURATIONS, NOTES } from '@one-step-at-a-time/web-components';
+import type {
+  DurationType,
+  Note,
+  Octave,
+} from '@one-step-at-a-time/web-components';
+import { DURATIONS, NOTES, OCTAVES } from '@one-step-at-a-time/web-components';
 import { Button, Select } from '@/design-system';
+import type { ChordNote } from './types';
 
-// Shared pitch / duration / chord-note controls used by both the "add entry"
-// panel (EntryInput) and the "edit selected entry" panel (EntryEditInput).
+// Shared pitch / octave / duration / chord-note controls used by both the "add
+// entry" panel (EntryInput) and the "edit selected entry" panel (EntryEditInput).
 
 export function PitchSelect({
   value,
@@ -23,6 +28,39 @@ export function PitchSelect({
       {NOTES.map((n) => (
         <option key={n} value={n}>
           {n}
+        </option>
+      ))}
+    </Select>
+  );
+}
+
+const CLEF_DEFAULT = 'clef';
+
+export function OctaveSelect({
+  value,
+  onChange,
+  className,
+}: {
+  value: Octave | null | undefined;
+  onChange: (value: Octave | null) => void;
+  className?: string;
+}) {
+  return (
+    <Select
+      className={className}
+      value={value ?? CLEF_DEFAULT}
+      onChange={(e) =>
+        onChange(
+          e.target.value === CLEF_DEFAULT
+            ? null
+            : (Number(e.target.value) as Octave)
+        )
+      }
+    >
+      <option value={CLEF_DEFAULT}>clef default</option>
+      {OCTAVES.map((o) => (
+        <option key={o} value={o}>
+          {o}
         </option>
       ))}
     </Select>
@@ -54,19 +92,25 @@ export function ChordNoteRows({
   notes,
   onChange,
 }: {
-  notes: Note[];
-  onChange: (notes: Note[]) => void;
+  notes: ChordNote[];
+  onChange: (notes: ChordNote[]) => void;
 }) {
+  const setNote = (index: number, next: Partial<ChordNote>) => {
+    onChange(notes.map((n, i) => (i === index ? { ...n, ...next } : n)));
+  };
+
   return (
     <div className="flex flex-col gap-2">
-      {notes.map((value, i) => (
+      {notes.map((note, i) => (
         <div key={i} className="flex items-center gap-1.5">
           <PitchSelect
             className="flex-1"
-            value={value}
-            onChange={(next) =>
-              onChange(notes.map((n, idx) => (idx === i ? next : n)))
-            }
+            value={note.value}
+            onChange={(value) => setNote(i, { value })}
+          />
+          <OctaveSelect
+            value={note.octave}
+            onChange={(octave) => setNote(i, { octave })}
           />
           {notes.length > 1 && (
             <Button
@@ -82,7 +126,7 @@ export function ChordNoteRows({
       <Button
         type="button"
         variant="secondary"
-        onClick={() => onChange([...notes, 'C'])}
+        onClick={() => onChange([...notes, { value: 'C' }])}
       >
         + Add Note
       </Button>

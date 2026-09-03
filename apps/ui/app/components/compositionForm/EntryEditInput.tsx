@@ -1,6 +1,15 @@
-import type { DurationType, Note } from '@one-step-at-a-time/web-components';
+import type {
+  DurationType,
+  Note,
+  Octave,
+} from '@one-step-at-a-time/web-components';
 import { useCompositionFormSession } from './CompositionFormSessionContext';
-import { ChordNoteRows, DurationSelect, PitchSelect } from './entryControls';
+import {
+  ChordNoteRows,
+  DurationSelect,
+  OctaveSelect,
+  PitchSelect,
+} from './entryControls';
 import type { MusicEntry } from './types';
 
 interface EntryEditInputProps {
@@ -18,13 +27,24 @@ export function EntryEditInput({ entry }: EntryEditInputProps) {
       onClick={(e) => e.stopPropagation()}
     >
       {entry.type === 'note' && (
-        <label className="flex flex-col gap-0.5">
-          <span className={labelClass}>Pitch</span>
-          <PitchSelect
-            value={entry.value}
-            onChange={(value: Note) => updateEntry({ ...entry, value })}
-          />
-        </label>
+        <div className="flex gap-2">
+          <label className="flex flex-1 flex-col gap-0.5">
+            <span className={labelClass}>Pitch</span>
+            <PitchSelect
+              value={entry.value}
+              onChange={(value: Note) => updateEntry({ ...entry, value })}
+            />
+          </label>
+          <label className="flex flex-col gap-0.5">
+            <span className={labelClass}>Octave</span>
+            <OctaveSelect
+              value={entry.octave}
+              onChange={(octave: Octave | null) =>
+                updateEntry({ ...entry, octave })
+              }
+            />
+          </label>
+        </div>
       )}
 
       {entry.type === 'chord' && (

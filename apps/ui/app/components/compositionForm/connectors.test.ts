@@ -131,6 +131,52 @@ describe('canTie', () => {
       canTie(buildStructure(), { startEntryId: 'e4', endEntryId: 'e5' })
     ).toBe(true);
   });
+
+  it('rejects the same pitch letter at a different octave', () => {
+    const structure = buildStructure();
+    structure.entriesById.e1 = {
+      id: 'e1',
+      type: 'note',
+      value: 'C',
+      octave: 4,
+      duration: 'quarter',
+    };
+    structure.entriesById.e2 = {
+      id: 'e2',
+      type: 'note',
+      value: 'C',
+      octave: 5,
+      duration: 'quarter',
+    };
+    expect(canTie(structure, { startEntryId: 'e1', endEntryId: 'e2' })).toBe(
+      false
+    );
+  });
+
+  it('matches chords by pitch and octave regardless of note order', () => {
+    const structure = buildStructure();
+    structure.entriesById.e1 = {
+      id: 'e1',
+      type: 'chord',
+      notes: [
+        { value: 'C', octave: 4 },
+        { value: 'E', octave: 4 },
+      ],
+      duration: 'quarter',
+    };
+    structure.entriesById.e2 = {
+      id: 'e2',
+      type: 'chord',
+      notes: [
+        { value: 'E', octave: 4 },
+        { value: 'C', octave: 4 },
+      ],
+      duration: 'quarter',
+    };
+    expect(canTie(structure, { startEntryId: 'e1', endEntryId: 'e2' })).toBe(
+      true
+    );
+  });
 });
 
 describe('upsertConnector / removeConnector / connectorBetween', () => {

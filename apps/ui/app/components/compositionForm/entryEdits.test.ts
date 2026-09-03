@@ -17,7 +17,12 @@ function buildStructure(): CompositionStructure {
     },
     entriesById: {
       e1: { id: 'e1', type: 'note', value: 'C', duration: 'quarter' },
-      e2: { id: 'e2', type: 'chord', notes: ['C', 'E'], duration: 'half' },
+      e2: {
+        id: 'e2',
+        type: 'chord',
+        notes: [{ value: 'C' }, { value: 'E' }],
+        duration: 'half',
+      },
     },
     connectorsById: {},
     connectorOrder: [],

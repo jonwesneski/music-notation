@@ -3,6 +3,7 @@ import type {
   DurationType,
   Mode,
   Note,
+  Octave,
   StaffGroupType,
   TimeSignature,
 } from '@one-step-at-a-time/web-components';
@@ -18,16 +19,21 @@ export const MODE_OPTIONS = MODES;
 
 export type StaffType = 'treble' | 'bass';
 
+// `octave: null` (or absent) means "let the staff clef pick the octave" —
+// matches the library's optional `octave` attribute and `ChordNote` shape.
+export type ChordNote = { value: Note; octave?: Octave | null };
+
 export type NoteEntry = {
   id: string;
   type: 'note';
   value: Note;
+  octave?: Octave | null;
   duration: DurationType;
 };
 export type ChordEntry = {
   id: string;
   type: 'chord';
-  notes: Note[];
+  notes: ChordNote[];
   duration: DurationType;
 };
 export type RestEntry = {

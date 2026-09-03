@@ -1,10 +1,19 @@
-import type { DurationType, Note } from '@one-step-at-a-time/web-components';
+import type {
+  DurationType,
+  Note,
+  Octave,
+} from '@one-step-at-a-time/web-components';
 import { durationToFactor } from '@one-step-at-a-time/web-components';
 import { useState } from 'react';
 import { Button, Radio } from '@/design-system';
 import { useCompositionFormSession } from './CompositionFormSessionContext';
-import { ChordNoteRows, DurationSelect, PitchSelect } from './entryControls';
-import type { DraftMusicEntry } from './types';
+import {
+  ChordNoteRows,
+  DurationSelect,
+  OctaveSelect,
+  PitchSelect,
+} from './entryControls';
+import type { ChordNote, DraftMusicEntry } from './types';
 
 interface EntryInputProps {
   onAdd: (entry: DraftMusicEntry) => void;
@@ -17,13 +26,17 @@ export function EntryInput({ onAdd, remainingBeats }: EntryInputProps) {
   const activeEntry = session.lastActiveEntry;
 
   const [noteValue, setNoteValue] = useState<Note>('C');
+  const [noteOctave, setNoteOctave] = useState<Octave | null>(null);
   const [duration, setDuration] = useState<DurationType>('quarter');
-  const [chordNotes, setChordNotes] = useState<Note[]>(['C', 'E']);
+  const [chordNotes, setChordNotes] = useState<ChordNote[]>([
+    { value: 'C' },
+    { value: 'E' },
+  ]);
 
   const canAdd = durationToFactor[duration] <= remainingBeats;
 
   function handleNoteAdd() {
-    onAdd({ type: 'note', value: noteValue, duration });
+    onAdd({ type: 'note', value: noteValue, octave: noteOctave, duration });
   }
 
   function handleChordAdd() {
@@ -70,7 +83,14 @@ export function EntryInput({ onAdd, remainingBeats }: EntryInputProps) {
       <div className="p-3 flex flex-col gap-2">
         {activeEntry === 'note' && (
           <>
-            <PitchSelect value={noteValue} onChange={setNoteValue} />
+            <div className="flex items-center gap-1.5">
+              <PitchSelect
+                className="flex-1"
+                value={noteValue}
+                onChange={setNoteValue}
+              />
+              <OctaveSelect value={noteOctave} onChange={setNoteOctave} />
+            </div>
             <DurationSelect value={duration} onChange={setDuration} />
             <Button type="button" disabled={!canAdd} onClick={handleNoteAdd}>
               Add

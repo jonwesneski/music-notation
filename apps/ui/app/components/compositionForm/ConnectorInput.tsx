@@ -24,7 +24,7 @@ function entryLabel(entry: MusicEntry | undefined): string {
     return entry.value;
   }
   if (entry.type === 'chord') {
-    return entry.notes.join('/');
+    return entry.notes.map((n) => n.value).join('/');
   }
   return 'rest';
 }

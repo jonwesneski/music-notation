@@ -1,4 +1,5 @@
 import type {
+  ChordNote,
   CompositionStructure,
   ConnectorKind,
   ConnectorRole,
@@ -175,14 +176,18 @@ export function canTie(
   if (
     start.type === 'note' &&
     end.type === 'note' &&
-    start.value !== end.value
+    (start.value !== end.value ||
+      (start.octave ?? null) !== (end.octave ?? null))
   ) {
     return false;
   }
   if (start.type === 'chord' && end.type === 'chord') {
-    const startNotes = [...start.notes].sort().join(',');
-    const endNotes = [...end.notes].sort().join(',');
-    if (startNotes !== endNotes) {
+    const key = (notes: ChordNote[]) =>
+      notes
+        .map((n) => `${n.value}${n.octave ?? ''}`)
+        .sort()
+        .join(',');
+    if (key(start.notes) !== key(end.notes)) {
       return false;
     }
   }

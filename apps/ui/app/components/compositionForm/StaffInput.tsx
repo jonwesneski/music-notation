@@ -54,6 +54,7 @@ export function StaffInput({ staffId, measureId }: StaffInputProps) {
           key={entry.id}
           ref={(el: HTMLElement | null) => registerEntryRef(entry.id, el)}
           note={entry.value}
+          octave={entry.octave ?? undefined}
           duration={entry.duration}
           tie={connector?.tie}
           slur={connector?.slur}
@@ -77,7 +78,7 @@ export function StaffInput({ staffId, measureId }: StaffInputProps) {
           onClick={handleEntryClick}
         >
           {entry.notes.map((n, j) => (
-            <music-note key={j} note={n} />
+            <music-note key={j} note={n.value} octave={n.octave ?? undefined} />
           ))}
         </music-chord>
       );
