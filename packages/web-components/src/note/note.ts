@@ -2,7 +2,13 @@ import {
   applyResolvedGraceAccidentals,
   buildGraceNoteDescriptors,
 } from '../rules/graceRules';
-import { ConnectorRole, INoteElement } from '../types/elements';
+import {
+  ConnectorRole,
+  GraceArticulationsType,
+  GraceNotesType,
+  GraceOctavesType,
+  INoteElement,
+} from '../types/elements';
 import {
   AccidentalType,
   ArticulationType,
@@ -24,6 +30,7 @@ import {
   createGraceNotesSvg,
   createNoteSvg,
   GRACE_MAIN_GAP_PX,
+  graceListToAttr,
   NOTE_HEAD_Y_OFFSET_CORRECTION,
   NOTE_SCALE,
   noteHeadCenter,
@@ -62,9 +69,9 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
    * @attr {'start' | 'end'} diminuendo - Alias of `decrescendo`.
    * @attr {ArticulationType} articulation - Articulation/accent mark, e.g. `staccato`, `accent`, `marcato-tenuto`, `fermata`.
    * @attr {'stressed' | 'unstressed'} stress - Schoenberg stress mark.
-   * @attr {string} grace - Comma-separated grace-note pitches preceding this note, e.g. `"F#,G"`.
-   * @attr {string} grace-octave - Comma-separated octaves aligned by index with `grace`; empty slots use this note's octave.
-   * @attr {string} grace-articulation - Comma-separated per-grace articulation aligned by index with `grace`; empty slots mean none.
+   * @attr {string} grace - Comma-separated grace-note pitches preceding this note, e.g. `"F#,G"`. The property also accepts a `Note[]`.
+   * @attr {string} grace-octave - Comma-separated octaves aligned by index with `grace`; empty slots use this note's octave. The property also accepts an `(Octave | null)[]`.
+   * @attr {string} grace-articulation - Comma-separated per-grace articulation aligned by index with `grace`; empty slots mean none. The property also accepts an `(ArticulationType | null)[]`.
    * @attr {'acciaccatura' | 'appoggiatura'} grace-type - Grace-note style. Defaults to `acciaccatura`.
    * @attr {GraceDuration} grace-duration - Note value drawn for the grace notes.
    * @attr {'auto' | 'none'} grace-slur - Whether to draw the slur from the grace group to the main note. Defaults to `auto`.
@@ -288,36 +295,38 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
     get grace(): Note[] | null {
       return parseGraceNotes(this.getAttribute('grace'));
     }
-    set grace(value: Note[] | null) {
-      if (value === null || value.length === 0) {
+    // Accepts the rich array or the comma-separated attribute string (React and
+    // Storybook set the JSX prop as a property, not an attribute).
+    set grace(value: GraceNotesType) {
+      const attr = graceListToAttr(value, parseGraceNotes);
+      if (attr === null) {
         this.removeAttribute('grace');
       } else {
-        this.setAttribute('grace', value.join(','));
+        this.setAttribute('grace', attr);
       }
     }
 
     get graceOctave(): (Octave | null)[] | null {
       return parseGraceOctaves(this.getAttribute('grace-octave'));
     }
-    set graceOctave(value: (Octave | null)[] | null) {
-      if (value === null || value.length === 0) {
+    set graceOctave(value: GraceOctavesType) {
+      const attr = graceListToAttr(value, parseGraceOctaves);
+      if (attr === null) {
         this.removeAttribute('grace-octave');
       } else {
-        this.setAttribute('grace-octave', value.map((v) => v ?? '').join(','));
+        this.setAttribute('grace-octave', attr);
       }
     }
 
     get graceArticulation(): (ArticulationType | null)[] | null {
       return parseGraceArticulations(this.getAttribute('grace-articulation'));
     }
-    set graceArticulation(value: (ArticulationType | null)[] | null) {
-      if (value === null || value.length === 0) {
+    set graceArticulation(value: GraceArticulationsType) {
+      const attr = graceListToAttr(value, parseGraceArticulations);
+      if (attr === null) {
         this.removeAttribute('grace-articulation');
       } else {
-        this.setAttribute(
-          'grace-articulation',
-          value.map((v) => v ?? '').join(',')
-        );
+        this.setAttribute('grace-articulation', attr);
       }
     }
 

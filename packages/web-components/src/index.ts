@@ -13,7 +13,13 @@ import './rest';
 
 export { durationToFactor } from './rules/theoryConsts';
 export * from './types/theory';
-export type { ConnectorRole, GuitarFret } from './types/elements';
+export type {
+  ConnectorRole,
+  GraceArticulationsType,
+  GraceNotesType,
+  GraceOctavesType,
+  GuitarFret,
+} from './types/elements';
 export type { PitchChangeDetail } from './utils/pitchDragHandler';
 
 /**

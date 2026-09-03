@@ -4,7 +4,6 @@
  *
  *   /// <reference types="@one-step-at-a-time/web-components/react" />
  */
-import 'react';
 import type {
   ArticulationType,
   Chord,
@@ -12,7 +11,10 @@ import type {
   ConnectorRole,
   DurationType,
   DynamicMarking,
+  GraceArticulationsType,
   GraceDuration,
+  GraceNotesType,
+  GraceOctavesType,
   GraceSlur,
   GraceType,
   GuitarFret,
@@ -26,6 +28,7 @@ import type {
   TupletRatio,
   Voice,
 } from '@one-step-at-a-time/web-components';
+import 'react';
 
 type WebComponentNoChildrenProps = {
   key?: React.Key;
@@ -113,14 +116,17 @@ declare module 'react' {
         diminuendo?: HairpinRole;
         articulation?: ArticulationType;
         stress?: StressType;
-        // Comma-separated grace note letters, e.g. "F#,G"
-        grace?: string;
-        // Comma-separated grace octaves, aligned by index with `grace`.
-        // Omitted or missing slots default to the host element's own octave.
-        'grace-octave'?: string;
-        // Comma-separated per-grace-note articulation, aligned by index with
-        // `grace`. Omitted or missing slots mean no mark for that grace note.
-        'grace-articulation'?: string;
+        // Grace-note letters preceding this element. A comma-separated string
+        // ("F#,G") or the `Note[]` array — the setter accepts both.
+        grace?: GraceNotesType;
+        // Grace-note octaves aligned by index with `grace`. A comma-separated
+        // string ("4,,5", empty slot = use the host element's own octave) or
+        // the `(Octave | null)[]` array.
+        'grace-octave'?: GraceOctavesType;
+        // Per-grace-note articulation aligned by index with `grace`. A
+        // comma-separated string ("staccato,,accent", empty slot = no mark) or
+        // the `(ArticulationType | null)[]` array.
+        'grace-articulation'?: GraceArticulationsType;
         'grace-type'?: GraceType;
         'grace-duration'?: GraceDuration;
         'grace-slur'?: GraceSlur;
@@ -146,14 +152,17 @@ declare module 'react' {
         diminuendo?: HairpinRole;
         articulation?: ArticulationType;
         stress?: StressType;
-        // Comma-separated grace note letters, e.g. "F#,G"
-        grace?: string;
-        // Comma-separated grace octaves, aligned by index with `grace`.
-        // Omitted or missing slots default to the host element's own octave.
-        'grace-octave'?: string;
-        // Comma-separated per-grace-note articulation, aligned by index with
-        // `grace`. Omitted or missing slots mean no mark for that grace note.
-        'grace-articulation'?: string;
+        // Grace-note letters preceding this element. A comma-separated string
+        // ("F#,G") or the `Note[]` array — the setter accepts both.
+        grace?: GraceNotesType;
+        // Grace-note octaves aligned by index with `grace`. A comma-separated
+        // string ("4,,5", empty slot = use the host element's own octave) or
+        // the `(Octave | null)[]` array.
+        'grace-octave'?: GraceOctavesType;
+        // Per-grace-note articulation aligned by index with `grace`. A
+        // comma-separated string ("staccato,,accent", empty slot = no mark) or
+        // the `(ArticulationType | null)[]` array.
+        'grace-articulation'?: GraceArticulationsType;
         'grace-type'?: GraceType;
         'grace-duration'?: GraceDuration;
         'grace-slur'?: GraceSlur;

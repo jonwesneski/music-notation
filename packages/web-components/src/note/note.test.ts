@@ -5,6 +5,7 @@ import '../staff/index';
 import '../tuplet/index';
 import type { NoteElementType, NoteLetterOctave } from '../types/elements';
 import type {
+  ArticulationType,
   DurationType,
   Note,
   Octave,
@@ -224,6 +225,51 @@ describe('grace notes', () => {
     expect(noteElement.graceSlur).toBe('none');
   });
 
+  it('accepts the comma-separated string form on the grace list setters', () => {
+    const noteElement = document.createElement(MUSIC_NOTE) as NoteElementType;
+    document.body.appendChild(noteElement);
+
+    noteElement.grace = 'F#,G';
+    noteElement.graceOctave = '4,,5';
+    noteElement.graceArticulation = ',staccato';
+
+    expect(noteElement.getAttribute('grace')).toBe('F#,G');
+    expect(noteElement.grace).toEqual([
+      'F#' satisfies Note,
+      'G' satisfies Note,
+    ]);
+    expect(noteElement.graceOctave).toEqual([
+      4 satisfies Octave,
+      null,
+      5 satisfies Octave,
+    ]);
+    expect(noteElement.graceArticulation).toEqual([
+      null,
+      'staccato' satisfies ArticulationType,
+    ]);
+  });
+
+  it('clears the grace list attributes when set to an empty string', () => {
+    const noteElement = document.createElement(MUSIC_NOTE) as NoteElementType;
+    noteElement.setAttribute('grace', 'C');
+    document.body.appendChild(noteElement);
+
+    noteElement.grace = '';
+    expect(noteElement.hasAttribute('grace')).toBe(false);
+    expect(noteElement.grace).toBeNull();
+  });
+
+  it('rejects an invalid grace string set via the property (no attribute written)', () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+    const noteElement = document.createElement(MUSIC_NOTE) as NoteElementType;
+    document.body.appendChild(noteElement);
+
+    noteElement.grace = 'H,I';
+    expect(noteElement.hasAttribute('grace')).toBe(false);
+    expect(warnSpy).toHaveBeenCalled();
+    warnSpy.mockRestore();
+  });
+
   it('defaults grace-type to acciaccatura and grace-slur to auto', () => {
     const noteElement = document.createElement(MUSIC_NOTE) as NoteElementType;
     document.body.appendChild(noteElement);
@@ -284,6 +330,20 @@ describe('grace notes', () => {
     const graceGroup = noteElement.shadowRoot?.querySelector('.grace-notes');
     expect(graceGroup).not.toBeNull();
     expect(graceGroup?.querySelectorAll('.grace-head')).toHaveLength(1);
+  });
+
+  it('renders grace notes when the string form is set via the property (React path)', () => {
+    const noteElement = document.createElement(MUSIC_NOTE) as NoteElementType;
+    noteElement.setAttribute('note', 'C' satisfies Note);
+    noteElement.setAttribute('octave', '5');
+    document.body.appendChild(noteElement);
+
+    noteElement.grace = 'B,A';
+    noteElement.graceOctave = '4,4';
+
+    const graceGroup = noteElement.shadowRoot?.querySelector('.grace-notes');
+    expect(graceGroup).not.toBeNull();
+    expect(graceGroup?.querySelectorAll('.grace-head')).toHaveLength(2);
   });
 
   it('renders a single grace note as a small flagged note with a slash and slur', () => {
