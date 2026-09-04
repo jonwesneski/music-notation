@@ -35,6 +35,7 @@ type WebComponentNoChildrenProps = {
   ref?: React.Ref<HTMLElement>;
   id?: string;
   className?: string;
+  onClick?: React.MouseEventHandler<HTMLElement>;
 };
 
 type WebComponentProps = WebComponentNoChildrenProps & {
@@ -54,7 +55,6 @@ declare module 'react' {
         keySig?: Note;
         mode?: Mode;
         time?: TimeSignature;
-        onClick?: React.MouseEventHandler<HTMLElement>;
       };
       'music-staff': WebComponentProps & {
         clef?: ClefType;
@@ -69,7 +69,6 @@ declare module 'react' {
         // Shared identifier joining this staff with other group="bracket"
         // staves into one multi-staff bracket connector — see StaffElementBase#groupId.
         'group-id'?: string;
-        onClick?: React.MouseEventHandler<HTMLElement>;
       };
       'music-staff-guitar-tab': WebComponentProps & {
         time?: TimeSignature;
@@ -91,11 +90,9 @@ declare module 'react' {
       };
       'music-clef': WebComponentNoChildrenProps & {
         clef?: ClefType;
-        onClick?: (e: MouseEvent) => void;
       };
       'music-rest': WebComponentNoChildrenProps & {
         duration?: DurationType;
-        onClick?: (e: MouseEvent) => void;
         onPointerDown?: (e: PointerEvent) => void;
         onPointerUp?: (e: PointerEvent) => void;
       };
@@ -133,7 +130,6 @@ declare module 'react' {
         'grace-slur'?: GraceSlur;
         // A single dynamic for the whole grace group, independent of `dynamic`.
         'grace-dynamic'?: DynamicMarking;
-        onClick?: (e: MouseEvent) => void;
         onPointerDown?: (e: PointerEvent) => void;
         onPointerUp?: (e: PointerEvent) => void;
       };
@@ -169,7 +165,6 @@ declare module 'react' {
         'grace-slur'?: GraceSlur;
         // A single dynamic for the whole grace group, independent of `dynamic`.
         'grace-dynamic'?: DynamicMarking;
-        onClick?: (e: MouseEvent) => void;
         onPointerDown?: (e: PointerEvent) => void;
         onPointerUp?: (e: PointerEvent) => void;
         // Custom events (note-click, note-pointerdown, note-pointerup) require
