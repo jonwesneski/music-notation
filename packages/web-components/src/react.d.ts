@@ -46,19 +46,19 @@ declare module 'react' {
   namespace JSX {
     interface IntrinsicElements {
       'music-composition': WebComponentProps & {
-        keySig?: Note;
+        'key-sig'?: Note;
         mode?: Mode;
         time?: TimeSignature;
       };
       'music-measure': WebComponentProps & {
         number?: number;
-        keySig?: Note;
+        'key-sig'?: Note;
         mode?: Mode;
         time?: TimeSignature;
       };
       'music-staff': WebComponentProps & {
         clef?: ClefType;
-        keySig?: Note;
+        'key-sig'?: Note;
         mode?: Mode;
         time?: TimeSignature;
         editable?: boolean;
@@ -77,7 +77,7 @@ declare module 'react' {
       };
       'music-staff-vocal': WebComponentProps & {
         voice?: Voice;
-        keySig?: Note;
+        'key-sig'?: Note;
         mode?: Mode;
         time?: TimeSignature;
         editable?: boolean;

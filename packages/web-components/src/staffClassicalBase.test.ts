@@ -22,7 +22,7 @@ describe('staffClassicalBase', () => {
     const consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
 
     const staff = document.createElement(MUSIC_STAFF) as any;
-    staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
+    staff.setAttribute(COMMON_ATTRIBUTES.TIME, '4/4');
     document.body.appendChild(staff);
 
     const notes = Array.from({ length: 5 }, () => {
@@ -52,7 +52,7 @@ describe('staffClassicalBase', () => {
     const consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
 
     const staff = document.createElement(MUSIC_STAFF) as any;
-    staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
+    staff.setAttribute(COMMON_ATTRIBUTES.TIME, '4/4');
     document.body.appendChild(staff);
 
     const notes = [
@@ -239,7 +239,7 @@ describe('staffClassicalBase', () => {
 
     it('shows the time signature on a standalone staff with no measure ancestor', () => {
       const staff = document.createElement(MUSIC_STAFF) as any;
-      staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '3/4');
+      staff.setAttribute(COMMON_ATTRIBUTES.TIME, '3/4');
       document.body.appendChild(staff);
 
       expect(hasTimeSignature(staff)).toBe(true);
@@ -249,7 +249,7 @@ describe('staffClassicalBase', () => {
       const measure = document.createElement(MUSIC_MEASURE) as any;
       measure.setAttribute('number', '1');
       const staff = document.createElement(MUSIC_STAFF) as any;
-      staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
+      staff.setAttribute(COMMON_ATTRIBUTES.TIME, '4/4');
       measure.appendChild(staff);
       document.body.appendChild(measure);
 
@@ -260,7 +260,7 @@ describe('staffClassicalBase', () => {
       const measure = document.createElement(MUSIC_MEASURE) as any;
       measure.setAttribute('number', '2');
       const staff = document.createElement(MUSIC_STAFF) as any;
-      staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
+      staff.setAttribute(COMMON_ATTRIBUTES.TIME, '4/4');
       measure.appendChild(staff);
       document.body.appendChild(measure);
 
@@ -271,7 +271,7 @@ describe('staffClassicalBase', () => {
       const measure = document.createElement(MUSIC_MEASURE) as any;
       measure.setAttribute('number', '2');
       const staff = document.createElement(MUSIC_STAFF) as any;
-      staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '3/4');
+      staff.setAttribute(COMMON_ATTRIBUTES.TIME, '3/4');
       measure.appendChild(staff);
       document.body.appendChild(measure);
 

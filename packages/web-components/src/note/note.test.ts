@@ -1039,7 +1039,7 @@ function makeStaff(): Element {
   const staff = document.createElement(MUSIC_STAFF) as any;
   staff.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'C');
   staff.setAttribute(COMMON_ATTRIBUTES.MODE, 'major');
-  staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
+  staff.setAttribute(COMMON_ATTRIBUTES.TIME, '4/4');
   document.body.appendChild(staff);
   return staff;
 }
@@ -1147,10 +1147,7 @@ describe('staff integration', () => {
     const consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
 
     const staff = document.createElement(MUSIC_STAFF) as any;
-    staff.setAttribute(
-      COMMON_ATTRIBUTES.TIME_SIG,
-      '4/2' satisfies TimeSignature
-    );
+    staff.setAttribute(COMMON_ATTRIBUTES.TIME, '4/2' satisfies TimeSignature);
     document.body.appendChild(staff);
 
     const note = document.createElement(MUSIC_NOTE) as any;
@@ -1229,10 +1226,7 @@ describe('staff integration', () => {
       const staff = document.createElement(MUSIC_STAFF) as any;
       staff.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'D' satisfies Note);
       staff.setAttribute(COMMON_ATTRIBUTES.MODE, 'major');
-      staff.setAttribute(
-        COMMON_ATTRIBUTES.TIME_SIG,
-        '4/4' satisfies TimeSignature
-      );
+      staff.setAttribute(COMMON_ATTRIBUTES.TIME, '4/4' satisfies TimeSignature);
       document.body.appendChild(staff);
 
       // In D major F# is in the key signature: no symbol on a grace F#4.

@@ -46,7 +46,7 @@ export default function StandAlone() {
       </Card>
       <Card title="Grand Staff">
         <music-composition>
-          <music-measure keySig="C" mode="major" time="4/4">
+          <music-measure key-sig="C" mode="major" time="4/4">
             <music-staff clef="treble" group="grand">
               <music-note note="C" duration="quarter"></music-note>
               <music-note note="E" duration="quarter"></music-note>

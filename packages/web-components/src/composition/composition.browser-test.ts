@@ -1116,7 +1116,7 @@ test.describe(`${MUSIC_COMPOSITION} responsive layout`, () => {
         lyricsTag: MUSIC_LYRICS,
         keySigAttr: COMMON_ATTRIBUTES.KEY_SIG,
         modeAttr: COMMON_ATTRIBUTES.MODE,
-        timeSigAttr: COMMON_ATTRIBUTES.TIME_SIG,
+        timeSigAttr: COMMON_ATTRIBUTES.TIME,
       }
     );
     await waitForRedrawCycle(page);

@@ -2,6 +2,7 @@ import { resolveStaffGroups } from '../rules/staffGroupRules';
 import { minWidthToFlexGrow } from '../rules/staffWidth';
 import type { StaffElementBaseType } from '../types/elements';
 import {
+  COMMON_ATTRIBUTES,
   createBraceSvg,
   createBracketSvg,
   isStaffNodeName,
@@ -49,7 +50,7 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
    *
    * @customElement music-measure
    * @attr {number} number - Bar number shown above the measure.
-   * @attr {Note} keysig - Overrides the inherited key-signature tonic from this bar on.
+   * @attr {Note} key-sig - Overrides the inherited key-signature tonic from this bar on.
    * @attr {'major' | 'minor'} mode - Overrides the inherited key-signature mode.
    * @attr {TimeSignature} time - Overrides the inherited time signature from this bar on.
    *
@@ -62,7 +63,12 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
    */
   class MeasureElement extends HTMLElement {
     static get observedAttributes(): string[] {
-      return ['number', 'keysig', 'mode', 'time'];
+      return [
+        'number',
+        COMMON_ATTRIBUTES.KEY_SIG,
+        COMMON_ATTRIBUTES.MODE,
+        COMMON_ATTRIBUTES.TIME,
+      ];
     }
 
     #staffConnectorObserver: ResizeObserver;
@@ -87,9 +93,10 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
       this.attachShadow({ mode: 'open' });
       const composition = this.closest(MUSIC_COMPOSITION);
       if (composition) {
-        this.time = composition.getAttribute('time') ?? '4/4';
-        this.mode = composition.getAttribute('mode') ?? 'major';
-        this.keySig = composition.getAttribute('keysig') ?? 'C';
+        this.time = composition.getAttribute(COMMON_ATTRIBUTES.TIME) ?? '4/4';
+        this.mode = composition.getAttribute(COMMON_ATTRIBUTES.MODE) ?? 'major';
+        this.keySig =
+          composition.getAttribute(COMMON_ATTRIBUTES.KEY_SIG) ?? 'C';
       }
 
       this.#boundUpdateConnectorVisibility =
@@ -111,27 +118,27 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
     }
 
     get keySig(): string {
-      return this.getAttribute('keysig') ?? 'C';
+      return this.getAttribute(COMMON_ATTRIBUTES.KEY_SIG) ?? 'C';
     }
 
     set keySig(value: string) {
-      this.setAttribute('keysig', value);
+      this.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, value);
     }
 
     get mode(): string {
-      return this.getAttribute('mode') ?? 'major';
+      return this.getAttribute(COMMON_ATTRIBUTES.MODE) ?? 'major';
     }
 
     set mode(value: string) {
-      this.setAttribute('mode', value);
+      this.setAttribute(COMMON_ATTRIBUTES.MODE, value);
     }
 
     get time(): string | null {
-      return this.getAttribute('time');
+      return this.getAttribute(COMMON_ATTRIBUTES.TIME);
     }
 
     set time(value: string) {
-      this.setAttribute('time', value);
+      this.setAttribute(COMMON_ATTRIBUTES.TIME, value);
     }
 
     connectedCallback(): void {

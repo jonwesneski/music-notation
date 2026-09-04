@@ -103,7 +103,7 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
     return [
       COMMON_ATTRIBUTES.KEY_SIG,
       COMMON_ATTRIBUTES.MODE,
-      COMMON_ATTRIBUTES.TIME_SIG,
+      COMMON_ATTRIBUTES.TIME,
       'editable',
       'managed',
       'group',
@@ -296,7 +296,7 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
   protected onConnectedCallback() {
     // Re-resolve inherited attrs now that ancestors are reachable via closest()
     this.effectiveTimeSig = this.convertTotimeInts(
-      this.resolveInheritedValue(COMMON_ATTRIBUTES.TIME_SIG, '4/4')
+      this.resolveInheritedValue(COMMON_ATTRIBUTES.TIME, '4/4')
     );
     this.#effectiveMode = this.resolveInheritedValue(
       COMMON_ATTRIBUTES.MODE,
@@ -566,7 +566,7 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
 
   refreshInheritedAttrs() {
     this.effectiveTimeSig = this.convertTotimeInts(
-      this.resolveInheritedValue(COMMON_ATTRIBUTES.TIME_SIG, '4/4')
+      this.resolveInheritedValue(COMMON_ATTRIBUTES.TIME, '4/4')
     );
     this.#effectiveMode = this.resolveInheritedValue(
       COMMON_ATTRIBUTES.MODE,
@@ -666,18 +666,18 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
         this.#enableDrag();
       }
     } else {
-      if (name === 'time') {
+      if (name === COMMON_ATTRIBUTES.TIME) {
         this.effectiveTimeSig = this.convertTotimeInts(
-          this.resolveInheritedValue('time', '4/4')
+          this.resolveInheritedValue(COMMON_ATTRIBUTES.TIME, '4/4')
         );
-      } else if (name === 'mode') {
+      } else if (name === COMMON_ATTRIBUTES.MODE) {
         this.#effectiveMode = this.resolveInheritedValue(
-          'mode',
+          COMMON_ATTRIBUTES.MODE,
           'major'
         ) as Mode;
-      } else if (name === 'keysig') {
+      } else if (name === COMMON_ATTRIBUTES.KEY_SIG) {
         this.#effectiveKeySig = this.resolveInheritedValue(
-          'keysig',
+          COMMON_ATTRIBUTES.KEY_SIG,
           'C'
         ) as Note;
       }

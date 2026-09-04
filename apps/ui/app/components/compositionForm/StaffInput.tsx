@@ -151,7 +151,7 @@ export function StaffInput({ staffId, measureId }: StaffInputProps) {
         group={staff.group ?? undefined}
         group-id={staff.groupId ?? undefined}
         className={staffClass}
-        keySig={keySig}
+        key-sig={keySig}
         mode={mode}
         time={timeSig}
         onClick={(e) => selectStaff(measureId, staffId, e)}

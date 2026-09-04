@@ -9,13 +9,13 @@ const meta: Meta = {
   render: (args) => html`
     <music-measure
       number=${args.number}
-      keySig=${args.keySig}
+      key-sig=${args.keySig}
       mode=${args.mode}
       time=${args.time}
     >
       <music-staff
         clef="treble"
-        keySig=${args.keySig}
+        key-sig=${args.keySig}
         mode=${args.mode}
         time=${args.time}
       >
@@ -26,7 +26,7 @@ const meta: Meta = {
       </music-staff>
       <music-staff
         clef="bass"
-        keySig=${args.keySig}
+        key-sig=${args.keySig}
         mode=${args.mode}
         time=${args.time}
       >
@@ -78,29 +78,29 @@ type Story = StoryObj;
 
 export const GrandStaves: Story = {
   render: () => html`
-    <music-measure number="1" keySig="C" mode="major" time="4/4">
+    <music-measure number="1" key-sig="C" mode="major" time="4/4">
       <music-staff
         clef="treble"
         group="grand"
-        keySig="C"
+        key-sig="C"
         mode="major"
         time="4/4"
       >
         <music-note note="C" duration="whole"></music-note>
       </music-staff>
-      <music-staff clef="bass" keySig="C" mode="major" time="4/4">
+      <music-staff clef="bass" key-sig="C" mode="major" time="4/4">
         <music-note note="C" duration="whole"></music-note>
       </music-staff>
       <music-staff
         clef="treble"
         group="grand"
-        keySig="C"
+        key-sig="C"
         mode="major"
         time="4/4"
       >
         <music-note note="G" duration="whole"></music-note>
       </music-staff>
-      <music-staff clef="bass" keySig="C" mode="major" time="4/4">
+      <music-staff clef="bass" key-sig="C" mode="major" time="4/4">
         <music-note note="G" duration="whole"></music-note>
       </music-staff>
     </music-measure>
@@ -109,17 +109,17 @@ export const GrandStaves: Story = {
 
 export const GroupBracketWithoutGroupId: Story = {
   render: () => html`
-    <music-measure number="1" keySig="C" mode="major" time="4/4">
+    <music-measure number="1" key-sig="C" mode="major" time="4/4">
       <music-staff
         clef="treble"
         group="bracket"
-        keySig="C"
+        key-sig="C"
         mode="major"
         time="4/4"
       >
         <music-note note="C" octave="5" duration="whole"></music-note>
       </music-staff>
-      <music-staff clef="treble" keySig="C" mode="major" time="4/4">
+      <music-staff clef="treble" key-sig="C" mode="major" time="4/4">
         <music-note note="G" octave="4" duration="whole"></music-note>
       </music-staff>
     </music-measure>
@@ -128,12 +128,12 @@ export const GroupBracketWithoutGroupId: Story = {
 
 export const GroupBracket: Story = {
   render: () => html`
-    <music-measure number="1" keySig="C" mode="major" time="4/4">
+    <music-measure number="1" key-sig="C" mode="major" time="4/4">
       <music-staff
         clef="treble"
         group="bracket"
         group-id="choir"
-        keySig="C"
+        key-sig="C"
         mode="major"
         time="4/4"
       >
@@ -143,7 +143,7 @@ export const GroupBracket: Story = {
         clef="treble"
         group="bracket"
         group-id="choir"
-        keySig="C"
+        key-sig="C"
         mode="major"
         time="4/4"
       >
@@ -153,7 +153,7 @@ export const GroupBracket: Story = {
         clef="bass"
         group="bracket"
         group-id="choir"
-        keySig="C"
+        key-sig="C"
         mode="major"
         time="4/4"
       >
@@ -163,7 +163,7 @@ export const GroupBracket: Story = {
         clef="bass"
         group="bracket"
         group-id="choir"
-        keySig="C"
+        key-sig="C"
         mode="major"
         time="4/4"
       >
@@ -178,14 +178,14 @@ export const GroupBracketWithGuitarTab: Story = {
   render: (args) => html`
     <music-measure
       number=${args.number}
-      keySig=${args.keySig}
+      key-sig=${args.keySig}
       mode=${args.mode}
       time=${args.time}
     >
       <music-staff
         clef="treble"
         group="bracket"
-        keySig=${args.keySig}
+        key-sig=${args.keySig}
         mode=${args.mode}
         time=${args.time}
       >

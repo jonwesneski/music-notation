@@ -69,7 +69,7 @@ export const VoiceWithLyrics: Story = {
     return html`
       <music-staff-vocal
         voice=${args.voice}
-        keySig=${args.keySig}
+        key-sig=${args.keySig}
         mode=${args.mode}
         time=${args.time}
       >

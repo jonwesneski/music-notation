@@ -8,14 +8,14 @@ const meta: Meta = {
   tags: ['autodocs'],
   render: (args) => html`
     <music-composition
-      keySig=${args.keySig}
+      key-sig=${args.keySig}
       mode=${args.mode}
       time=${args.time}
     >
       <music-measure>
         <music-staff
           clef="treble"
-          keySig=${args.keySig}
+          key-sig=${args.keySig}
           mode=${args.mode}
           time=${args.time}
         >
@@ -28,7 +28,7 @@ const meta: Meta = {
       <music-measure>
         <music-staff
           clef="treble"
-          keySig=${args.keySig}
+          key-sig=${args.keySig}
           mode=${args.mode}
           time=${args.time}
         >
@@ -85,7 +85,7 @@ export const GrandStaff: Story = {
   args: { keySig: 'G', mode: 'major', time: '4/4' },
   render: (args) => html`
     <music-composition
-      keySig=${args.keySig}
+      key-sig=${args.keySig}
       mode=${args.mode}
       time=${args.time}
     >
@@ -93,7 +93,7 @@ export const GrandStaff: Story = {
         <music-staff
           clef="treble"
           group="grand"
-          keySig=${args.keySig}
+          key-sig=${args.keySig}
           mode=${args.mode}
           time=${args.time}
         >
@@ -104,7 +104,7 @@ export const GrandStaff: Story = {
         </music-staff>
         <music-staff
           clef="bass"
-          keySig=${args.keySig}
+          key-sig=${args.keySig}
           mode=${args.mode}
           time=${args.time}
         >
@@ -116,7 +116,7 @@ export const GrandStaff: Story = {
         <music-staff
           clef="treble"
           group="grand"
-          keySig=${args.keySig}
+          key-sig=${args.keySig}
           mode=${args.mode}
           time=${args.time}
         >
@@ -127,7 +127,7 @@ export const GrandStaff: Story = {
         </music-staff>
         <music-staff
           clef="bass"
-          keySig=${args.keySig}
+          key-sig=${args.keySig}
           mode=${args.mode}
           time=${args.time}
         >
@@ -139,7 +139,7 @@ export const GrandStaff: Story = {
         <music-staff
           clef="treble"
           group="grand"
-          keySig=${args.keySig}
+          key-sig=${args.keySig}
           mode=${args.mode}
           time=${args.time}
         >
@@ -150,7 +150,7 @@ export const GrandStaff: Story = {
         </music-staff>
         <music-staff
           clef="bass"
-          keySig=${args.keySig}
+          key-sig=${args.keySig}
           mode=${args.mode}
           time=${args.time}
         >
@@ -162,7 +162,7 @@ export const GrandStaff: Story = {
         <music-staff
           clef="treble"
           group="grand"
-          keySig=${args.keySig}
+          key-sig=${args.keySig}
           mode=${args.mode}
           time=${args.time}
         >
@@ -173,7 +173,7 @@ export const GrandStaff: Story = {
         </music-staff>
         <music-staff
           clef="bass"
-          keySig=${args.keySig}
+          key-sig=${args.keySig}
           mode=${args.mode}
           time=${args.time}
         >
@@ -185,7 +185,7 @@ export const GrandStaff: Story = {
         <music-staff
           clef="treble"
           group="grand"
-          keySig=${args.keySig}
+          key-sig=${args.keySig}
           mode=${args.mode}
           time=${args.time}
         >
@@ -196,7 +196,7 @@ export const GrandStaff: Story = {
         </music-staff>
         <music-staff
           clef="bass"
-          keySig=${args.keySig}
+          key-sig=${args.keySig}
           mode=${args.mode}
           time=${args.time}
         >
@@ -208,7 +208,7 @@ export const GrandStaff: Story = {
         <music-staff
           clef="treble"
           group="grand"
-          keySig=${args.keySig}
+          key-sig=${args.keySig}
           mode=${args.mode}
           time=${args.time}
         >
@@ -219,7 +219,7 @@ export const GrandStaff: Story = {
         </music-staff>
         <music-staff
           clef="bass"
-          keySig=${args.keySig}
+          key-sig=${args.keySig}
           mode=${args.mode}
           time=${args.time}
         >
@@ -235,14 +235,14 @@ export const WithCrossMeasureTie: Story = {
   args: { keySig: 'C', mode: 'major', time: '4/4' },
   render: (args) => html`
     <music-composition
-      keySig=${args.keySig}
+      key-sig=${args.keySig}
       mode=${args.mode}
       time=${args.time}
     >
       <music-measure>
         <music-staff
           clef="treble"
-          keySig=${args.keySig}
+          key-sig=${args.keySig}
           mode=${args.mode}
           time=${args.time}
         >
@@ -260,7 +260,7 @@ export const WithCrossMeasureTie: Story = {
       <music-measure>
         <music-staff
           clef="treble"
-          keySig=${args.keySig}
+          key-sig=${args.keySig}
           mode=${args.mode}
           time=${args.time}
         >
@@ -283,14 +283,14 @@ export const WithCrossRowTie: Story = {
   render: (args) => html`
     <div style="max-width: 420px;">
       <music-composition
-        keySig=${args.keySig}
+        key-sig=${args.keySig}
         mode=${args.mode}
         time=${args.time}
       >
         <music-measure>
           <music-staff
             clef="treble"
-            keySig=${args.keySig}
+            key-sig=${args.keySig}
             mode=${args.mode}
             time=${args.time}
           >
@@ -308,7 +308,7 @@ export const WithCrossRowTie: Story = {
         <music-measure>
           <music-staff
             clef="treble"
-            keySig=${args.keySig}
+            key-sig=${args.keySig}
             mode=${args.mode}
             time=${args.time}
           >
@@ -329,9 +329,9 @@ export const WithCrossRowTie: Story = {
 export const WithCrossSystemHairpin: Story = {
   render: () => html`
     <div style="max-width: 200px;">
-      <music-composition keySig="C" mode="major" time="4/4">
+      <music-composition key-sig="C" mode="major" time="4/4">
         <music-measure>
-          <music-staff clef="treble" keySig="C" mode="major" time="4/4">
+          <music-staff clef="treble" key-sig="C" mode="major" time="4/4">
             <music-note
               note="C"
               octave="5"
@@ -345,7 +345,7 @@ export const WithCrossSystemHairpin: Story = {
           </music-staff>
         </music-measure>
         <music-measure>
-          <music-staff clef="treble" keySig="C" mode="major" time="4/4">
+          <music-staff clef="treble" key-sig="C" mode="major" time="4/4">
             <music-note note="G" octave="5" duration="quarter"></music-note>
             <music-note note="A" octave="5" duration="quarter"></music-note>
             <music-note note="B" octave="5" duration="quarter"></music-note>
@@ -366,7 +366,7 @@ export const WithCrossSystemHairpin: Story = {
 export const CourtesyClefAtRowWrap: Story = {
   render: () => html`
     <div style="max-width: 150px;">
-      <music-composition keySig="C" mode="major" time="4/4">
+      <music-composition key-sig="C" mode="major" time="4/4">
         <music-measure>
           <music-staff clef="treble">
             <music-note note="C" duration="whole"></music-note>

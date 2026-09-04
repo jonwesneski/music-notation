@@ -88,7 +88,7 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
     }
 
     static get observedAttributes(): string[] {
-      return [COMMON_ATTRIBUTES.TIME_SIG, 'group', 'group-id'];
+      return [COMMON_ATTRIBUTES.TIME, 'group', 'group-id'];
     }
 
     // No time-signature glyph to render (tab notation doesn't show one), so
@@ -102,9 +102,9 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
       if (oldValue === newValue) {
         return;
       }
-      if (name === COMMON_ATTRIBUTES.TIME_SIG) {
+      if (name === COMMON_ATTRIBUTES.TIME) {
         this.effectiveTimeSig = this.convertTotimeInts(
-          this.resolveInheritedValue(COMMON_ATTRIBUTES.TIME_SIG, '4/4')
+          this.resolveInheritedValue(COMMON_ATTRIBUTES.TIME, '4/4')
         );
       } else if (name === 'group' || name === 'group-id') {
         this.dispatchGroupAttributeChange();
@@ -115,14 +115,14 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
     // `time` only — guitar tab has no keySig/mode concept.
     refreshInheritedAttrs() {
       this.effectiveTimeSig = this.convertTotimeInts(
-        this.resolveInheritedValue(COMMON_ATTRIBUTES.TIME_SIG, '4/4')
+        this.resolveInheritedValue(COMMON_ATTRIBUTES.TIME, '4/4')
       );
     }
 
     protected onConnectedCallback() {
       // Re-resolve now that ancestors are reachable via closest()
       this.effectiveTimeSig = this.convertTotimeInts(
-        this.resolveInheritedValue(COMMON_ATTRIBUTES.TIME_SIG, '4/4')
+        this.resolveInheritedValue(COMMON_ATTRIBUTES.TIME, '4/4')
       );
 
       this.#describeContainer.setAttribute('class', 'describe-container');

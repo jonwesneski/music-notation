@@ -772,7 +772,7 @@
                 "text": "Note"
               },
               "description": "Key-signature tonic inherited by child measures/staves (e.g. `C`, `F#`, `Bb`). Defaults to `C`.",
-              "name": "keysig"
+              "name": "key-sig"
             },
             {
               "type": {
@@ -1093,25 +1093,25 @@
               "description": "Bar number shown above the measure."
             },
             {
-              "name": "keysig",
               "type": {
                 "text": "Note"
               },
-              "description": "Overrides the inherited key-signature tonic from this bar on."
+              "description": "Overrides the inherited key-signature tonic from this bar on.",
+              "name": "key-sig"
             },
             {
-              "name": "mode",
               "type": {
                 "text": "'major' | 'minor'"
               },
-              "description": "Overrides the inherited key-signature mode."
+              "description": "Overrides the inherited key-signature mode.",
+              "name": "mode"
             },
             {
-              "name": "time",
               "type": {
                 "text": "TimeSignature"
               },
-              "description": "Overrides the inherited time signature from this bar on."
+              "description": "Overrides the inherited time signature from this bar on.",
+              "name": "time"
             }
           ],
           "superclass": {
@@ -2967,7 +2967,7 @@
                 "text": "Note"
               },
               "description": "Key-signature tonic (e.g. `C`, `F#`, `Bb`). Inherited from a parent measure/composition when unset.",
-              "name": "keysig"
+              "name": "key-sig"
             },
             {
               "type": {
@@ -5229,7 +5229,7 @@
                 "text": "Note"
               },
               "description": "Key-signature tonic. Inherited from a parent measure/composition when unset.",
-              "name": "keysig"
+              "name": "key-sig"
             },
             {
               "type": {

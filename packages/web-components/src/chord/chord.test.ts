@@ -728,7 +728,7 @@ function makeStaff(): Element {
   const staff = document.createElement(MUSIC_STAFF) as any;
   staff.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'C');
   staff.setAttribute(COMMON_ATTRIBUTES.MODE, 'major');
-  staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
+  staff.setAttribute(COMMON_ATTRIBUTES.TIME, '4/4');
   document.body.appendChild(staff);
   return staff;
 }

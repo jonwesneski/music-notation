@@ -12,7 +12,7 @@ const meta: Meta = {
   render: (args) => html`
     <music-staff
       clef=${args.clef}
-      keySig=${args.keySig}
+      key-sig=${args.keySig}
       mode=${args.mode}
       time=${args.time}
     >
@@ -60,7 +60,7 @@ export const BassClef: Story = {
   render: (args) => html`
     <music-staff
       clef=${args.clef}
-      keySig=${args.keySig}
+      key-sig=${args.keySig}
       mode=${args.mode}
       time=${args.time}
     >
@@ -77,7 +77,7 @@ export const WithBeamedEighthNotes: Story = {
   render: (args) => html`
     <music-staff
       clef=${args.clef}
-      keySig=${args.keySig}
+      key-sig=${args.keySig}
       mode=${args.mode}
       time=${args.time}
     >
@@ -98,7 +98,7 @@ export const ThreeQuarterTime: Story = {
   render: (args) => html`
     <music-staff
       clef=${args.clef}
-      keySig=${args.keySig}
+      key-sig=${args.keySig}
       mode=${args.mode}
       time=${args.time}
     >
@@ -114,7 +114,7 @@ export const WithLedgerLines: Story = {
   render: (args) => html`
     <music-staff
       clef=${args.clef}
-      keySig=${args.keySig}
+      key-sig=${args.keySig}
       mode=${args.mode}
       time="6/4"
     >
@@ -139,7 +139,7 @@ export const WithAccidentals: Story = {
   render: (args) => html`
     <music-staff
       clef=${args.clef}
-      keySig=${args.keySig}
+      key-sig=${args.keySig}
       mode=${args.mode}
       time=${args.time}
     >
@@ -162,7 +162,7 @@ export const WithTriplets: Story = {
   render: (args) => html`
     <music-staff
       clef=${args.clef}
-      keySig=${args.keySig}
+      key-sig=${args.keySig}
       mode=${args.mode}
       time=${args.time}
     >
@@ -195,7 +195,7 @@ export const WithDynamics: Story = {
     dynamic4: { control: 'select', options: DYNAMICS },
   },
   render: (args) => html`
-    <music-staff clef="treble" keySig="C" mode="major" time="4/4">
+    <music-staff clef="treble" key-sig="C" mode="major" time="4/4">
       <music-note
         duration="quarter"
         note="C"
@@ -258,7 +258,7 @@ export const WithDynamicsAndHairpin: Story = {
     decrescendo4: { control: 'select', options: HAIRPIN_ROLES },
   },
   render: (args) => html`
-    <music-staff clef="treble" keySig="C" mode="major" time="4/4">
+    <music-staff clef="treble" key-sig="C" mode="major" time="4/4">
       <music-note
         duration="quarter"
         note="C"
@@ -278,7 +278,7 @@ export const WithDynamicsAndHairpin: Story = {
     </music-staff>
     <music-staff
       clef="treble"
-      keySig="C"
+      key-sig="C"
       mode="major"
       time="4/4"
       style="margin-top: 1rem"
@@ -308,7 +308,7 @@ export const WithQuintuplet: Story = {
   render: (args) => html`
     <music-staff
       clef=${args.clef}
-      keySig=${args.keySig}
+      key-sig=${args.keySig}
       mode=${args.mode}
       time=${args.time}
     >
@@ -358,7 +358,7 @@ export const SingleMeasure: Story = {
   render: (args) => html`
     <music-staff
       clef=${args.clef}
-      keySig=${args.keySig}
+      key-sig=${args.keySig}
       mode=${args.mode}
       time=${args.time}
     >
@@ -375,7 +375,7 @@ export const WithTies: Story = {
   render: (args) => html`
     <music-staff
       clef=${args.clef}
-      keySig=${args.keySig}
+      key-sig=${args.keySig}
       mode=${args.mode}
       time=${args.time}
     >
@@ -402,7 +402,7 @@ export const WithSlurs: Story = {
   render: (args) => html`
     <music-staff
       clef=${args.clef}
-      keySig=${args.keySig}
+      key-sig=${args.keySig}
       mode=${args.mode}
       time=${args.time}
     >
@@ -433,7 +433,7 @@ export const WithNestedSlurs: Story = {
   render: (args) => html`
     <music-staff
       clef=${args.clef}
-      keySig=${args.keySig}
+      key-sig=${args.keySig}
       mode=${args.mode}
       time=${args.time}
     >
@@ -464,7 +464,7 @@ export const ChordWithPartialTie: Story = {
   render: (args) => html`
     <music-staff
       clef=${args.clef}
-      keySig=${args.keySig}
+      key-sig=${args.keySig}
       mode=${args.mode}
       time=${args.time}
     >
@@ -492,7 +492,7 @@ export const ChordWithTie: Story = {
   render: (args) => html`
     <music-staff
       clef=${args.clef}
-      keySig=${args.keySig}
+      key-sig=${args.keySig}
       mode=${args.mode}
       time=${args.time}
     >
@@ -515,7 +515,7 @@ export const ChordWithSlur: Story = {
   render: (args) => html`
     <music-staff
       clef=${args.clef}
-      keySig=${args.keySig}
+      key-sig=${args.keySig}
       mode=${args.mode}
       time=${args.time}
     >

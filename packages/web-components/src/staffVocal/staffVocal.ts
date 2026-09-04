@@ -38,7 +38,7 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
    *
    * @customElement music-staff-vocal
    * @attr {'soprano' | 'mezzo' | 'alto' | 'tenor' | 'baritone' | 'bass'} voice - Voice type, which selects the clef and range. Defaults to `soprano`.
-   * @attr {Note} keysig - Key-signature tonic. Inherited from a parent measure/composition when unset.
+   * @attr {Note} key-sig - Key-signature tonic. Inherited from a parent measure/composition when unset.
    * @attr {'major' | 'minor'} mode - Key-signature mode. Inherited when unset. Defaults to `major`.
    * @attr {TimeSignature} time - Beats per measure. Inherited when unset.
    * @attr {boolean} editable - Enables pitch and timing drag interactions on slotted notes.
@@ -47,7 +47,7 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
    * @attr {string} group-id - Shared identifier letting a `group="bracket"` connector span more than two contiguous staves.
    *
    * @example
-   * <music-staff-vocal voice="tenor" keysig="G" mode="major" time="4/4">
+   * <music-staff-vocal voice="tenor" key-sig="G" mode="major" time="4/4">
    *   <music-note note="G" octave="4" duration="quarter"></music-note>
    *   <music-note note="A" octave="4" duration="quarter"></music-note>
    *   <music-lyrics verse="1">A-men</music-lyrics>

@@ -120,7 +120,7 @@ function CompositionFormBody({
       </div>
 
       <DragSelectOverlay>
-        <music-composition keySig={keySig} mode={mode} time={timeSig}>
+        <music-composition key-sig={keySig} mode={mode} time={timeSig}>
           {measureOrder.map((measureId) => (
             <MeasureInput key={measureId} measureId={measureId} />
           ))}

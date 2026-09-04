@@ -40,12 +40,12 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
    * unless overridden lower down.
    *
    * @customElement music-composition
-   * @attr {Note} keysig - Key-signature tonic inherited by child measures/staves (e.g. `C`, `F#`, `Bb`). Defaults to `C`.
+   * @attr {Note} key-sig - Key-signature tonic inherited by child measures/staves (e.g. `C`, `F#`, `Bb`). Defaults to `C`.
    * @attr {'major' | 'minor'} mode - Key-signature mode. Defaults to `major`.
    * @attr {TimeSignature} time - Beats per measure (e.g. `4/4`, `6/8`). Defaults to `4/4`.
    *
    * @example
-   * <music-composition keysig="G" mode="major" time="4/4">
+   * <music-composition key-sig="G" mode="major" time="4/4">
    *   <music-measure>
    *     <music-staff clef="treble">
    *       <music-note note="G" octave="4" duration="quarter"></music-note>
@@ -60,7 +60,7 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
       return [
         COMMON_ATTRIBUTES.KEY_SIG,
         COMMON_ATTRIBUTES.MODE,
-        COMMON_ATTRIBUTES.TIME_SIG,
+        COMMON_ATTRIBUTES.TIME,
       ];
     }
 
@@ -95,11 +95,11 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
     }
 
     get time(): string {
-      return this.getAttribute(COMMON_ATTRIBUTES.TIME_SIG) ?? '4/4';
+      return this.getAttribute(COMMON_ATTRIBUTES.TIME) ?? '4/4';
     }
 
     set time(value: string) {
-      this.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, value);
+      this.setAttribute(COMMON_ATTRIBUTES.TIME, value);
     }
 
     connectedCallback(): void {
@@ -131,7 +131,11 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
         return;
       }
       this.render();
-      if (name === 'keysig' || name === 'mode' || name === 'time') {
+      if (
+        name === COMMON_ATTRIBUTES.KEY_SIG ||
+        name === COMMON_ATTRIBUTES.MODE ||
+        name === COMMON_ATTRIBUTES.TIME
+      ) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any -- duck-typed call to avoid cross-module import
         Array.from(this.querySelectorAll(STAFF_TAGS)).forEach((staff) =>
           (staff as any).refreshInheritedAttrs?.()
@@ -642,7 +646,7 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
       ) as HTMLElement[];
       measures.forEach((measure, index) => {
         if (index === 0) {
-          measure.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, this.time);
+          measure.setAttribute(COMMON_ATTRIBUTES.TIME, this.time);
         }
         measure.setAttribute('number', (index + 1).toString());
       });

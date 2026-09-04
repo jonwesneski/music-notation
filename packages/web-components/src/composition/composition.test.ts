@@ -46,7 +46,7 @@ describe(`${MUSIC_COMPOSITION} attribute propagation`, () => {
     return { composition, measure, staff };
   }
 
-  it('propagates keysig change to a descendant treble staff', () => {
+  it('propagates key-sig change to a descendant treble staff', () => {
     const { composition, staff } = makeTree('treble');
 
     expect(staff.keySig).toBe('C');
@@ -71,12 +71,12 @@ describe(`${MUSIC_COMPOSITION} attribute propagation`, () => {
 
     expect(staff.time).toBe('4/4');
 
-    composition.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '3/4');
+    composition.setAttribute(COMMON_ATTRIBUTES.TIME, '3/4');
 
     expect(staff.time).toBe('3/4');
   });
 
-  it('propagates keysig change to a descendant bass staff', () => {
+  it('propagates key-sig change to a descendant bass staff', () => {
     const { composition, staff } = makeTree('bass');
 
     expect(staff.keySig).toBe('C');
@@ -86,7 +86,7 @@ describe(`${MUSIC_COMPOSITION} attribute propagation`, () => {
     expect(staff.keySig).toBe('Bb');
   });
 
-  it('respects a staff-level keysig override over the composition value', () => {
+  it('respects a staff-level key-sig override over the composition value', () => {
     const { composition, staff } = makeTree('treble');
     staff.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'D');
 
@@ -97,8 +97,8 @@ describe(`${MUSIC_COMPOSITION} attribute propagation`, () => {
     expect(staff.keySig).toBe('D');
   });
 
-  it('respects a measure-level keysig override over the composition value', () => {
-    // Set the measure's keysig BEFORE the staff connects so #resolveInheritedValue
+  it('respects a measure-level key-sig override over the composition value', () => {
+    // Set the measure's key-sig BEFORE the staff connects so #resolveInheritedValue
     // picks it up during onConnectedCallback.
     const composition = document.createElement(MUSIC_COMPOSITION) as any;
     document.body.appendChild(composition);

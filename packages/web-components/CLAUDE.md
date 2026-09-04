@@ -186,7 +186,7 @@ Features land in one of two shapes; steps are tagged accordingly:
     wiring differs: add to `COMMON_ATTRIBUTES`, to `observedAttributes` (a static, per-concrete-class
     member — there's no shared list), add an `#effectiveX` field + `resolveInheritedValue()` calls
     (see Staff Class Hierarchy below), and the descendant push loop in `composition.ts`. Two
-    variants: `keysig`/`mode` are **classical-only** inherited attrs, still wired on
+    variants: `key-sig`/`mode` are **classical-only** inherited attrs, still wired on
     `StaffClassicalElementBase` exactly as before. `time` is different — it's inherited by
     **every** staff type via `StaffElementBase` (see below), so a new attribute that should apply
     universally (not just to classical staves) belongs there instead, following `time`'s pattern:

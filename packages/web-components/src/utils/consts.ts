@@ -87,9 +87,9 @@ export const STAFF_EVENTS = {
 } as const;
 
 export const COMMON_ATTRIBUTES = {
-  KEY_SIG: 'keysig',
+  KEY_SIG: 'key-sig',
   MODE: 'mode',
-  TIME_SIG: 'time',
+  TIME: 'time',
   //todo
   //TEMPO: tempo,
 } as const;

@@ -57,7 +57,7 @@ function makeStaff(clef: ClefType = 'treble'): any {
   element.setAttribute('clef', clef);
   element.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'C');
   element.setAttribute(COMMON_ATTRIBUTES.MODE, 'major');
-  element.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
+  element.setAttribute(COMMON_ATTRIBUTES.TIME, '4/4');
   document.body.appendChild(element);
   return element;
 }
@@ -294,7 +294,7 @@ describe(`${MUSIC_STAFF} clef changes`, () => {
 
   it('drops and hides a clef marker whose anchor note is truncated by measure overflow', () => {
     const staff = makeStaff('treble');
-    staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '1/4');
+    staff.setAttribute(COMMON_ATTRIBUTES.TIME, '1/4');
 
     const note1 = document.createElement(MUSIC_NOTE) as NoteElementType;
     note1.setAttribute('duration', 'quarter');
