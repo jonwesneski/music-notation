@@ -1147,6 +1147,147 @@ test.describe(`${MUSIC_COMPOSITION} responsive layout`, () => {
     ]);
   });
 
+  test('after a full remount that wraps to a second row: clef + key sig repeat per row, time signature stays on measure 1 only', async ({
+    page,
+  }) => {
+    // Build one wide row (D major so the key signature has visible content).
+    await page.evaluate(
+      ({
+        compositionTag,
+        measureTag,
+        staffTag,
+        noteTag,
+        keySigAttr,
+        modeAttr,
+      }) => {
+        const host = document.getElementById('host');
+        if (host === null) {
+          throw new Error('host missing');
+        }
+        host.innerHTML = '';
+        // Narrow enough that the remounted 6 measures below wrap; kept constant
+        // for the whole test so no host resize is involved.
+        host.style.width = '640px';
+        const composition = document.createElement(compositionTag);
+        composition.setAttribute(keySigAttr, 'D');
+        composition.setAttribute(modeAttr, 'major');
+        for (let m = 0; m < 2; m++) {
+          const measure = document.createElement(measureTag);
+          const staff = document.createElement(staffTag);
+          staff.setAttribute('clef', 'treble');
+          for (let n = 0; n < 4; n++) {
+            const note = document.createElement(noteTag);
+            note.setAttribute('note', 'D4');
+            note.setAttribute('duration', 'quarter');
+            staff.appendChild(note);
+          }
+          measure.appendChild(staff);
+          composition.appendChild(measure);
+        }
+        host.appendChild(composition);
+      },
+      {
+        compositionTag: MUSIC_COMPOSITION,
+        measureTag: MUSIC_MEASURE,
+        staffTag: MUSIC_STAFF,
+        noteTag: MUSIC_NOTE,
+        keySigAttr: COMMON_ATTRIBUTES.KEY_SIG,
+        modeAttr: COMMON_ATTRIBUTES.MODE,
+      }
+    );
+    await waitForRedrawCycle(page);
+    await waitForRedrawCycle(page);
+
+    // Full remount (what a rebar does): drop every measure and add fresh ones.
+    // 6 measures at 640px wrap to a second row on their own — no host resize.
+    await page.evaluate(
+      ({ compositionTag, measureTag, staffTag, noteTag }) => {
+        const composition = document.querySelector(compositionTag);
+        if (composition == null) {
+          throw new Error('composition missing');
+        }
+        composition.querySelectorAll(measureTag).forEach((m) => m.remove());
+        for (let m = 0; m < 6; m++) {
+          const measure = document.createElement(measureTag);
+          const staff = document.createElement(staffTag);
+          staff.setAttribute('clef', 'treble');
+          for (let n = 0; n < 4; n++) {
+            const note = document.createElement(noteTag);
+            note.setAttribute('note', 'D4');
+            note.setAttribute('duration', 'quarter');
+            staff.appendChild(note);
+          }
+          measure.appendChild(staff);
+          composition.appendChild(measure);
+        }
+      },
+      {
+        compositionTag: MUSIC_COMPOSITION,
+        measureTag: MUSIC_MEASURE,
+        staffTag: MUSIC_STAFF,
+        noteTag: MUSIC_NOTE,
+      }
+    );
+    await waitForRedrawCycle(page);
+    await waitForRedrawCycle(page);
+
+    const rows = await page.evaluate(
+      ({ compositionTag, measureTag, staffTag }) => {
+        const measures = Array.from(
+          document
+            .querySelector(compositionTag)
+            ?.querySelectorAll(measureTag) ?? []
+        ) as HTMLElement[];
+        const grouped: {
+          top: number;
+          cells: { clef: boolean; keySig: boolean; timeSig: boolean }[];
+        }[] = [];
+        for (const measure of measures) {
+          const top = Math.round(measure.getBoundingClientRect().top);
+          const staff = measure.querySelector(staffTag);
+          const describe = staff?.shadowRoot?.querySelector(
+            '.describe-container'
+          );
+          const cell = {
+            clef: describe?.querySelector('svg.clef') != null,
+            keySig:
+              (describe?.querySelector('.key-signature')?.childElementCount ??
+                0) > 0,
+            timeSig: describe?.querySelector('.time-signature') != null,
+          };
+          const row = grouped.find((r) => Math.abs(r.top - top) <= 5);
+          if (row === undefined) {
+            grouped.push({ top, cells: [cell] });
+          } else {
+            row.cells.push(cell);
+          }
+        }
+        return grouped.map((r) => r.cells);
+      },
+      {
+        compositionTag: MUSIC_COMPOSITION,
+        measureTag: MUSIC_MEASURE,
+        staffTag: MUSIC_STAFF,
+      }
+    );
+
+    expect(rows.length).toBeGreaterThanOrEqual(2);
+    rows.forEach((row, rowIndex) => {
+      // Clef + key signature repeat on the first measure of every row.
+      expect(row[0].clef).toBe(true);
+      expect(row[0].keySig).toBe(true);
+      for (let i = 1; i < row.length; i++) {
+        expect(row[i].clef).toBe(false);
+        expect(row[i].keySig).toBe(false);
+      }
+      // Time signature only on the very first measure of the piece — never
+      // repeated per row.
+      row.forEach((cell, colIndex) => {
+        expect(cell.timeSig).toBe(rowIndex === 0 && colIndex === 0);
+      });
+    });
+  });
+
   test('all measures share the same row when composition is inside a flex justify-center container (regression for 1-measure-per-row bug)', async ({
     page,
   }) => {
