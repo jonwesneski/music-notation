@@ -8,6 +8,7 @@ import { ConnectorInput } from './ConnectorInput';
 import { isConnectableSelection } from './connectors';
 import { EntryEditInput } from './EntryEditInput';
 import { GraceInput } from './GraceInput';
+import { availableForDuration, fittingDurations } from './measureCapacity';
 import { StaffGroupInput } from './StaffGroupInput';
 import { StaffInput } from './StaffInput';
 import { TupletInput } from './TupletInput';
@@ -23,6 +24,7 @@ interface MeasureInputProps {
 export function MeasureInput({ measureId }: MeasureInputProps) {
   const { watch } = useFormContext<CompositionFormValues>();
   const measure = watch(`measuresById.${measureId}`);
+  const timeSig = watch('timeSig');
   const { session, selectMeasure, registerMeasureRef, setConnector } =
     useCompositionFormSession();
   const structure = useCompositionStructure();
@@ -113,7 +115,15 @@ export function MeasureInput({ measureId }: MeasureInputProps) {
   } else if (editableEntry) {
     tabs.push({
       label: 'Edit',
-      content: <EntryEditInput entry={editableEntry} />,
+      content: (
+        <EntryEditInput
+          entry={editableEntry}
+          durationOptions={fittingDurations(
+            availableForDuration(structure, timeSig, editableEntry.id),
+            editableEntry.duration
+          )}
+        />
+      ),
     });
     if (editableEntry.type !== 'rest') {
       tabs.push({

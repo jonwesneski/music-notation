@@ -1,3 +1,5 @@
+import { Button } from '@/design-system';
+import { useUndoRedo } from '@/hooks/useUndoRedo';
 import '@one-step-at-a-time/web-components';
 import type {
   StaffGroupType,
@@ -10,8 +12,6 @@ import {
   useFormContext,
   useWatch,
 } from 'react-hook-form';
-import { Button } from '@/design-system';
-import { useUndoRedo } from '@/hooks/useUndoRedo';
 import { BasicInfoInput } from './BasicInfoInput';
 import {
   CompositionFormSessionProvider,
@@ -319,7 +319,7 @@ export function CompositionInput() {
 
   function updateEntry(entry: MusicEntry) {
     const s = getStructure();
-    const next = applyEntryUpdate(s, entry);
+    const next = applyEntryUpdate(s, entry, methods.getValues('timeSig'));
     if (next !== s) {
       record(next);
     }

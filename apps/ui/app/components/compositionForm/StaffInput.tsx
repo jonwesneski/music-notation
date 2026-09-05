@@ -46,7 +46,11 @@ export function StaffInput({ staffId, measureId }: StaffInputProps) {
 
   const entries = staff.entryIds.map((eid) => entriesById[eid]);
 
-  const remainingBeats = remainingDuration(entries, timeSig);
+  const remainingBeats = remainingDuration(
+    entries,
+    timeSig,
+    structure.tupletsById
+  );
   const add = (entry: DraftMusicEntry) => addEntry(measureId, staffId, entry);
 
   const staffClass = `cursor-pointer rounded transition-shadow ${

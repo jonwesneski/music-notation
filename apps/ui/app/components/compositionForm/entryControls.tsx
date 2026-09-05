@@ -77,16 +77,18 @@ export function OctaveSelect({
 export function DurationSelect({
   value,
   onChange,
+  options = DURATIONS,
 }: {
   value: DurationType;
   onChange: (value: DurationType) => void;
+  options?: readonly DurationType[];
 }) {
   return (
     <Select
       value={value}
       onChange={(e) => onChange(e.target.value as DurationType)}
     >
-      {DURATIONS.map((d) => (
+      {options.map((d) => (
         <option key={d} value={d}>
           {d}
         </option>

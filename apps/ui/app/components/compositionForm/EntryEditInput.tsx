@@ -15,11 +15,15 @@ import type { PitchedEntry } from './types';
 
 interface EntryEditInputProps {
   entry: PitchedEntry;
+  durationOptions: readonly DurationType[];
 }
 
 const labelClass = 'text-xs font-medium text-zinc-500';
 
-export function EntryEditInput({ entry }: EntryEditInputProps) {
+export function EntryEditInput({
+  entry,
+  durationOptions,
+}: EntryEditInputProps) {
   const { updateEntry } = useCompositionFormSession();
 
   return (
@@ -62,6 +66,7 @@ export function EntryEditInput({ entry }: EntryEditInputProps) {
         <span className={labelClass}>Duration</span>
         <DurationSelect
           value={entry.duration}
+          options={durationOptions}
           onChange={(duration: DurationType) =>
             updateEntry({ ...entry, duration })
           }

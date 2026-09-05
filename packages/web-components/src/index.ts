@@ -1,18 +1,19 @@
 import './chord';
-import './composition';
-import './tuplet';
-import './measure';
-import './staffGuitarTab';
-import './staff'; // order of import matters for some reason, otherwise <note> can't find gYCoordinate()
-import './staffVocal';
 import './clef';
+import './composition';
+import './measure';
+import './staff'; // order of import matters for some reason, otherwise <note> can't find gYCoordinate()
+import './staffGuitarTab';
+import './staffVocal';
+import './tuplet';
 
 import './guitarNote';
 import './note';
 import './rest';
 
 export { durationToFactor } from './rules/theoryConsts';
-export * from './types/theory';
+export { parseTupletRatio } from './rules/tupletRules';
+export type { ParsedTupletRatio } from './rules/tupletRules';
 export type {
   ConnectorRole,
   GraceArticulationsType,
@@ -20,6 +21,7 @@ export type {
   GraceOctavesType,
   GuitarFret,
 } from './types/elements';
+export * from './types/theory';
 export type { PitchChangeDetail } from './utils/pitchDragHandler';
 
 /**
