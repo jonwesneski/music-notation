@@ -1,5 +1,7 @@
-import { useFormContext } from 'react-hook-form';
 import { Select, TextInput } from '@/design-system';
+import type { TimeSignature } from '@one-step-at-a-time/web-components';
+import { useFormContext, useWatch } from 'react-hook-form';
+import { useCompositionFormSession } from './CompositionFormSessionContext';
 import {
   KEY_SIGNATURE_OPTIONS,
   MODE_OPTIONS,
@@ -10,7 +12,9 @@ import {
 const labelClass = 'text-xs font-medium text-zinc-500 mb-0.5';
 
 export function BasicInfoInput() {
-  const { register } = useFormContext<CompositionFormValues>();
+  const { register, control } = useFormContext<CompositionFormValues>();
+  const { requestMeterChange } = useCompositionFormSession();
+  const timeSig = useWatch({ control, name: 'timeSig' });
 
   return (
     <div className="flex flex-wrap gap-4 items-end">
@@ -32,7 +36,16 @@ export function BasicInfoInput() {
 
       <div className="flex flex-col">
         <label className={labelClass}>Time</label>
-        <Select className="w-full" {...register('timeSig')}>
+        <Select
+          className="w-full"
+          value={timeSig}
+          onChange={(e) =>
+            requestMeterChange({
+              scope: 'composition',
+              timeSig: e.target.value as TimeSignature,
+            })
+          }
+        >
           {TIME_SIGNATURE_OPTIONS.map((time) => (
             <option key={time} value={time}>
               {time}

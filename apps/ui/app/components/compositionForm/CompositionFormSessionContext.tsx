@@ -1,5 +1,6 @@
 import type {
   StaffGroupType,
+  TimeSignature,
   TupletRatio,
 } from '@one-step-at-a-time/web-components';
 import {
@@ -21,9 +22,16 @@ import type {
 } from './types';
 import { EMPTY_SELECTION, isSelectionEmpty } from './types';
 
+// A meter change the user picked but hasn't confirmed — the MeterChangeDialog is
+// open on it, asking rewrite / signature-only / cancel.
+export type PendingMeterChange =
+  | { scope: 'composition'; timeSig: TimeSignature }
+  | { scope: 'measure'; measureId: string; timeSig: TimeSignature | null };
+
 export type CompositionFormSession = {
   entryPanelTab: string | null;
   selection: Selection;
+  pendingMeterChange: PendingMeterChange | null;
 };
 
 type CompositionFormSessionContextValue = {
@@ -72,6 +80,9 @@ type CompositionFormSessionContextValue = {
     family: ConnectorKind[]
   ) => void;
   setTuplet: (entryIds: string[], ratio: TupletRatio | null) => void;
+  requestMeterChange: (request: PendingMeterChange) => void;
+  confirmMeterChange: (rewrite: boolean) => void;
+  cancelMeterChange: () => void;
 };
 
 const CompositionFormSessionContext =
@@ -100,6 +111,12 @@ type CompositionFormSessionProviderProps = {
     family: ConnectorKind[]
   ) => void;
   onSetTuplet: (entryIds: string[], ratio: TupletRatio | null) => void;
+  onSetCompositionMeter: (timeSig: TimeSignature, rewrite: boolean) => void;
+  onSetMeasureMeter: (
+    measureId: string,
+    timeSig: TimeSignature | null,
+    rewrite: boolean
+  ) => void;
   children: React.ReactNode;
 };
 
@@ -114,11 +131,14 @@ export function CompositionFormSessionProvider({
   onUpdateEntry,
   onSetConnector,
   onSetTuplet,
+  onSetCompositionMeter,
+  onSetMeasureMeter,
   children,
 }: CompositionFormSessionProviderProps) {
   const [session, setSessionState] = useState<CompositionFormSession>({
     entryPanelTab: null,
     selection: EMPTY_SELECTION,
+    pendingMeterChange: null,
   });
   const setSession = useCallback(
     (patch: Partial<CompositionFormSession>) =>
@@ -223,6 +243,40 @@ export function CompositionFormSessionProvider({
     setSession({ selection: EMPTY_SELECTION });
   }, [session.selection, getStructure, recordStructure, setSession]);
 
+  const requestMeterChange = useCallback(
+    (request: PendingMeterChange) =>
+      setSession({ pendingMeterChange: request }),
+    [setSession]
+  );
+  const cancelMeterChange = useCallback(
+    () => setSession({ pendingMeterChange: null }),
+    [setSession]
+  );
+  const confirmMeterChange = useCallback(
+    (rewrite: boolean) => {
+      const pending = session.pendingMeterChange;
+      if (!pending) {
+        return;
+      }
+      if (pending.scope === 'composition') {
+        onSetCompositionMeter(pending.timeSig, rewrite);
+      } else {
+        onSetMeasureMeter(pending.measureId, pending.timeSig, rewrite);
+      }
+      setSession({
+        pendingMeterChange: null,
+        // rebar mints fresh measure/staff ids
+        ...(rewrite ? { selection: EMPTY_SELECTION } : {}),
+      });
+    },
+    [
+      session.pendingMeterChange,
+      onSetCompositionMeter,
+      onSetMeasureMeter,
+      setSession,
+    ]
+  );
+
   return (
     <CompositionFormSessionContext
       value={{
@@ -243,6 +297,9 @@ export function CompositionFormSessionProvider({
         updateEntry: onUpdateEntry,
         setConnector: onSetConnector,
         setTuplet: onSetTuplet,
+        requestMeterChange,
+        confirmMeterChange,
+        cancelMeterChange,
       }}
     >
       {children}

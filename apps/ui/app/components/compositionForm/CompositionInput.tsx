@@ -3,6 +3,7 @@ import { useUndoRedo } from '@/hooks/useUndoRedo';
 import '@one-step-at-a-time/web-components';
 import type {
   StaffGroupType,
+  TimeSignature,
   TupletRatio,
 } from '@one-step-at-a-time/web-components';
 import { useCallback, useEffect } from 'react';
@@ -25,6 +26,8 @@ import {
 import { DragSelectOverlay } from './DragSelectOverlay';
 import { applyEntryUpdate } from './entryEdits';
 import { MeasureInput } from './MeasureInput';
+import { MeterChangeDialog } from './MeterChangeDialog';
+import { rebar } from './rebar';
 import { findGroupMembers } from './staffGroups';
 import { setTuplet as setTupletInStructure } from './tuplets';
 import type {
@@ -133,6 +136,8 @@ function CompositionFormBody({
           </Button>
         </music-composition>
       </DragSelectOverlay>
+
+      <MeterChangeDialog />
     </div>
   );
 }
@@ -142,8 +147,8 @@ export function CompositionInput() {
     defaultValues: {
       title: '',
       keySig: 'C',
-      timeSig: '4/4',
       mode: 'major',
+      timeSig: '4/4',
       measureOrder: [firstMeasureId],
       measuresById: { [firstMeasureId]: { id: firstMeasureId, staffIds: [] } },
       stavesById: {},
@@ -156,6 +161,7 @@ export function CompositionInput() {
 
   const getStructure = useCallback(
     (): CompositionStructure => ({
+      timeSig: methods.getValues('timeSig'),
       measureOrder: methods.getValues('measureOrder'),
       measuresById: methods.getValues('measuresById'),
       stavesById: methods.getValues('stavesById'),
@@ -169,6 +175,7 @@ export function CompositionInput() {
 
   const setStructure = useCallback(
     (s: CompositionStructure) => {
+      methods.setValue('timeSig', s.timeSig);
       methods.setValue('measureOrder', s.measureOrder);
       methods.setValue('measuresById', s.measuresById);
       methods.setValue('stavesById', s.stavesById);
@@ -319,7 +326,7 @@ export function CompositionInput() {
 
   function updateEntry(entry: MusicEntry) {
     const s = getStructure();
-    const next = applyEntryUpdate(s, entry, methods.getValues('timeSig'));
+    const next = applyEntryUpdate(s, entry);
     if (next !== s) {
       record(next);
     }
@@ -349,6 +356,36 @@ export function CompositionInput() {
     record(setTupletInStructure(getStructure(), entryIds, ratio));
   }
 
+  // A meter change either re-bars the affected region (`rewrite`) — one undo step
+  // covering the whole reflow — or applies "signature only", leaving the notes as
+  // they are (now-overfull measures are flagged in the editor, nothing is lost).
+  function setCompositionMeter(timeSig: TimeSignature, rewrite: boolean) {
+    const s = getStructure();
+    const withMeter = { ...s, timeSig };
+    record(rewrite ? rebar(withMeter, 0) : withMeter);
+  }
+
+  function setMeasureMeter(
+    measureId: string,
+    timeSig: TimeSignature | null,
+    rewrite: boolean
+  ) {
+    const s = getStructure();
+    const measure = s.measuresById[measureId];
+    if (!measure) {
+      return;
+    }
+    const withMeter: CompositionStructure = {
+      ...s,
+      measuresById: {
+        ...s.measuresById,
+        [measureId]: { ...measure, time: timeSig },
+      },
+    };
+    const measureIndex = s.measureOrder.indexOf(measureId);
+    record(rewrite ? rebar(withMeter, measureIndex) : withMeter);
+  }
+
   return (
     <CompositionFormSessionProvider
       getStructure={getStructure}
@@ -360,6 +397,8 @@ export function CompositionInput() {
       onUpdateEntry={updateEntry}
       onSetConnector={setConnector}
       onSetTuplet={setTuplet}
+      onSetCompositionMeter={setCompositionMeter}
+      onSetMeasureMeter={setMeasureMeter}
     >
       <FormProvider {...methods}>
         <CompositionFormBody

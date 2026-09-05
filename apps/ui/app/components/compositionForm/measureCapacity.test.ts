@@ -35,6 +35,7 @@ function buildStructure(
   tupletsById: Record<string, NormalizedTuplet> = {}
 ): CompositionStructure {
   return {
+    timeSig: '4/4',
     measureOrder: ['m1'],
     measuresById: { m1: { id: 'm1', staffIds: ['s1'] } },
     stavesById: {

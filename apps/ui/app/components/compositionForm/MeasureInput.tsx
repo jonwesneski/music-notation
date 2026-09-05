@@ -8,14 +8,22 @@ import { ConnectorInput } from './ConnectorInput';
 import { isConnectableSelection } from './connectors';
 import { EntryEditInput } from './EntryEditInput';
 import { GraceInput } from './GraceInput';
-import { availableForDuration, fittingDurations } from './measureCapacity';
+import {
+  availableForDuration,
+  fittingDurations,
+  remainingDuration,
+} from './measureCapacity';
+import { MeasureMeterInput } from './MeasureMeterInput';
 import { StaffGroupInput } from './StaffGroupInput';
 import { StaffInput } from './StaffInput';
 import { TupletInput } from './TupletInput';
 import { tupletCandidate } from './tuplets';
 import type { CompositionFormValues } from './types';
 import { isSingleEntrySelection } from './types';
-import { useCompositionStructure } from './useCompositionStructure';
+import {
+  useCompositionStructure,
+  useMeasureMeters,
+} from './useCompositionStructure';
 
 interface MeasureInputProps {
   measureId: string;
@@ -24,12 +32,23 @@ interface MeasureInputProps {
 export function MeasureInput({ measureId }: MeasureInputProps) {
   const { watch } = useFormContext<CompositionFormValues>();
   const measure = watch(`measuresById.${measureId}`);
-  const timeSig = watch('timeSig');
   const { session, selectMeasure, registerMeasureRef, setConnector } =
     useCompositionFormSession();
   const structure = useCompositionStructure();
+  const meter = useMeasureMeters().get(measureId) ?? structure.timeSig;
 
   const isMeasureSelected = session.selection.measureIds.includes(measureId);
+  const isOverfull = measure.staffIds.some((sid) => {
+    const staff = structure.stavesById[sid];
+    return (
+      staff !== undefined &&
+      remainingDuration(
+        staff.entryIds.map((id) => structure.entriesById[id]),
+        meter,
+        structure.tupletsById
+      ) < -1e-9
+    );
+  });
   const containsSelectedStaff = measure.staffIds.some((id) =>
     session.selection.staffIds.includes(id)
   );
@@ -82,6 +101,17 @@ export function MeasureInput({ measureId }: MeasureInputProps) {
       label: 'Add Staff',
       content: <AddStaffInput measureId={measureId} />,
     });
+    tabs.push({
+      label: 'Time Signature',
+      content: (
+        <MeasureMeterInput
+          measureId={measureId}
+          measure={measure}
+          meter={meter}
+          isFirstMeasure={structure.measureOrder[0] === measureId}
+        />
+      ),
+    });
   }
   if (isGroupableSelection) {
     tabs.push({
@@ -119,7 +149,7 @@ export function MeasureInput({ measureId }: MeasureInputProps) {
         <EntryEditInput
           entry={editableEntry}
           durationOptions={fittingDurations(
-            availableForDuration(structure, timeSig, editableEntry.id),
+            availableForDuration(structure, meter, editableEntry.id),
             editableEntry.duration
           )}
         />
@@ -144,7 +174,7 @@ export function MeasureInput({ measureId }: MeasureInputProps) {
       ref={(el: HTMLElement | null) => registerMeasureRef(measureId, el)}
       className={`cursor-pointer rounded transition-shadow ${
         isMeasureSelected ? 'rainbow-selected' : ''
-      } ${
+      } ${isOverfull ? 'outline-2 outline-red-500' : ''} ${
         isMeasureSelected ||
         containsSelectedStaff ||
         connectorEndpoints ||
@@ -155,13 +185,23 @@ export function MeasureInput({ measureId }: MeasureInputProps) {
       }`}
       onClick={() => selectMeasure(measureId)}
     >
+      {isOverfull && (
+        <div className="text-red-600 text-xs px-2 pt-1 select-none">
+          More notes than fit this time signature — trailing notes are hidden.
+        </div>
+      )}
       {measure.staffIds.length === 0 && (
         <div className="text-zinc-400 text-sm px-3 py-4 select-none">
           Tap or click here and use the dropdown to add a staff
         </div>
       )}
       {measure.staffIds.map((staffId) => (
-        <StaffInput key={staffId} staffId={staffId} measureId={measureId} />
+        <StaffInput
+          key={staffId}
+          staffId={staffId}
+          measureId={measureId}
+          meter={meter}
+        />
       ))}
       {tabs.length > 0 && <AnchoredTabPanel tabs={tabs} />}
     </music-measure>

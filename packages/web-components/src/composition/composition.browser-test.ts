@@ -923,6 +923,25 @@ test.describe(`${MUSIC_COMPOSITION} responsive layout`, () => {
     }, MUSIC_MEASURE);
   }
 
+  async function getTimeSignatureTextPerMeasure(
+    page: import('@playwright/test').Page
+  ): Promise<(string | null)[]> {
+    return page.evaluate((measureTag) => {
+      const measures = Array.from(
+        document.querySelectorAll(measureTag)
+      ) as HTMLElement[];
+      return measures.map((m) => {
+        const staff = Array.from(m.children).find(
+          (el) => el.nodeName === 'MUSIC-STAFF'
+        );
+        return (
+          staff?.shadowRoot?.querySelector('.time-signature')?.textContent ??
+          null
+        );
+      });
+    }, MUSIC_MEASURE);
+  }
+
   test('time signature only renders on the first measure when the time signature never changes', async ({
     page,
   }) => {
@@ -981,6 +1000,151 @@ test.describe(`${MUSIC_COMPOSITION} responsive layout`, () => {
     // not the boundary flag) and true on every later measure whose time
     // differs from its predecessor.
     expect(timeChangeAtBoundaryPerMeasure).toEqual([false, true, true]);
+  });
+
+  test('time signature reappears (with the new meter) after measure 1 is replaced by a fresh node (rebar remount)', async ({
+    page,
+  }) => {
+    await buildTimeSignatureComposition(page, ['4/4', '4/4']);
+    expect(await getTimeSignatureTextPerMeasure(page)).toEqual(['44', null]);
+
+    // Replace measure 1 with a brand-new node carrying a *different* meter —
+    // what a rebar does. Its staff connects before the composition's
+    // MutationObserver writes `number`, so the "first measure" glyph only
+    // survives if that decision is made from live DOM position, not `number`.
+    await page.evaluate(
+      ({ compositionTag, measureTag, staffTag, noteTag }) => {
+        const composition = document.querySelector(compositionTag);
+        const oldFirst = composition?.querySelector(measureTag);
+        if (composition == null || oldFirst == null) {
+          throw new Error('composition/measure missing');
+        }
+        const measure = document.createElement(measureTag);
+        const staff = document.createElement(staffTag);
+        staff.setAttribute('clef', 'treble');
+        staff.setAttribute('time', '3/4');
+        const note = document.createElement(noteTag);
+        note.setAttribute('note', 'C');
+        note.setAttribute('octave', '5');
+        note.setAttribute('duration', 'half');
+        staff.appendChild(note);
+        measure.appendChild(staff);
+        composition.replaceChild(measure, oldFirst);
+      },
+      {
+        compositionTag: MUSIC_COMPOSITION,
+        measureTag: MUSIC_MEASURE,
+        staffTag: MUSIC_STAFF,
+        noteTag: MUSIC_NOTE,
+      }
+    );
+    await waitForRedrawCycle(page);
+    await waitForRedrawCycle(page);
+
+    // Measure 1 shows the remounted meter (3/4); measure 2 now shows 4/4 as a
+    // real mid-piece change at the barline.
+    expect(await getTimeSignatureTextPerMeasure(page)).toEqual(['34', '44']);
+  });
+
+  test('grand-staff first measure keeps its time signature through a multi-measure remount', async ({
+    page,
+  }) => {
+    // A grand staff in each measure; the reported failure was a rebar to 1/4
+    // that remounted several such measures at once.
+    await page.evaluate(
+      ({ compositionTag, measureTag, staffTag, noteTag, clefs, times }) => {
+        const host = document.getElementById('host');
+        if (host === null) {
+          throw new Error('host missing');
+        }
+        host.innerHTML = '';
+        host.style.width = '900px';
+        const composition = document.createElement(compositionTag);
+        times.forEach((time) => {
+          const measure = document.createElement(measureTag);
+          clefs.forEach((clef) => {
+            const staff = document.createElement(staffTag);
+            staff.setAttribute('clef', clef);
+            staff.setAttribute('time', time);
+            const note = document.createElement(noteTag);
+            note.setAttribute('note', 'C');
+            note.setAttribute('octave', '4');
+            note.setAttribute('duration', 'whole');
+            staff.appendChild(note);
+            measure.appendChild(staff);
+          });
+          composition.appendChild(measure);
+        });
+        host.appendChild(composition);
+      },
+      {
+        compositionTag: MUSIC_COMPOSITION,
+        measureTag: MUSIC_MEASURE,
+        staffTag: MUSIC_STAFF,
+        noteTag: MUSIC_NOTE,
+        clefs: ['treble', 'bass'],
+        times: ['4/4'],
+      }
+    );
+    await waitForRedrawCycle(page);
+    await waitForRedrawCycle(page);
+
+    // Replace the one measure and append two more fresh 1/4 measures in one
+    // commit (3 measures, uniform meter).
+    await page.evaluate(
+      ({ compositionTag, measureTag, staffTag, noteTag, clefs }) => {
+        const composition = document.querySelector(compositionTag);
+        const oldFirst = composition?.querySelector(measureTag);
+        if (composition == null || oldFirst == null) {
+          throw new Error('composition/measure missing');
+        }
+        const makeMeasure = () => {
+          const measure = document.createElement(measureTag);
+          clefs.forEach((clef) => {
+            const staff = document.createElement(staffTag);
+            staff.setAttribute('clef', clef);
+            staff.setAttribute('time', '1/4');
+            const note = document.createElement(noteTag);
+            note.setAttribute('note', 'C');
+            note.setAttribute('octave', '4');
+            note.setAttribute('duration', 'quarter');
+            staff.appendChild(note);
+            measure.appendChild(staff);
+          });
+          return measure;
+        };
+        composition.replaceChild(makeMeasure(), oldFirst);
+        composition.appendChild(makeMeasure());
+        composition.appendChild(makeMeasure());
+      },
+      {
+        compositionTag: MUSIC_COMPOSITION,
+        measureTag: MUSIC_MEASURE,
+        staffTag: MUSIC_STAFF,
+        noteTag: MUSIC_NOTE,
+        clefs: ['treble', 'bass'],
+      }
+    );
+    await waitForRedrawCycle(page);
+    await waitForRedrawCycle(page);
+
+    const perMeasure = await page.evaluate((measureTag) => {
+      return Array.from(document.querySelectorAll(measureTag)).map((m) =>
+        Array.from(m.children)
+          .filter((el) => el.nodeName === 'MUSIC-STAFF')
+          .map(
+            (s) =>
+              s.shadowRoot?.querySelector('.time-signature')?.textContent ??
+              null
+          )
+      );
+    }, MUSIC_MEASURE);
+
+    expect(perMeasure).toEqual([
+      ['14', '14'],
+      [null, null],
+      [null, null],
+    ]);
   });
 
   test('all measures share the same row when composition is inside a flex justify-center container (regression for 1-measure-per-row bug)', async ({

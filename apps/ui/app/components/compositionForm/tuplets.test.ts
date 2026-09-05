@@ -21,6 +21,7 @@ const note = (id: string, tupletId?: string | null): MusicEntry => ({
 
 function buildStructure(): CompositionStructure {
   return {
+    timeSig: '4/4',
     measureOrder: ['m1'],
     measuresById: { m1: { id: 'm1', staffIds: ['s1', 's2'] } },
     stavesById: {

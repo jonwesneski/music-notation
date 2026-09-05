@@ -1,12 +1,15 @@
+import type { TimeSignature } from '@one-step-at-a-time/web-components';
 import { useMemo } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import type { ConnectorEntryAttributes } from './connectors';
 import { resolveConnectorAttributes } from './connectors';
+import { effectiveMeters } from './timeSignatures';
 import type { CompositionFormValues, CompositionStructure } from './types';
 
 // Assembles the normalized structural slice from the form store, reactively.
 export function useCompositionStructure(): CompositionStructure {
   const { control } = useFormContext<CompositionFormValues>();
+  const timeSig = useWatch({ control, name: 'timeSig' });
   const measureOrder = useWatch({ control, name: 'measureOrder' });
   const measuresById = useWatch({ control, name: 'measuresById' });
   const stavesById = useWatch({ control, name: 'stavesById' });
@@ -17,6 +20,7 @@ export function useCompositionStructure(): CompositionStructure {
 
   return useMemo(
     () => ({
+      timeSig,
       measureOrder,
       measuresById,
       stavesById,
@@ -26,6 +30,7 @@ export function useCompositionStructure(): CompositionStructure {
       tupletsById,
     }),
     [
+      timeSig,
       measureOrder,
       measuresById,
       stavesById,
@@ -44,4 +49,13 @@ export function useConnectorAttributes(): Map<
 > {
   const structure = useCompositionStructure();
   return useMemo(() => resolveConnectorAttributes(structure), [structure]);
+}
+
+// Effective time signature of every measure, keyed by measure id.
+export function useMeasureMeters(): Map<string, TimeSignature> {
+  const structure = useCompositionStructure();
+  return useMemo(() => {
+    const meters = effectiveMeters(structure);
+    return new Map(structure.measureOrder.map((id, i) => [id, meters[i]]));
+  }, [structure]);
 }

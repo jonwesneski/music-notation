@@ -12,6 +12,7 @@ import type { CompositionStructure, Selection } from './types';
 
 function buildStructure(): CompositionStructure {
   return {
+    timeSig: '4/4',
     measureOrder: ['m1', 'm2'],
     measuresById: {
       m1: { id: 'm1', staffIds: ['s1'] },

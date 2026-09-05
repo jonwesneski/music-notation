@@ -1,4 +1,5 @@
 import '@one-step-at-a-time/web-components';
+import type { TimeSignature } from '@one-step-at-a-time/web-components';
 import { useFormContext } from 'react-hook-form';
 import { AddChordInput } from './AddChordInput';
 import { AddClefInput } from './AddClefInput';
@@ -22,14 +23,14 @@ import {
 interface StaffInputProps {
   staffId: string;
   measureId: string;
+  meter: TimeSignature;
 }
 
-export function StaffInput({ staffId, measureId }: StaffInputProps) {
+export function StaffInput({ staffId, measureId, meter }: StaffInputProps) {
   const { watch } = useFormContext<CompositionFormValues>();
   const staff = watch(`stavesById.${staffId}`);
   const entriesById = watch('entriesById');
   const keySig = watch('keySig');
-  const timeSig = watch('timeSig');
   const mode = watch('mode');
   const {
     session,
@@ -48,7 +49,7 @@ export function StaffInput({ staffId, measureId }: StaffInputProps) {
 
   const remainingBeats = remainingDuration(
     entries,
-    timeSig,
+    meter,
     structure.tupletsById
   );
   const add = (entry: DraftMusicEntry) => addEntry(measureId, staffId, entry);
@@ -157,7 +158,7 @@ export function StaffInput({ staffId, measureId }: StaffInputProps) {
         className={staffClass}
         key-sig={keySig}
         mode={mode}
-        time={timeSig}
+        time={meter}
         onClick={(e) => selectStaff(measureId, staffId, e)}
       >
         {entryNodes}

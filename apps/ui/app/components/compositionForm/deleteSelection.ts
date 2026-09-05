@@ -116,6 +116,7 @@ export function removeSelectionFromStructure(
   }
 
   return {
+    timeSig: structure.timeSig,
     measureOrder,
     measuresById,
     stavesById: cleanedStavesById,

@@ -1,9 +1,11 @@
+import type { TimeSignature } from '@one-step-at-a-time/web-components';
 import { describe, expect, it } from 'vitest';
 import { applyEntryUpdate } from './entryEdits';
 import type { CompositionStructure } from './types';
 
-function buildStructure(): CompositionStructure {
+function buildStructure(timeSig: TimeSignature = '4/4'): CompositionStructure {
   return {
+    timeSig,
     measureOrder: ['m1'],
     measuresById: { m1: { id: 'm1', staffIds: ['s1'] } },
     stavesById: {
@@ -64,33 +66,44 @@ describe('applyEntryUpdate', () => {
 describe('applyEntryUpdate — capacity clamp', () => {
   // buildStructure: s1 = [e1 quarter note, e2 half chord] → used 0.75 in 4/4
   it('applies a duration that still fits its measure verbatim', () => {
-    const structure = buildStructure();
-    const next = applyEntryUpdate(
-      structure,
-      { id: 'e1', type: 'note', value: 'C', duration: 'half' },
-      '4/4'
-    );
+    const next = applyEntryUpdate(buildStructure(), {
+      id: 'e1',
+      type: 'note',
+      value: 'C',
+      duration: 'half',
+    });
     expect(next.entriesById.e1).toMatchObject({ duration: 'half' });
   });
 
   it('clamps a duration that would overfill down to the largest that fits', () => {
-    const structure = buildStructure();
-    const next = applyEntryUpdate(
-      structure,
-      { id: 'e1', type: 'note', value: 'C', duration: 'whole' },
-      '4/4'
-    );
     // freeing e1's quarter leaves 0.5 available → whole clamps to half
+    const next = applyEntryUpdate(buildStructure(), {
+      id: 'e1',
+      type: 'note',
+      value: 'C',
+      duration: 'whole',
+    });
     expect(next.entriesById.e1).toMatchObject({ duration: 'half' });
   });
 
+  it('clamps against the measure’s own time signature', () => {
+    // 3/4 measure, freeing e1's quarter leaves 0.25 available → clamps to quarter
+    const next = applyEntryUpdate(buildStructure('3/4'), {
+      id: 'e1',
+      type: 'note',
+      value: 'C',
+      duration: 'half',
+    });
+    expect(next.entriesById.e1).toMatchObject({ duration: 'quarter' });
+  });
+
   it('leaves non-duration edits alone even when the measure is full', () => {
-    const structure = buildStructure();
-    const next = applyEntryUpdate(
-      structure,
-      { id: 'e1', type: 'note', value: 'G', duration: 'quarter' },
-      '4/4'
-    );
+    const next = applyEntryUpdate(buildStructure(), {
+      id: 'e1',
+      type: 'note',
+      value: 'G',
+      duration: 'quarter',
+    });
     expect(next.entriesById.e1).toEqual({
       id: 'e1',
       type: 'note',
@@ -101,17 +114,18 @@ describe('applyEntryUpdate — capacity clamp', () => {
 
   it('keeps the existing duration when the measure is already overfull', () => {
     const structure: CompositionStructure = {
-      ...buildStructure(),
+      ...buildStructure('3/4'),
       entriesById: {
         e1: { id: 'e1', type: 'note', value: 'C', duration: 'whole' },
         e2: { id: 'e2', type: 'note', value: 'C', duration: 'whole' },
       },
     };
-    const next = applyEntryUpdate(
-      structure,
-      { id: 'e1', type: 'note', value: 'C', duration: 'double-whole' },
-      '3/4'
-    );
+    const next = applyEntryUpdate(structure, {
+      id: 'e1',
+      type: 'note',
+      value: 'C',
+      duration: 'double-whole',
+    });
     expect(next.entriesById.e1).toMatchObject({ duration: 'whole' });
   });
 });

@@ -170,6 +170,65 @@ describe(`${MUSIC_COMPOSITION} measure numbering`, () => {
     expect(freshMeasure.getAttribute('number')).toBe('1');
   });
 
+  function measureWithStaves(...times: string[]): {
+    measure: HTMLElement;
+    staves: any[];
+  } {
+    const measure = document.createElement(MUSIC_MEASURE);
+    const staves = times.map((time) => {
+      const staff = document.createElement(MUSIC_STAFF) as any;
+      staff.setAttribute(COMMON_ATTRIBUTES.TIME, time);
+      measure.appendChild(staff);
+      return staff;
+    });
+    return { measure, staves };
+  }
+
+  const timeSigText = (staff: any): string | null =>
+    staff.shadowRoot.querySelector('.time-signature')?.textContent ?? null;
+
+  it('shows the first measure’s time signature after it is replaced by a fresh node', async () => {
+    const composition = document.createElement(MUSIC_COMPOSITION) as any;
+    document.body.appendChild(composition);
+
+    const first = measureWithStaves('4/4');
+    composition.appendChild(first.measure);
+    await flushMutations();
+    expect(timeSigText(first.staves[0])).toBe('44');
+
+    // A rebar replaces measure 1 with a brand-new node whose staff connects
+    // before the MutationObserver runs #renumberMeasures.
+    const fresh = measureWithStaves('5/4');
+    composition.replaceChild(fresh.measure, first.measure);
+    await flushMutations();
+
+    expect(fresh.measure.getAttribute('number')).toBe('1');
+    expect(timeSigText(fresh.staves[0])).toBe('54');
+  });
+
+  it('shows the time signature on both staves of a remounted grand-staff first measure', async () => {
+    const composition = document.createElement(MUSIC_COMPOSITION) as any;
+    document.body.appendChild(composition);
+
+    const original = measureWithStaves('4/4', '4/4'); // treble + bass
+    composition.appendChild(original.measure);
+    await flushMutations();
+
+    // Replace measure 1 and add two more fresh measures at once (a multi-measure
+    // rebar): measure 1 remounts as a grand staff, measures 2–3 do not show it.
+    const m1 = measureWithStaves('3/4', '3/4');
+    const m2 = measureWithStaves('3/4', '3/4');
+    const m3 = measureWithStaves('3/4', '3/4');
+    composition.replaceChild(m1.measure, original.measure);
+    composition.appendChild(m2.measure);
+    composition.appendChild(m3.measure);
+    await flushMutations();
+
+    expect(m1.staves.map(timeSigText)).toEqual(['34', '34']);
+    expect(m2.staves.map(timeSigText)).toEqual([null, null]);
+    expect(m3.staves.map(timeSigText)).toEqual([null, null]);
+  });
+
   it('renumbers remaining measures with no gap after removing a middle measure', async () => {
     const composition = document.createElement(MUSIC_COMPOSITION) as any;
     document.body.appendChild(composition);

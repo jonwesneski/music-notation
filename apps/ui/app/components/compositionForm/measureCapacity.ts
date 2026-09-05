@@ -38,7 +38,9 @@ export function measureDuration(timeSig: TimeSignature): number {
   return beats / beatType;
 }
 
-function entryFactor(
+// One entry's share of the measure budget: its duration factor, scaled by the
+// tuplet ratio when it belongs to one. Zero for clef markers.
+export function entryFactor(
   entry: MusicEntry,
   tupletsById: Record<string, NormalizedTuplet>
 ): number {

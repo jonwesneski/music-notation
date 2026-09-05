@@ -650,6 +650,21 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
         }
         measure.setAttribute('number', (index + 1).toString());
       });
+
+      // This runs from the childList MutationObserver, i.e. after a framework
+      // commit has settled the DOM. Nudge the first measure's staves to rebuild
+      // their describe area so the "first measure" time-signature glyph is
+      // correct even when they connected before the first measure took its final
+      // position (e.g. a new measure 1 inserted before the old one is removed).
+      const firstMeasure = measures[0];
+      if (firstMeasure !== undefined) {
+        Array.from(firstMeasure.children)
+          .filter((el) => isStaffNodeName(el.nodeName))
+          .forEach((staff) =>
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- duck-typed, same as attributeChangedCallback above
+            (staff as any).refreshInheritedAttrs?.()
+          );
+      }
     }
   }
 

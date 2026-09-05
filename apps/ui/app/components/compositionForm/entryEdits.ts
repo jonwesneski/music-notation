@@ -1,9 +1,9 @@
-import type { TimeSignature } from '@one-step-at-a-time/web-components';
 import {
   availableForDuration,
   durationFits,
   largestFittingDuration,
 } from './measureCapacity';
+import { meterOfEntry } from './timeSignatures';
 import type { CompositionStructure, MusicEntry } from './types';
 import { isPitchedEntry } from './types';
 
@@ -12,29 +12,30 @@ import { isPitchedEntry } from './types';
 // test; the `updateEntry` mutator in CompositionInput just wraps this in
 // `record()`.
 //
-// When `timeSig` is given, a duration that would overfill the entry's measure is
-// clamped down to the largest value that fits — the last line of defense behind
-// the filtered `DurationSelect`, so no caller can push the measure past its
-// budget (the renderer silently drops entries beyond it).
+// A duration that would overfill the entry's measure (under that measure's
+// effective time signature) is clamped down to the largest value that fits — the
+// last line of defense behind the filtered `DurationSelect`, so no caller can
+// push the measure past its budget (the renderer silently drops entries beyond
+// it).
 export function applyEntryUpdate(
   structure: CompositionStructure,
-  entry: MusicEntry,
-  timeSig?: TimeSignature
+  entry: MusicEntry
 ): CompositionStructure {
   if (!structure.entriesById[entry.id]) {
     return structure;
   }
-  const next = timeSig ? clampDuration(structure, entry, timeSig) : entry;
   return {
     ...structure,
-    entriesById: { ...structure.entriesById, [entry.id]: next },
+    entriesById: {
+      ...structure.entriesById,
+      [entry.id]: clampDuration(structure, entry),
+    },
   };
 }
 
 function clampDuration(
   structure: CompositionStructure,
-  entry: MusicEntry,
-  timeSig: TimeSignature
+  entry: MusicEntry
 ): MusicEntry {
   const current = structure.entriesById[entry.id];
   if (
@@ -44,7 +45,8 @@ function clampDuration(
   ) {
     return entry;
   }
-  const available = availableForDuration(structure, timeSig, entry.id);
+  const meter = meterOfEntry(structure, entry.id);
+  const available = availableForDuration(structure, meter, entry.id);
   if (durationFits(entry.duration, available)) {
     return entry;
   }
