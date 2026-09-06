@@ -102,10 +102,11 @@ export type DraftMusicEntry =
   | Omit<RestEntry, 'id'>
   | Omit<ClefEntry, 'id'>;
 
-// Flat normalized nodes. `time` is a sparse meter override: set only on a measure
-// where the time signature changes; absent/null means "inherit the effective
-// meter from earlier measures" (ultimately the composition `timeSig`). Measure 1
-// never carries one — its meter is the composition `timeSig`.
+// Flat normalized nodes. `time` is a sparse time signature override: set only on
+// a measure where the time signature changes; absent/null means "inherit the
+// effective time signature from earlier measures" (ultimately the composition
+// `timeSig`). Measure 1 never carries one — its time signature is the composition
+// `timeSig`.
 export type NormalizedMeasure = {
   id: string;
   staffIds: string[];
@@ -141,7 +142,8 @@ export type NormalizedConnector = {
 export type NormalizedTuplet = { id: string; ratio: TupletRatio };
 
 // The undoable structural slice. `timeSig` lives here (not just on the root form
-// values) so a meter change — which also re-bars the music — is one undo step.
+// values) so a time signature change — which also re-bars the music — is one undo
+// step.
 export type CompositionStructure = {
   timeSig: TimeSignature;
   measureOrder: string[];

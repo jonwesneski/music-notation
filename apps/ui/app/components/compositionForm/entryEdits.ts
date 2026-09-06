@@ -3,7 +3,7 @@ import {
   durationFits,
   largestFittingDuration,
 } from './measureCapacity';
-import { meterOfEntry } from './timeSignatures';
+import { timeSignatureOfEntry } from './timeSignatures';
 import type { CompositionStructure, MusicEntry } from './types';
 import { isPitchedEntry } from './types';
 
@@ -45,8 +45,8 @@ function clampDuration(
   ) {
     return entry;
   }
-  const meter = meterOfEntry(structure, entry.id);
-  const available = availableForDuration(structure, meter, entry.id);
+  const timeSignature = timeSignatureOfEntry(structure, entry.id);
+  const available = availableForDuration(structure, timeSignature, entry.id);
   if (durationFits(entry.duration, available)) {
     return entry;
   }

@@ -1,10 +1,10 @@
 import type { TimeSignature } from '@one-step-at-a-time/web-components';
 import { describe, expect, it } from 'vitest';
 import {
-  effectiveMeters,
-  meterAt,
-  meterOfEntry,
-  meterRegionAt,
+  effectiveTimeSignatures,
+  timeSignatureAt,
+  timeSignatureOfEntry,
+  timeSignatureRegionAt,
 } from './timeSignatures';
 import type { CompositionStructure, NormalizedMeasure } from './types';
 
@@ -30,10 +30,10 @@ function structureOf(
   };
 }
 
-describe('effectiveMeters', () => {
-  it('carries the composition meter forward until an override', () => {
+describe('effectiveTimeSignatures', () => {
+  it('carries the composition time signature forward until an override', () => {
     const s = structureOf('4/4', [null, null, '3/4', null, '4/4', null]);
-    expect(effectiveMeters(s)).toEqual([
+    expect(effectiveTimeSignatures(s)).toEqual([
       '4/4',
       '4/4',
       '3/4',
@@ -43,41 +43,41 @@ describe('effectiveMeters', () => {
     ]);
   });
 
-  it('is just the composition meter with no overrides', () => {
+  it('is just the composition time signature with no overrides', () => {
     const s = structureOf('6/8', [null, null, null]);
-    expect(effectiveMeters(s)).toEqual(['6/8', '6/8', '6/8']);
+    expect(effectiveTimeSignatures(s)).toEqual(['6/8', '6/8', '6/8']);
   });
 });
 
-describe('meterAt', () => {
-  it('reads one measure’s effective meter', () => {
+describe('timeSignatureAt', () => {
+  it('reads one measure’s effective time signature', () => {
     const s = structureOf('4/4', [null, '3/4', null]);
-    expect(meterAt(s, 0)).toBe('4/4');
-    expect(meterAt(s, 2)).toBe('3/4');
+    expect(timeSignatureAt(s, 0)).toBe('4/4');
+    expect(timeSignatureAt(s, 2)).toBe('3/4');
   });
 });
 
-describe('meterRegionAt', () => {
+describe('timeSignatureRegionAt', () => {
   const s = structureOf('4/4', [null, null, '3/4', null, '4/4', null]);
 
   it('spans from the composition start to the first override', () => {
-    expect(meterRegionAt(s, 0)).toEqual({ startIndex: 0, endIndex: 2 });
-    expect(meterRegionAt(s, 1)).toEqual({ startIndex: 0, endIndex: 2 });
+    expect(timeSignatureRegionAt(s, 0)).toEqual({ startIndex: 0, endIndex: 2 });
+    expect(timeSignatureRegionAt(s, 1)).toEqual({ startIndex: 0, endIndex: 2 });
   });
 
   it('spans from an override to the next override', () => {
-    expect(meterRegionAt(s, 2)).toEqual({ startIndex: 2, endIndex: 4 });
-    expect(meterRegionAt(s, 3)).toEqual({ startIndex: 2, endIndex: 4 });
+    expect(timeSignatureRegionAt(s, 2)).toEqual({ startIndex: 2, endIndex: 4 });
+    expect(timeSignatureRegionAt(s, 3)).toEqual({ startIndex: 2, endIndex: 4 });
   });
 
   it('spans from the last override to the end', () => {
-    expect(meterRegionAt(s, 4)).toEqual({ startIndex: 4, endIndex: 6 });
-    expect(meterRegionAt(s, 5)).toEqual({ startIndex: 4, endIndex: 6 });
+    expect(timeSignatureRegionAt(s, 4)).toEqual({ startIndex: 4, endIndex: 6 });
+    expect(timeSignatureRegionAt(s, 5)).toEqual({ startIndex: 4, endIndex: 6 });
   });
 });
 
-describe('meterOfEntry', () => {
-  it('is the effective meter of the entry’s measure', () => {
+describe('timeSignatureOfEntry', () => {
+  it('is the effective time signature of the entry’s measure', () => {
     const base = structureOf('4/4', [null, '3/4']);
     const s: CompositionStructure = {
       ...base,
@@ -106,8 +106,8 @@ describe('meterOfEntry', () => {
         b: { id: 'b', type: 'rest', duration: 'quarter' },
       },
     };
-    expect(meterOfEntry(s, 'a')).toBe('4/4');
-    expect(meterOfEntry(s, 'b')).toBe('3/4');
-    expect(meterOfEntry(s, 'missing')).toBe('4/4');
+    expect(timeSignatureOfEntry(s, 'a')).toBe('4/4');
+    expect(timeSignatureOfEntry(s, 'b')).toBe('3/4');
+    expect(timeSignatureOfEntry(s, 'missing')).toBe('4/4');
   });
 });

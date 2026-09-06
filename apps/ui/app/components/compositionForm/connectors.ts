@@ -285,8 +285,10 @@ export function resolveConnectorAttributes(
     patch(connector.startEntryId, role('start'));
     patch(connector.endEntryId, role('end'));
 
-    // Hairpins are paired by the library's nearest-end rule and never take
-    // id/for; only tie/slur need the explicit LIFO-stack disambiguation.
+    // Hairpins take only the role attribute: tie/slur get the id/for LIFO-stack
+    // disambiguation, hairpins rely on the library's nearest-end rule. That rule
+    // can't resolve two overlapping same-kind hairpins, so `upsertConnector`
+    // guarantees they never coexist.
     if (isHairpinKind(connector.kind)) {
       continue;
     }
@@ -310,7 +312,9 @@ export function resolveConnectorAttributes(
 // a crescendo can coexist over one pair, but not a tie and a slur — and
 // dropping any other same-kind connector that already starts at startEntryId or
 // ends at endEntryId, since the renderer allows only one role of each kind per
-// element.
+// element. For hairpins it goes further and drops any same-kind hairpin whose
+// span overlaps the new one: the library's nearest-end pairing can't resolve
+// two overlapping same-kind hairpins (see resolveConnectorAttributes).
 export function upsertConnector(
   structure: CompositionStructure,
   startEntryId: string,
@@ -319,6 +323,28 @@ export function upsertConnector(
 ): CompositionStructure {
   const sameFamily = (other: ConnectorKind) =>
     isHairpinKind(other) === isHairpinKind(kind);
+
+  const flat = flattenEntryOrder(structure);
+  const indexOf = new Map(flat.map((id, index) => [id, index]));
+  const newStart = indexOf.get(startEntryId);
+  const newEnd = indexOf.get(endEntryId);
+
+  const overlapsNewHairpinSpan = (connector: NormalizedConnector) => {
+    if (!isHairpinKind(kind) || connector.kind !== kind) {
+      return false;
+    }
+    const otherStart = indexOf.get(connector.startEntryId);
+    const otherEnd = indexOf.get(connector.endEntryId);
+    if (
+      newStart === undefined ||
+      newEnd === undefined ||
+      otherStart === undefined ||
+      otherEnd === undefined
+    ) {
+      return false;
+    }
+    return !(otherEnd < newStart || newEnd < otherStart);
+  };
 
   const removed = new Set<string>();
   for (const [id, connector] of Object.entries(structure.connectorsById)) {
@@ -330,7 +356,11 @@ export function upsertConnector(
       connector.kind === kind &&
       (connector.startEntryId === startEntryId ||
         connector.endEntryId === endEntryId);
-    if (samePair || sameKindEndpointClash) {
+    if (
+      samePair ||
+      sameKindEndpointClash ||
+      overlapsNewHairpinSpan(connector)
+    ) {
       removed.add(id);
     }
   }

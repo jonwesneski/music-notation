@@ -1,43 +1,45 @@
 import { Button, Select } from '@/design-system';
 import type { TimeSignature } from '@one-step-at-a-time/web-components';
 import { useCompositionFormSession } from './CompositionFormSessionContext';
+import { fieldLabelClass } from './formLabel';
 import type { NormalizedMeasure } from './types';
 import { TIME_SIGNATURE_OPTIONS } from './types';
 
-interface MeasureMeterInputProps {
+interface MeasureTimeInputProps {
   measureId: string;
   measure: NormalizedMeasure;
-  meter: TimeSignature;
+  timeSignature: TimeSignature;
   isFirstMeasure: boolean;
 }
 
-const labelClass = 'text-xs font-medium text-zinc-500';
-
-// Meter control for a selected measure. Measure 1's meter is the composition
-// meter, so editing it routes to the composition scope; any later measure can
-// carry its own override or clear it to inherit from earlier.
-export function MeasureMeterInput({
+// Time signature control for a selected measure. Measure 1's time signature is
+// the composition time signature, so editing it routes to the composition scope;
+// any later measure can carry its own override or clear it to inherit from
+// earlier.
+export function MeasureTimeInput({
   measureId,
   measure,
-  meter,
+  timeSignature,
   isFirstMeasure,
-}: MeasureMeterInputProps) {
-  const { requestMeterChange } = useCompositionFormSession();
+}: MeasureTimeInputProps) {
+  const { requestTimeSignatureChange } = useCompositionFormSession();
 
   const request = (timeSig: TimeSignature) => {
     if (isFirstMeasure) {
-      requestMeterChange({ scope: 'composition', timeSig });
+      requestTimeSignatureChange({ scope: 'composition', timeSig });
     } else {
-      requestMeterChange({ scope: 'measure', measureId, timeSig });
+      requestTimeSignatureChange({ scope: 'measure', measureId, timeSig });
     }
   };
 
   return (
-    <div className="flex flex-col gap-2 p-3">
+    <div className="flex flex-col gap-2">
       <label className="flex flex-col gap-0.5">
-        <span className={labelClass}>Time signature from this measure</span>
+        <span className={fieldLabelClass}>
+          Time signature from this measure
+        </span>
         <Select
-          value={meter}
+          value={timeSignature}
           onChange={(e) => request(e.target.value as TimeSignature)}
         >
           {TIME_SIGNATURE_OPTIONS.map((time) => (
@@ -53,7 +55,11 @@ export function MeasureMeterInput({
           type="button"
           variant="secondary"
           onClick={() =>
-            requestMeterChange({ scope: 'measure', measureId, timeSig: null })
+            requestTimeSignatureChange({
+              scope: 'measure',
+              measureId,
+              timeSig: null,
+            })
           }
         >
           Same as previous measure

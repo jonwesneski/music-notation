@@ -23,10 +23,14 @@ import {
 interface StaffInputProps {
   staffId: string;
   measureId: string;
-  meter: TimeSignature;
+  timeSignature: TimeSignature;
 }
 
-export function StaffInput({ staffId, measureId, meter }: StaffInputProps) {
+export function StaffInput({
+  staffId,
+  measureId,
+  timeSignature,
+}: StaffInputProps) {
   const { watch } = useFormContext<CompositionFormValues>();
   const staff = watch(`stavesById.${staffId}`);
   const entriesById = watch('entriesById');
@@ -49,7 +53,7 @@ export function StaffInput({ staffId, measureId, meter }: StaffInputProps) {
 
   const remainingBeats = remainingDuration(
     entries,
-    meter,
+    timeSignature,
     structure.tupletsById
   );
   const add = (entry: DraftMusicEntry) => addEntry(measureId, staffId, entry);
@@ -158,7 +162,7 @@ export function StaffInput({ staffId, measureId, meter }: StaffInputProps) {
         className={staffClass}
         key-sig={keySig}
         mode={mode}
-        time={meter}
+        time={timeSignature}
         onClick={(e) => selectStaff(measureId, staffId, e)}
       >
         {entryNodes}

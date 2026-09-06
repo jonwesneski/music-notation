@@ -1,19 +1,19 @@
 import { Button } from '@/design-system';
-import type { PendingMeterChange } from './CompositionFormSessionContext';
+import type { PendingTimeSignatureChange } from './CompositionFormSessionContext';
 import { useCompositionFormSession } from './CompositionFormSessionContext';
 import { remainingDuration } from './measureCapacity';
-import { effectiveMeters } from './timeSignatures';
+import { effectiveTimeSignatures } from './timeSignatures';
 import type { CompositionStructure } from './types';
 import { useCompositionStructure } from './useCompositionStructure';
 
-// The Sibelius-style prompt shown after the user picks a new meter: rewrite the
-// music to fit, apply the signature only, or cancel. Rendered by
-// CompositionFormBody off `session.pendingMeterChange`.
-export function MeterChangeDialog() {
-  const { session, confirmMeterChange, cancelMeterChange } =
+// The Sibelius-style prompt shown after the user picks a new time signature:
+// rewrite the music to fit, apply the signature only, or cancel. Rendered by
+// CompositionFormBody off `session.pendingTimeSignatureChange`.
+export function TimeSignatureChangeDialog() {
+  const { session, confirmTimeSignatureChange, cancelTimeSignatureChange } =
     useCompositionFormSession();
   const structure = useCompositionStructure();
-  const pending = session.pendingMeterChange;
+  const pending = session.pendingTimeSignatureChange;
 
   if (!pending) {
     return null;
@@ -28,7 +28,7 @@ export function MeterChangeDialog() {
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4"
-      onClick={cancelMeterChange}
+      onClick={cancelTimeSignatureChange}
     >
       <div
         className="flex w-full max-w-sm flex-col gap-3 rounded-lg bg-white p-5 shadow-xl"
@@ -47,17 +47,24 @@ export function MeterChangeDialog() {
           </p>
         )}
         <div className="flex flex-col gap-2">
-          <Button type="button" onClick={() => confirmMeterChange(true)}>
+          <Button
+            type="button"
+            onClick={() => confirmTimeSignatureChange(true)}
+          >
             Rewrite the music
           </Button>
           <Button
             type="button"
             variant="secondary"
-            onClick={() => confirmMeterChange(false)}
+            onClick={() => confirmTimeSignatureChange(false)}
           >
             Change signature only
           </Button>
-          <Button type="button" variant="secondary" onClick={cancelMeterChange}>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={cancelTimeSignatureChange}
+          >
             Cancel
           </Button>
         </div>
@@ -68,7 +75,7 @@ export function MeterChangeDialog() {
 
 function signatureOnlyOverflowCount(
   structure: CompositionStructure,
-  pending: PendingMeterChange
+  pending: PendingTimeSignatureChange
 ): number {
   const next: CompositionStructure =
     pending.scope === 'composition'
@@ -83,7 +90,7 @@ function signatureOnlyOverflowCount(
             },
           },
         };
-  const meters = effectiveMeters(next);
+  const timeSignatures = effectiveTimeSignatures(next);
   return next.measureOrder.reduce((count, id, index) => {
     const measure = next.measuresById[id];
     const overfull = measure.staffIds.some((sid) => {
@@ -92,7 +99,7 @@ function signatureOnlyOverflowCount(
         staff !== undefined &&
         remainingDuration(
           staff.entryIds.map((eid) => next.entriesById[eid]),
-          meters[index],
+          timeSignatures[index],
           next.tupletsById
         ) < -1e-9
       );

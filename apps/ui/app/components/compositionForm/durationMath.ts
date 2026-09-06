@@ -8,8 +8,8 @@ import { CAPACITY_EPSILON } from './measureCapacity';
 // The model has no augmentation dots, so a duration that isn't a single power of
 // two (e.g. a dotted-eighth 0.1875, or the 0.3125 a barline can leave) is written
 // as a tie chain of plain durations. Greedy largest-first over `DURATIONS`
-// (descending) — every meter here has a power-of-two beat type, so a factor that
-// is a multiple of a 128th always resolves exactly.
+// (descending) — every time signature here has a power-of-two beat type, so a
+// factor that is a multiple of a 128th always resolves exactly.
 export function decomposeToDurations(factor: number): DurationType[] {
   const out: DurationType[] = [];
   let remaining = factor;

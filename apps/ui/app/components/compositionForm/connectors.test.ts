@@ -231,6 +231,33 @@ describe('upsertConnector / removeConnector / connectorBetween', () => {
     ).toBe('decrescendo');
   });
 
+  it('drops an interleaving same-kind hairpin', () => {
+    let next = upsertConnector(buildStructure(), 'e1', 'e3', 'crescendo');
+    next = upsertConnector(next, 'e2', 'e4', 'crescendo');
+    expect(next.connectorOrder).toHaveLength(1);
+    expect(connectorBetween(next, 'e1', 'e3')).toBeNull();
+    expect(connectorBetween(next, 'e2', 'e4')?.kind).toBe('crescendo');
+  });
+
+  it('drops a nested same-kind hairpin', () => {
+    let next = upsertConnector(buildStructure(), 'e1', 'e4', 'crescendo');
+    next = upsertConnector(next, 'e2', 'e3', 'crescendo');
+    expect(next.connectorOrder).toHaveLength(1);
+    expect(connectorBetween(next, 'e2', 'e3')?.kind).toBe('crescendo');
+  });
+
+  it('keeps two disjoint same-kind hairpins', () => {
+    let next = upsertConnector(buildStructure(), 'e1', 'e2', 'crescendo');
+    next = upsertConnector(next, 'e3', 'e4', 'crescendo');
+    expect(next.connectorOrder).toHaveLength(2);
+  });
+
+  it('keeps an overlapping crescendo and decrescendo (different kinds)', () => {
+    let next = upsertConnector(buildStructure(), 'e1', 'e3', 'crescendo');
+    next = upsertConnector(next, 'e2', 'e4', 'decrescendo');
+    expect(next.connectorOrder).toHaveLength(2);
+  });
+
   it('removes a connector by id', () => {
     const added = upsertConnector(buildStructure(), 'e1', 'e3', 'slur');
     const [id] = added.connectorOrder;

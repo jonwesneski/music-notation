@@ -13,7 +13,7 @@ const labelClass = 'text-xs font-medium text-zinc-500 mb-0.5';
 
 export function BasicInfoInput() {
   const { register, control } = useFormContext<CompositionFormValues>();
-  const { requestMeterChange } = useCompositionFormSession();
+  const { requestTimeSignatureChange } = useCompositionFormSession();
   const timeSig = useWatch({ control, name: 'timeSig' });
 
   return (
@@ -40,7 +40,7 @@ export function BasicInfoInput() {
           className="w-full"
           value={timeSig}
           onChange={(e) =>
-            requestMeterChange({
+            requestTimeSignatureChange({
               scope: 'composition',
               timeSig: e.target.value as TimeSignature,
             })

@@ -22,16 +22,17 @@ import type {
 } from './types';
 import { EMPTY_SELECTION, isSelectionEmpty } from './types';
 
-// A meter change the user picked but hasn't confirmed — the MeterChangeDialog is
-// open on it, asking rewrite / signature-only / cancel.
-export type PendingMeterChange =
+// A time signature change the user picked but hasn't confirmed — the
+// TimeSignatureChangeDialog is open on it, asking rewrite / signature-only /
+// cancel.
+export type PendingTimeSignatureChange =
   | { scope: 'composition'; timeSig: TimeSignature }
   | { scope: 'measure'; measureId: string; timeSig: TimeSignature | null };
 
 export type CompositionFormSession = {
   entryPanelTab: string | null;
   selection: Selection;
-  pendingMeterChange: PendingMeterChange | null;
+  pendingTimeSignatureChange: PendingTimeSignatureChange | null;
 };
 
 type CompositionFormSessionContextValue = {
@@ -80,9 +81,9 @@ type CompositionFormSessionContextValue = {
     family: ConnectorKind[]
   ) => void;
   setTuplet: (entryIds: string[], ratio: TupletRatio | null) => void;
-  requestMeterChange: (request: PendingMeterChange) => void;
-  confirmMeterChange: (rewrite: boolean) => void;
-  cancelMeterChange: () => void;
+  requestTimeSignatureChange: (request: PendingTimeSignatureChange) => void;
+  confirmTimeSignatureChange: (rewrite: boolean) => void;
+  cancelTimeSignatureChange: () => void;
 };
 
 const CompositionFormSessionContext =
@@ -111,8 +112,11 @@ type CompositionFormSessionProviderProps = {
     family: ConnectorKind[]
   ) => void;
   onSetTuplet: (entryIds: string[], ratio: TupletRatio | null) => void;
-  onSetCompositionMeter: (timeSig: TimeSignature, rewrite: boolean) => void;
-  onSetMeasureMeter: (
+  onSetCompositionTimeSignature: (
+    timeSig: TimeSignature,
+    rewrite: boolean
+  ) => void;
+  onSetMeasureTimeSignature: (
     measureId: string,
     timeSig: TimeSignature | null,
     rewrite: boolean
@@ -131,14 +135,14 @@ export function CompositionFormSessionProvider({
   onUpdateEntry,
   onSetConnector,
   onSetTuplet,
-  onSetCompositionMeter,
-  onSetMeasureMeter,
+  onSetCompositionTimeSignature,
+  onSetMeasureTimeSignature,
   children,
 }: CompositionFormSessionProviderProps) {
   const [session, setSessionState] = useState<CompositionFormSession>({
     entryPanelTab: null,
     selection: EMPTY_SELECTION,
-    pendingMeterChange: null,
+    pendingTimeSignatureChange: null,
   });
   const setSession = useCallback(
     (patch: Partial<CompositionFormSession>) =>
@@ -243,36 +247,36 @@ export function CompositionFormSessionProvider({
     setSession({ selection: EMPTY_SELECTION });
   }, [session.selection, getStructure, recordStructure, setSession]);
 
-  const requestMeterChange = useCallback(
-    (request: PendingMeterChange) =>
-      setSession({ pendingMeterChange: request }),
+  const requestTimeSignatureChange = useCallback(
+    (request: PendingTimeSignatureChange) =>
+      setSession({ pendingTimeSignatureChange: request }),
     [setSession]
   );
-  const cancelMeterChange = useCallback(
-    () => setSession({ pendingMeterChange: null }),
+  const cancelTimeSignatureChange = useCallback(
+    () => setSession({ pendingTimeSignatureChange: null }),
     [setSession]
   );
-  const confirmMeterChange = useCallback(
+  const confirmTimeSignatureChange = useCallback(
     (rewrite: boolean) => {
-      const pending = session.pendingMeterChange;
+      const pending = session.pendingTimeSignatureChange;
       if (!pending) {
         return;
       }
       if (pending.scope === 'composition') {
-        onSetCompositionMeter(pending.timeSig, rewrite);
+        onSetCompositionTimeSignature(pending.timeSig, rewrite);
       } else {
-        onSetMeasureMeter(pending.measureId, pending.timeSig, rewrite);
+        onSetMeasureTimeSignature(pending.measureId, pending.timeSig, rewrite);
       }
       setSession({
-        pendingMeterChange: null,
+        pendingTimeSignatureChange: null,
         // rebar mints fresh measure/staff ids
         ...(rewrite ? { selection: EMPTY_SELECTION } : {}),
       });
     },
     [
-      session.pendingMeterChange,
-      onSetCompositionMeter,
-      onSetMeasureMeter,
+      session.pendingTimeSignatureChange,
+      onSetCompositionTimeSignature,
+      onSetMeasureTimeSignature,
       setSession,
     ]
   );
@@ -297,9 +301,9 @@ export function CompositionFormSessionProvider({
         updateEntry: onUpdateEntry,
         setConnector: onSetConnector,
         setTuplet: onSetTuplet,
-        requestMeterChange,
-        confirmMeterChange,
-        cancelMeterChange,
+        requestTimeSignatureChange,
+        confirmTimeSignatureChange,
+        cancelTimeSignatureChange,
       }}
     >
       {children}

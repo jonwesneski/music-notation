@@ -1,6 +1,5 @@
 import '@one-step-at-a-time/web-components';
 import { useFormContext } from 'react-hook-form';
-import { AddStaffInput } from './AddStaffInput';
 import { AnchoredTabPanel } from './AnchoredTabPanel';
 import { ClefEntryInput } from './ClefEntryInput';
 import { useCompositionFormSession } from './CompositionFormSessionContext';
@@ -8,12 +7,12 @@ import { ConnectorInput } from './ConnectorInput';
 import { isConnectableSelection } from './connectors';
 import { EntryEditInput } from './EntryEditInput';
 import { GraceInput } from './GraceInput';
+import { MeasureBasicInput } from './MeasureBasicInput';
 import {
   availableForDuration,
   fittingDurations,
   remainingDuration,
 } from './measureCapacity';
-import { MeasureMeterInput } from './MeasureMeterInput';
 import { StaffGroupInput } from './StaffGroupInput';
 import { StaffInput } from './StaffInput';
 import { TupletInput } from './TupletInput';
@@ -22,7 +21,7 @@ import type { CompositionFormValues } from './types';
 import { isSingleEntrySelection } from './types';
 import {
   useCompositionStructure,
-  useMeasureMeters,
+  useMeasureTimeSignatures,
 } from './useCompositionStructure';
 
 interface MeasureInputProps {
@@ -35,7 +34,8 @@ export function MeasureInput({ measureId }: MeasureInputProps) {
   const { session, selectMeasure, registerMeasureRef, setConnector } =
     useCompositionFormSession();
   const structure = useCompositionStructure();
-  const meter = useMeasureMeters().get(measureId) ?? structure.timeSig;
+  const timeSignature =
+    useMeasureTimeSignatures().get(measureId) ?? structure.timeSig;
 
   const isMeasureSelected = session.selection.measureIds.includes(measureId);
   const isOverfull = measure.staffIds.some((sid) => {
@@ -44,7 +44,7 @@ export function MeasureInput({ measureId }: MeasureInputProps) {
       staff !== undefined &&
       remainingDuration(
         staff.entryIds.map((id) => structure.entriesById[id]),
-        meter,
+        timeSignature,
         structure.tupletsById
       ) < -1e-9
     );
@@ -98,16 +98,12 @@ export function MeasureInput({ measureId }: MeasureInputProps) {
   const tabs = [];
   if (isMeasureSelected) {
     tabs.push({
-      label: 'Add Staff',
-      content: <AddStaffInput measureId={measureId} />,
-    });
-    tabs.push({
-      label: 'Time Signature',
+      label: 'Measure',
       content: (
-        <MeasureMeterInput
+        <MeasureBasicInput
           measureId={measureId}
           measure={measure}
-          meter={meter}
+          timeSignature={timeSignature}
           isFirstMeasure={structure.measureOrder[0] === measureId}
         />
       ),
@@ -149,7 +145,7 @@ export function MeasureInput({ measureId }: MeasureInputProps) {
         <EntryEditInput
           entry={editableEntry}
           durationOptions={fittingDurations(
-            availableForDuration(structure, meter, editableEntry.id),
+            availableForDuration(structure, timeSignature, editableEntry.id),
             editableEntry.duration
           )}
         />
@@ -200,7 +196,7 @@ export function MeasureInput({ measureId }: MeasureInputProps) {
           key={staffId}
           staffId={staffId}
           measureId={measureId}
-          meter={meter}
+          timeSignature={timeSignature}
         />
       ))}
       {tabs.length > 0 && <AnchoredTabPanel tabs={tabs} />}

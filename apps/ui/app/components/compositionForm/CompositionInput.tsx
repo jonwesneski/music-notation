@@ -26,9 +26,9 @@ import {
 import { DragSelectOverlay } from './DragSelectOverlay';
 import { applyEntryUpdate } from './entryEdits';
 import { MeasureInput } from './MeasureInput';
-import { MeterChangeDialog } from './MeterChangeDialog';
 import { rebar } from './rebar';
 import { findGroupMembers } from './staffGroups';
+import { TimeSignatureChangeDialog } from './TimeSignatureChangeDialog';
 import { setTuplet as setTupletInStructure } from './tuplets';
 import type {
   CompositionFormValues,
@@ -137,7 +137,7 @@ function CompositionFormBody({
         </music-composition>
       </DragSelectOverlay>
 
-      <MeterChangeDialog />
+      <TimeSignatureChangeDialog />
     </div>
   );
 }
@@ -356,16 +356,20 @@ export function CompositionInput() {
     record(setTupletInStructure(getStructure(), entryIds, ratio));
   }
 
-  // A meter change either re-bars the affected region (`rewrite`) — one undo step
-  // covering the whole reflow — or applies "signature only", leaving the notes as
-  // they are (now-overfull measures are flagged in the editor, nothing is lost).
-  function setCompositionMeter(timeSig: TimeSignature, rewrite: boolean) {
+  // A time signature change either re-bars the affected region (`rewrite`) — one
+  // undo step covering the whole reflow — or applies "signature only", leaving
+  // the notes as they are (now-overfull measures are flagged in the editor,
+  // nothing is lost).
+  function setCompositionTimeSignature(
+    timeSig: TimeSignature,
+    rewrite: boolean
+  ) {
     const s = getStructure();
-    const withMeter = { ...s, timeSig };
-    record(rewrite ? rebar(withMeter, 0) : withMeter);
+    const withTimeSignature = { ...s, timeSig };
+    record(rewrite ? rebar(withTimeSignature, 0) : withTimeSignature);
   }
 
-  function setMeasureMeter(
+  function setMeasureTimeSignature(
     measureId: string,
     timeSig: TimeSignature | null,
     rewrite: boolean
@@ -375,7 +379,7 @@ export function CompositionInput() {
     if (!measure) {
       return;
     }
-    const withMeter: CompositionStructure = {
+    const withTimeSignature: CompositionStructure = {
       ...s,
       measuresById: {
         ...s.measuresById,
@@ -383,7 +387,9 @@ export function CompositionInput() {
       },
     };
     const measureIndex = s.measureOrder.indexOf(measureId);
-    record(rewrite ? rebar(withMeter, measureIndex) : withMeter);
+    record(
+      rewrite ? rebar(withTimeSignature, measureIndex) : withTimeSignature
+    );
   }
 
   return (
@@ -397,8 +403,8 @@ export function CompositionInput() {
       onUpdateEntry={updateEntry}
       onSetConnector={setConnector}
       onSetTuplet={setTuplet}
-      onSetCompositionMeter={setCompositionMeter}
-      onSetMeasureMeter={setMeasureMeter}
+      onSetCompositionTimeSignature={setCompositionTimeSignature}
+      onSetMeasureTimeSignature={setMeasureTimeSignature}
     >
       <FormProvider {...methods}>
         <CompositionFormBody

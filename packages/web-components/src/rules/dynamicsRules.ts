@@ -52,7 +52,7 @@ export function pairHairpins(
     const noteOrChordElement = element as NoteOrChordElementType;
 
     if (crescendo === 'start') {
-      openStarts.set('crescendo', { element: noteOrChordElement, index });
+      openHairpinStart(openStarts, 'crescendo', noteOrChordElement, index);
     } else if (crescendo === 'end') {
       const start = openStarts.get('crescendo');
       if (start !== undefined) {
@@ -66,11 +66,15 @@ export function pairHairpins(
           )
         );
         openStarts.delete('crescendo');
+      } else {
+        console.warn(
+          `[dynamicsRules] orphan crescendo end (no matching start)`
+        );
       }
     }
 
     if (decrescendo === 'start') {
-      openStarts.set('decrescendo', { element: noteOrChordElement, index });
+      openHairpinStart(openStarts, 'decrescendo', noteOrChordElement, index);
     } else if (decrescendo === 'end') {
       const start = openStarts.get('decrescendo');
       if (start !== undefined) {
@@ -84,11 +88,32 @@ export function pairHairpins(
           )
         );
         openStarts.delete('decrescendo');
+      } else {
+        console.warn(
+          `[dynamicsRules] orphan decrescendo end (no matching start)`
+        );
       }
     }
   });
 
   return pairs;
+}
+
+// Only one open start per kind is representable — the model has no explicit
+// start/end pairing attribute (unlike pairConnectors' for="id"). A second
+// same-kind start before the first closes drops the first, deterministically.
+function openHairpinStart(
+  openStarts: Map<HairpinKind, OpenHairpinStart>,
+  kind: HairpinKind,
+  element: NoteOrChordElementType,
+  index: number
+): void {
+  if (openStarts.has(kind)) {
+    console.warn(
+      `[dynamicsRules] ${kind} start dropped: a second ${kind} started before the first closed`
+    );
+  }
+  openStarts.set(kind, { element, index });
 }
 
 function buildHairpinPair(

@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import type { ConnectorEntryAttributes } from './connectors';
 import { resolveConnectorAttributes } from './connectors';
-import { effectiveMeters } from './timeSignatures';
+import { effectiveTimeSignatures } from './timeSignatures';
 import type { CompositionFormValues, CompositionStructure } from './types';
 
 // Assembles the normalized structural slice from the form store, reactively.
@@ -52,10 +52,12 @@ export function useConnectorAttributes(): Map<
 }
 
 // Effective time signature of every measure, keyed by measure id.
-export function useMeasureMeters(): Map<string, TimeSignature> {
+export function useMeasureTimeSignatures(): Map<string, TimeSignature> {
   const structure = useCompositionStructure();
   return useMemo(() => {
-    const meters = effectiveMeters(structure);
-    return new Map(structure.measureOrder.map((id, i) => [id, meters[i]]));
+    const timeSignatures = effectiveTimeSignatures(structure);
+    return new Map(
+      structure.measureOrder.map((id, i) => [id, timeSignatures[i]])
+    );
   }, [structure]);
 }

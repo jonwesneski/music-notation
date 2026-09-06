@@ -6,7 +6,10 @@ import {
   entryFactor,
   measureDuration,
 } from './measureCapacity';
-import { effectiveMeters, meterRegionAt } from './timeSignatures';
+import {
+  effectiveTimeSignatures,
+  timeSignatureRegionAt,
+} from './timeSignatures';
 import { resolveTupletRuns } from './tuplets';
 import type {
   CompositionStructure,
@@ -18,7 +21,7 @@ import type {
 } from './types';
 import { isPitchedEntry } from './types';
 
-// Re-flows one meter region into measures of its (already-updated) time
+// Re-flows one time signature region into measures of its (already-updated) time
 // signature: the note stream of each staff index is concatenated and re-sliced,
 // notes that cross a new barline are split into a tie chain, and measures are
 // minted or dropped to fit. Measures outside the region are untouched — a later
@@ -38,9 +41,9 @@ export function rebar(
     return structure;
   }
   const idx = Math.max(0, Math.min(fromMeasureIndex, order.length - 1));
-  const { startIndex, endIndex } = meterRegionAt(structure, idx);
-  const meter = effectiveMeters(structure)[startIndex];
-  const capacity = measureDuration(meter);
+  const { startIndex, endIndex } = timeSignatureRegionAt(structure, idx);
+  const timeSignature = effectiveTimeSignatures(structure)[startIndex];
+  const capacity = measureDuration(timeSignature);
 
   const regionMeasureIds = order.slice(startIndex, endIndex);
   const regionMeasureIdSet = new Set(regionMeasureIds);
@@ -110,7 +113,7 @@ export function rebar(
     newMeasuresById[measureId] = {
       id: measureId,
       staffIds,
-      time: mi === 0 && startIndex > 0 ? meter : null,
+      time: mi === 0 && startIndex > 0 ? timeSignature : null,
     };
   }
 
