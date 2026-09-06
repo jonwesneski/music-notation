@@ -12,8 +12,7 @@ import { CLEF_RANGES, step, stepToPitch } from './clefsHelpers';
 // library's notationDimensions.ts `STAFF_Y_STEP` (= STAFF_LINE_SPACING / 2). The
 // staff renders vertical positions in raw CSS px — staff lines are `<div>`s
 // positioned in px, notes with `style.top` in px, no SVG viewBox scaling — so
-// one layout unit is one CSS px, the same assumption the (now removed) library
-// pitch-drag handler relied on.
+// one layout unit is one CSS px.
 export const STAFF_Y_STEP = 5;
 
 // Pointer travel (either axis) before a press on a note becomes a drag rather
