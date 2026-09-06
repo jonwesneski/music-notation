@@ -12,15 +12,17 @@ import {
 } from './rules/graceRules';
 import { computeAllowedElementCount } from './rules/measureRules';
 import { restToYCoordinate } from './rules/restRules';
-import { calculateStaffMinWidth } from './rules/staffWidth';
-import { durationToFactor } from './rules/theoryConsts';
+import { computeSpacingWeights, distributeSlack } from './rules/spacingRules';
+import {
+  calculateStaffMinWidth,
+  calculateStaffNaturalWidth,
+} from './rules/staffWidth';
 import {
   buildTupletGroups,
   computeOuterBracketBaseY,
   computeTupletBracketGeometry,
+  computeTupletScaleByIndex,
   computeTupletScaledNoteCount,
-  parseTupletRatio,
-  resolveInnermostTuplet,
   TupletBracketGeometry,
   TupletGroup,
 } from './rules/tupletRules';
@@ -76,6 +78,7 @@ import {
   KEY_SIG_FLAT_WIDTH,
   KEY_SIG_FLAT_Y_OFFSET,
   KEY_SIG_SHARP_WIDTH,
+  LEADING_NOTE_GAP_PX,
   MID_STREAM_CLEF_Y_OFFSET,
   MIN_NOTE_WIDTH,
   NOTES_AREA_LEFT_MARGIN,
@@ -125,6 +128,7 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
   #notePitchDragHandler: PitchDragHandler | null = null;
   #boundPointerDown: ((e: PointerEvent) => void) | null = null;
   #describeEndX = 0;
+  #currentSpacingSlackWeight = 0;
   #showDescribe = true;
   #clefChangeAtBoundary = false;
   #timeChangeAtBoundary = false;
@@ -159,6 +163,15 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
 
   protected get describeEndX(): number {
     return this.#describeEndX;
+  }
+
+  /**
+   * Σ of the current entries' logarithmic spacing slack weights, set on every
+   * #spaceElements() pass. StaffVocalElement reads it to compute its natural
+   * width after re-scoring against lyric widths.
+   */
+  protected get currentSpacingSlackWeight(): number {
+    return this.#currentSpacingSlackWeight;
   }
 
   get showDescribe(): boolean {
@@ -926,11 +939,16 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
         extraLeftwardWidth,
         this.#clefMarkers.length * CLEF_CHANGE_RESERVED_WIDTH_PX
       );
+      const { totalWeight } = computeSpacingWeights(
+        elements,
+        computeTupletScaleByIndex(elements, this.#tupletsByIndex)
+      );
+      const naturalWidth = calculateStaffNaturalWidth(minWidth, totalWeight);
       this.dispatchEvent(
         new CustomEvent(STAFF_EVENTS.STAFF_MIN_WIDTH, {
           bubbles: true,
           composed: false,
-          detail: { minWidth },
+          detail: { minWidth, naturalWidth },
         })
       );
     }
@@ -1105,25 +1123,41 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
       `${STAFF_TRANSCRIPTION_HEIGHT}`
     );
 
-    const [beatsInMeasure, beatType] = this.effectiveTimeSig;
-    const measureDuration = beatsInMeasure / beatType;
-
+    const tupletScaleByIndex = computeTupletScaleByIndex(
+      this.#currentElements,
+      this.#tupletsByIndex
+    );
     const scaledNoteCount = computeTupletScaledNoteCount(
       this.#currentElements,
       this.#tupletsByIndex
     );
+    const { weights, totalWeight } = computeSpacingWeights(
+      this.#currentElements,
+      tupletScaleByIndex
+    );
+    this.#currentSpacingSlackWeight = totalWeight;
+
+    // Entries are justified to fill the notes area: every entry keeps a fixed
+    // MIN_NOTE_WIDTH strut, and the width left over is shared out by each entry's
+    // logarithmic duration weight — including the trailing space after the last
+    // entry, so an underfull bar spreads rather than bunching to the left.
     const proportionalWidth =
       remainingWidth -
+      LEADING_NOTE_GAP_PX -
       scaledNoteCount * MIN_NOTE_WIDTH -
       this.#clefMarkers.length * CLEF_CHANGE_RESERVED_WIDTH_PX;
+    const slackOffsets = distributeSlack(
+      weights,
+      totalWeight,
+      proportionalWidth
+    );
 
     const clefMarkersByAfterIndex = new Map(
       this.#clefMarkers.map((marker) => [marker.afterElementIndex, marker])
     );
 
-    let beatOffset = 0;
     let minWidthAccumulator = 0;
-    let previousRightEdge = this.#describeEndX;
+    let previousRightEdge = this.#describeEndX + LEADING_NOTE_GAP_PX;
 
     // A marker before the first note/chord/rest (afterElementIndex === -1)
     // is positioned here, ahead of the loop, since there's no element index
@@ -1142,8 +1176,7 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
       const element = this.#currentElements[i];
       const duration = element.duration as DurationType;
       const xOffsetInNotesSpace =
-        minWidthAccumulator +
-        (beatOffset / measureDuration) * proportionalWidth;
+        LEADING_NOTE_GAP_PX + minWidthAccumulator + slackOffsets[i];
 
       // Position the light DOM element via inline styles
       let xInWrapper = this.#describeEndX + xOffsetInNotesSpace;
@@ -1247,23 +1280,10 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
         element.style.top = '0px';
       }
 
-      const innermostTupletForElement = resolveInnermostTuplet(
-        this.#tupletsByIndex,
-        i
-      );
-      if (innermostTupletForElement !== undefined) {
-        const { actual, normal } = parseTupletRatio(
-          innermostTupletForElement.ratio
-        );
-        beatOffset += durationToFactor[duration] * (normal / actual);
-        minWidthAccumulator += MIN_NOTE_WIDTH * (normal / actual);
-      } else {
-        beatOffset += durationToFactor[duration];
-        minWidthAccumulator += MIN_NOTE_WIDTH;
-      }
+      minWidthAccumulator += MIN_NOTE_WIDTH * (tupletScaleByIndex.get(i) ?? 1);
 
       // A marker following this element (afterElementIndex === i) is
-      // zero-duration — it does not advance beatOffset — but does reserve
+      // zero-duration — it does not consume spacing slack — but does reserve
       // horizontal space, same as MIN_NOTE_WIDTH does for a real note.
       const trailingClefMarker = clefMarkersByAfterIndex.get(i);
       if (trailingClefMarker) {

@@ -49,6 +49,7 @@ declare module 'react' {
         'key-sig'?: Note;
         mode?: Mode;
         time?: TimeSignature;
+        'max-width'?: number | 'none';
       };
       'music-measure': WebComponentProps & {
         number?: number;

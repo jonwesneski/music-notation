@@ -2,6 +2,7 @@
  * @jest-environment jsdom
  */
 import '../note/index';
+import { makeNote } from '../test-fixtures/unitHelpers';
 import '../tuplet/index';
 import type {
   ChordElementType,
@@ -11,7 +12,6 @@ import type {
 } from '../types/elements';
 import { DurationType } from '../types/theory';
 import { MUSIC_TUPLET } from '../utils/consts';
-import { makeNote } from '../test-fixtures/unitHelpers';
 import {
   BEAM_THICKNESS_PX,
   STAFF_BOTTOM_LINE_Y,
@@ -34,6 +34,7 @@ import {
   buildTupletGroups,
   computeOuterBracketBaseY,
   computeTupletBracketGeometry,
+  computeTupletScaleByIndex,
   computeTupletScaledNoteCount,
   defaultNormalCount,
   parseTupletRatio,
@@ -168,6 +169,41 @@ describe('computeTupletScaledNoteCount', () => {
     const result = computeTupletScaledNoteCount(elements, tupletsByIndex);
 
     expect(result).toBeCloseTo(3);
+  });
+});
+
+// ─── computeTupletScaleByIndex ──────────────────────────────────────────────
+
+describe('computeTupletScaleByIndex', () => {
+  it('returns an empty map when nothing is tupleted', () => {
+    const elements: NoteChordOrRestElementType[] = [
+      makeNote({ note: 'C', duration: 'quarter' }),
+      makeNote({ note: 'C', duration: 'quarter' }),
+    ];
+
+    expect(computeTupletScaleByIndex(elements, new Map()).size).toBe(0);
+  });
+
+  it('maps only the tupleted indices to normal/actual', () => {
+    const tupletElement = makeTuplet('3');
+    const elements: NoteChordOrRestElementType[] = [
+      makeNote({ note: 'C', duration: 'eighth' }),
+      makeNote({ note: 'C', duration: 'eighth' }),
+      makeNote({ note: 'C', duration: 'eighth' }),
+      makeNote({ note: 'C', duration: 'quarter' }),
+    ];
+    const tupletsByIndex = new Map<number, TupletElementType[]>([
+      [0, [tupletElement]],
+      [1, [tupletElement]],
+      [2, [tupletElement]],
+    ]);
+
+    const result = computeTupletScaleByIndex(elements, tupletsByIndex);
+
+    expect(result.size).toBe(3);
+    expect(result.get(0)).toBeCloseTo(2 / 3);
+    expect(result.get(2)).toBeCloseTo(2 / 3);
+    expect(result.has(3)).toBe(false);
   });
 });
 

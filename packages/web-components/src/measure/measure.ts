@@ -1,5 +1,5 @@
 import { resolveStaffGroups } from '../rules/staffGroupRules';
-import { minWidthToFlexGrow } from '../rules/staffWidth';
+import { measureFlexValue } from '../rules/staffWidth';
 import type { StaffElementBaseType } from '../types/elements';
 import {
   COMMON_ATTRIBUTES,
@@ -18,6 +18,7 @@ import {
   BRACKET_TOP_OFFSET_PX,
   BRACKET_WIDTH_PX,
   EMPTY_MEASURE_FLEX_BASIS_PX,
+  MEASURE_MIN_WIDTH_PX,
   STAFF_BOTTOM_MARGIN,
   STAFF_LINE_START,
 } from '../utils/notationDimensions';
@@ -72,18 +73,30 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
     }
 
     #staffConnectorObserver: ResizeObserver;
-    #staffMinWidths = new Map<EventTarget, number>();
+    #staffWidths = new Map<
+      EventTarget,
+      { minWidth: number; naturalWidth: number }
+    >();
     #onStaffMinWidth = (event: Event): void => {
-      const customEvent = event as CustomEvent<{ minWidth: number }>;
+      const customEvent = event as CustomEvent<{
+        minWidth: number;
+        naturalWidth: number;
+      }>;
       if (customEvent.target) {
-        this.#staffMinWidths.set(
-          customEvent.target,
-          customEvent.detail.minWidth
-        );
+        this.#staffWidths.set(customEvent.target, {
+          minWidth: customEvent.detail.minWidth,
+          naturalWidth: customEvent.detail.naturalWidth,
+        });
       }
-      const maxMinWidth = Math.max(...this.#staffMinWidths.values());
-      const flexGrow = minWidthToFlexGrow(maxMinWidth);
-      this.style.flex = `${flexGrow} 1 ${maxMinWidth}px`;
+      const widths = [...this.#staffWidths.values()];
+      const maxMinWidth = Math.max(...widths.map((w) => w.minWidth));
+      const maxNaturalWidth = Math.max(...widths.map((w) => w.naturalWidth));
+      // flex grow == basis == natural width, so measures on a row share it as
+      // naturalWidth_i ÷ Σ naturalWidth. min-width is the collision strut (never
+      // below the absolute floor), set apart from the basis so a crowded measure
+      // can still shrink toward it before the row wraps.
+      this.style.flex = measureFlexValue(maxNaturalWidth);
+      this.style.minWidth = `${Math.max(maxMinWidth, MEASURE_MIN_WIDTH_PX)}px`;
     };
     #boundUpdateConnectorVisibility: () => void;
 
@@ -165,7 +178,7 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
         STAFF_EVENTS.GROUP_ATTRIBUTE_CHANGE,
         this.#boundUpdateConnectorVisibility
       );
-      this.#staffMinWidths.clear();
+      this.#staffWidths.clear();
     }
 
     attributeChangedCallback(
@@ -184,8 +197,8 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
         <style>
           :host {
             display: block;
-            flex: 1 1 ${EMPTY_MEASURE_FLEX_BASIS_PX}px;
-            min-width: 100px;
+            flex: ${EMPTY_MEASURE_FLEX_BASIS_PX} 1 ${EMPTY_MEASURE_FLEX_BASIS_PX}px;
+            min-width: ${MEASURE_MIN_WIDTH_PX}px;
             box-sizing: border-box;
             position: relative;
           }

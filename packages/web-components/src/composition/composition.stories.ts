@@ -81,6 +81,39 @@ export const MultipleMeasures: Story = {
   args: { keySig: 'C', mode: 'major', time: '4/4' },
 };
 
+export const MaxWidth: Story = {
+  args: { keySig: 'C', mode: 'major', time: '4/4', maxWidth: '520' },
+  argTypes: {
+    maxWidth: { control: 'text' },
+  },
+  render: (args) => html`
+    <music-composition
+      key-sig=${args.keySig}
+      mode=${args.mode}
+      time=${args.time}
+      max-width=${args.maxWidth}
+    >
+      ${[0, 1, 2, 3, 4].map(
+        () => html`
+          <music-measure>
+            <music-staff
+              clef="treble"
+              key-sig=${args.keySig}
+              mode=${args.mode}
+              time=${args.time}
+            >
+              <music-note note="C" duration="quarter"></music-note>
+              <music-note note="E" duration="quarter"></music-note>
+              <music-note note="G" duration="quarter"></music-note>
+              <music-note note="E" duration="quarter"></music-note>
+            </music-staff>
+          </music-measure>
+        `
+      )}
+    </music-composition>
+  `,
+};
+
 export const GrandStaff: Story = {
   args: { keySig: 'G', mode: 'major', time: '4/4' },
   render: (args) => html`

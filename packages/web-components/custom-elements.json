@@ -635,6 +635,24 @@
               }
             },
             {
+              "kind": "field",
+              "name": "maxWidth",
+              "type": {
+                "text": "string"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "#resolveMaxWidthCss",
+              "privacy": "private",
+              "return": {
+                "type": {
+                  "text": "string"
+                }
+              },
+              "description": "`max-width` attribute → a CSS length for `.composition-wrapper`."
+            },
+            {
               "kind": "method",
               "name": "render",
               "privacy": "private",
@@ -767,6 +785,13 @@
             }
           ],
           "attributes": [
+            {
+              "name": "max-width",
+              "type": {
+                "text": "number | 'none'"
+              },
+              "description": "Caps the rendered score width in px (default 900); `none` fills the container."
+            },
             {
               "type": {
                 "text": "Note"
@@ -986,9 +1011,9 @@
             },
             {
               "kind": "field",
-              "name": "#staffMinWidths",
+              "name": "#staffWidths",
               "privacy": "private",
-              "default": "new Map<EventTarget, number>()"
+              "default": "new Map< EventTarget, { minWidth: number; naturalWidth: number } >()"
             },
             {
               "kind": "field",
@@ -1927,6 +1952,19 @@
             },
             {
               "kind": "field",
+              "name": "#currentSpacingSlackWeight",
+              "privacy": "private",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
               "name": "#showDescribe",
               "privacy": "private",
               "type": {
@@ -2124,6 +2162,20 @@
                 "text": "number"
               },
               "privacy": "protected",
+              "readonly": true,
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "currentSpacingSlackWeight",
+              "type": {
+                "text": "number"
+              },
+              "privacy": "protected",
+              "description": "Σ of the current entries' logarithmic spacing slack weights, set on every\n#spaceElements() pass. StaffVocalElement reads it to compute its natural\nwidth after re-scoring against lyric widths.",
               "readonly": true,
               "inheritedFrom": {
                 "name": "StaffClassicalElementBase",
@@ -3233,6 +3285,19 @@
             },
             {
               "kind": "method",
+              "name": "#dispatchStaffWidths",
+              "privacy": "private",
+              "parameters": [
+                {
+                  "name": "elements",
+                  "type": {
+                    "text": "GuitarNoteElementType[]"
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "method",
               "name": "#spaceElements",
               "privacy": "private",
               "parameters": [
@@ -4201,6 +4266,19 @@
             },
             {
               "kind": "field",
+              "name": "#currentSpacingSlackWeight",
+              "privacy": "private",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
               "name": "#showDescribe",
               "privacy": "private",
               "type": {
@@ -4398,6 +4476,20 @@
                 "text": "number"
               },
               "privacy": "protected",
+              "readonly": true,
+              "inheritedFrom": {
+                "name": "StaffClassicalElementBase",
+                "module": "src/staffClassicalBase.ts"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "currentSpacingSlackWeight",
+              "type": {
+                "text": "number"
+              },
+              "privacy": "protected",
+              "description": "Σ of the current entries' logarithmic spacing slack weights, set on every\n#spaceElements() pass. StaffVocalElement reads it to compute its natural\nwidth after re-scoring against lyric widths.",
               "readonly": true,
               "inheritedFrom": {
                 "name": "StaffClassicalElementBase",

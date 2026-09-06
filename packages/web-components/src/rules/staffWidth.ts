@@ -1,15 +1,30 @@
 import {
   AVG_LYRIC_CHAR_WIDTH_PX,
-  COMPOSITION_MAX_WIDTH_PX,
+  LEADING_NOTE_GAP_PX,
   MIN_NOTE_WIDTH,
-  SCORED_MIN_FLEX_GROW,
 } from '../utils/notationDimensions';
 
 /**
- * Calculates the minimum pixel width for a classical staff measure (no lyrics).
+ * Sizing of the staff/measure box itself — the min and preferred widths that
+ * feed <music-measure>'s flex. Where each entry sits *within* that width is
+ * rules/spacingRules.ts.
  *
- * minWidth = describeEndX + firstElementLeftwardWidth + extraLeftwardWidth
- *          + noteCount × MIN_NOTE_WIDTH
+ * Every staff reports two widths:
+ *  - a strut min width — the collision floor, becomes the measure's CSS min-width
+ *    so noteheads never overlap however narrow the container gets;
+ *  - a natural width — strut plus the total logarithmic slack the entries want,
+ *    becomes the measure's flex-basis and flex-grow (kept equal) so measures on a
+ *    row share width in proportion to their musical content.
+ */
+
+/**
+ * Strut min width for a classical staff measure (no lyrics).
+ *
+ * minWidth = describeEndX + leadingGap + firstElementLeftwardWidth
+ *          + extraLeftwardWidth + noteCount × MIN_NOTE_WIDTH + clefChangeWidth
+ *
+ * leadingGap (LEADING_NOTE_GAP_PX, only when there are notes) keeps the first
+ * entry off the clef/key/time area.
  *
  * noteCount may be fractional when the measure contains tuplets — each tuplet
  * note contributes (normal/actual) rather than 1.0, matching the reduced
@@ -35,6 +50,7 @@ export function calculateStaffMinWidth(
 ): number {
   return (
     describeEndX +
+    (noteCount > 0 ? LEADING_NOTE_GAP_PX : 0) +
     firstElementLeftwardWidth +
     extraLeftwardWidth +
     noteCount * MIN_NOTE_WIDTH +
@@ -43,10 +59,11 @@ export function calculateStaffMinWidth(
 }
 
 /**
- * Calculates the minimum pixel width for a vocal staff measure, accounting for
- * both note spacing and lyric character width.
+ * Strut min width for a vocal staff measure, accounting for both note spacing
+ * and lyric character width.
  *
- * minWidth = describeEndX + firstElementLeftwardWidth + extraLeftwardWidth
+ * minWidth = describeEndX + leadingGap + firstElementLeftwardWidth
+ *          + extraLeftwardWidth
  *          + max(noteCount × MIN_NOTE_WIDTH,
  *                lyricCharCount × AVG_LYRIC_CHAR_WIDTH_PX)
  */
@@ -61,6 +78,7 @@ export function calculateStaffVocalMinWidth(
   const lyricMinWidth = lyricCharCount * AVG_LYRIC_CHAR_WIDTH_PX;
   return (
     describeEndX +
+    (noteCount > 0 ? LEADING_NOTE_GAP_PX : 0) +
     firstElementLeftwardWidth +
     extraLeftwardWidth +
     Math.max(noteMinWidth, lyricMinWidth)
@@ -68,27 +86,62 @@ export function calculateStaffVocalMinWidth(
 }
 
 /**
- * Calculates the minimum pixel width for a guitar tab staff measure.
- * Guitar tab has no accidentals, lyrics, or key signatures — only
- * note-count-driven spacing applies.
+ * Strut min width for a guitar tab staff measure. Guitar tab has no accidentals,
+ * lyrics, or key signatures — only entry-count-driven spacing applies.
  */
 export function calculateGuitarTabMinWidth(
   describeEndX: number,
   noteCount: number
 ): number {
-  return describeEndX + noteCount * MIN_NOTE_WIDTH;
+  return (
+    describeEndX +
+    (noteCount > 0 ? LEADING_NOTE_GAP_PX : 0) +
+    noteCount * MIN_NOTE_WIDTH
+  );
 }
 
 /**
- * Maps a minimum width (px) to a CSS flex-grow value.
- *
- * Scales as minWidth / COMPOSITION_MAX_WIDTH_PX, clamped to
- * [SCORED_MIN_FLEX_GROW, 1.0]. Empty measures (no staves have reported a
- * minWidth yet) continue to use MIN_FLEX_GROW via CSS default in measure.ts.
+ * Natural (preferred) width for a classical or guitar tab staff measure: the
+ * strut min width plus the total logarithmic slack its entries want beyond it.
+ * `totalSlackWeight` comes from computeSpacingWeights() in rules/spacingRules.ts.
  */
-export function minWidthToFlexGrow(minWidth: number): number {
-  return Math.min(
-    1.0,
-    Math.max(SCORED_MIN_FLEX_GROW, minWidth / COMPOSITION_MAX_WIDTH_PX)
-  );
+export function calculateStaffNaturalWidth(
+  minWidth: number,
+  totalSlackWeight: number
+): number {
+  return minWidth + totalSlackWeight;
+}
+
+/**
+ * Natural width for a vocal staff measure: whichever is larger of the
+ * note-driven natural width (strut + slack) and the lyric-driven width.
+ */
+export function calculateStaffVocalNaturalWidth(
+  describeEndX: number,
+  noteCount: number,
+  lyricCharCount: number,
+  totalSlackWeight: number,
+  firstElementLeftwardWidth = 0,
+  extraLeftwardWidth = 0
+): number {
+  const base =
+    describeEndX +
+    (noteCount > 0 ? LEADING_NOTE_GAP_PX : 0) +
+    firstElementLeftwardWidth +
+    extraLeftwardWidth;
+  const noteNatural = base + noteCount * MIN_NOTE_WIDTH + totalSlackWeight;
+  const lyricNatural = base + lyricCharCount * AVG_LYRIC_CHAR_WIDTH_PX;
+  return Math.max(noteNatural, lyricNatural);
+}
+
+/**
+ * The `flex` shorthand for a measure whose duration-weighted natural width is
+ * `naturalWidth`: grow and basis both equal it, so a row of measures ends up
+ * distributed as naturalWidth_i ÷ Σ naturalWidth × rowWidth (a lone measure
+ * fills the row, equal measures split it evenly). The measure's CSS min-width is
+ * set separately from the strut so it can still shrink below this when crowded.
+ */
+export function measureFlexValue(naturalWidth: number): string {
+  const rounded = Math.round(naturalWidth);
+  return `${rounded} 1 ${rounded}px`;
 }

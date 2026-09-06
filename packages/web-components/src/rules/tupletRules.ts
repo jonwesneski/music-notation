@@ -115,6 +115,26 @@ export function computeTupletScaledNoteCount(
   return count;
 }
 
+/**
+ * Maps each tupleted element index to its innermost ratio's normal/actual factor
+ * (the same horizontal-footprint reduction used in #spaceElements()). Plain
+ * elements are absent from the map — callers treat a missing index as factor 1.
+ */
+export function computeTupletScaleByIndex(
+  elements: NoteChordOrRestElementType[],
+  tupletsByIndex: ReadonlyMap<number, TupletElementType[]>
+): Map<number, number> {
+  const scaleByIndex = new Map<number, number>();
+  for (let i = 0; i < elements.length; i++) {
+    const innermostTuplet = resolveInnermostTuplet(tupletsByIndex, i);
+    if (innermostTuplet !== undefined) {
+      const { actual, normal } = parseTupletRatio(innermostTuplet.ratio);
+      scaleByIndex.set(i, normal / actual);
+    }
+  }
+  return scaleByIndex;
+}
+
 function computeNestingLevel(el: TupletElementType): number {
   let level = 0;
   let ancestor = el.parentElement;

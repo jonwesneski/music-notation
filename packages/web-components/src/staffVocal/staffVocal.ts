@@ -1,4 +1,7 @@
-import { calculateStaffVocalMinWidth } from '../rules/staffWidth';
+import {
+  calculateStaffVocalMinWidth,
+  calculateStaffVocalNaturalWidth,
+} from '../rules/staffWidth';
 import {
   generateKeySignatureYCoordinates,
   generateYCoordinates,
@@ -447,11 +450,17 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
           this.#slottedElements.length,
           maxLyricChars
         );
+        const naturalWidth = calculateStaffVocalNaturalWidth(
+          this.describeEndX,
+          this.#slottedElements.length,
+          maxLyricChars,
+          this.currentSpacingSlackWeight
+        );
         this.dispatchEvent(
           new CustomEvent(STAFF_EVENTS.STAFF_MIN_WIDTH, {
             bubbles: true,
             composed: false,
-            detail: { minWidth },
+            detail: { minWidth, naturalWidth },
           })
         );
       }

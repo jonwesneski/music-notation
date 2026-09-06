@@ -10,6 +10,12 @@ import {
 } from '../utils/consts';
 
 const MIN_NOTE_WIDTH = 20;
+const LEADING_NOTE_GAP = 10;
+const SPACING_SHORTEST_SLACK = 20;
+const MEASURE_MIN_WIDTH = 100;
+// Natural-width contribution of one entry when every entry in the measure shares
+// the shortest duration (so each gets exactly the slack floor).
+const UNIFORM_ENTRY_NATURAL = MIN_NOTE_WIDTH + SPACING_SHORTEST_SLACK;
 
 test.beforeEach(async ({ page }) => {
   await page.goto('./');
@@ -39,6 +45,16 @@ async function readMeasureFlex(page: Page): Promise<FlexValues> {
     return measure.style.flex;
   }, MUSIC_MEASURE);
   return parseFlex(flexString);
+}
+
+async function readMeasureMinWidth(page: Page): Promise<number> {
+  return page.evaluate((measureTag) => {
+    const measure = document.querySelector(measureTag) as HTMLElement | null;
+    if (measure === null) {
+      throw new Error(`${measureTag} not found`);
+    }
+    return parseFloat(measure.style.minWidth);
+  }, MUSIC_MEASURE);
 }
 
 async function readDescribeEndX(page: Page): Promise<number> {
@@ -161,22 +177,36 @@ const SIXTEEN_NOTES: NoteLetterOctave[] = [
 ];
 
 test.describe(`${MUSIC_MEASURE} min-width layout`, () => {
-  test('single whole note — basis equals describeEndX + MIN_NOTE_WIDTH, grow clamped to minimum', async ({
+  test('single whole note — basis is describeEndX + leadingGap + strut + slack, grow equals basis', async ({
     page,
   }) => {
     await buildMeasureWithNotes(page, 'whole', ONE_NOTE);
     await waitForRedrawCycle(page);
 
     const flex = await readMeasureFlex(page);
+    const minWidth = await readMeasureMinWidth(page);
     const describeEndX = await readDescribeEndX(page);
 
     expect(
-      Math.abs(flex.basis - (describeEndX + MIN_NOTE_WIDTH))
+      Math.abs(
+        flex.basis - (describeEndX + LEADING_NOTE_GAP + UNIFORM_ENTRY_NATURAL)
+      )
     ).toBeLessThanOrEqual(1);
-    expect(flex.grow).toBeCloseTo(0.2, 5);
+    // uniform-stretch invariant: grow and basis are kept equal
+    expect(flex.grow).toBeCloseTo(flex.basis, 5);
+    // min-width is the collision strut, floored at MEASURE_MIN_WIDTH
+    expect(
+      Math.abs(
+        minWidth -
+          Math.max(
+            describeEndX + LEADING_NOTE_GAP + MIN_NOTE_WIDTH,
+            MEASURE_MIN_WIDTH
+          )
+      )
+    ).toBeLessThanOrEqual(1);
   });
 
-  test('basis scales linearly with note count — delta = noteCount × MIN_NOTE_WIDTH', async ({
+  test('basis scales linearly with note count — delta = noteCount × (strut + slack)', async ({
     page,
   }) => {
     await buildMeasureWithNotes(page, 'eighth', ONE_NOTE);
@@ -187,7 +217,7 @@ test.describe(`${MUSIC_MEASURE} min-width layout`, () => {
     await waitForRedrawCycle(page);
     const flex8 = await readMeasureFlex(page);
 
-    expect(flex8.basis - flex1.basis).toBeCloseTo(7 * MIN_NOTE_WIDTH, 1);
+    expect(flex8.basis - flex1.basis).toBeCloseTo(7 * UNIFORM_ENTRY_NATURAL, 0);
   });
 
   test('16 hundredtwentyeighth notes — basis exceeds old 300px cap (regression)', async ({
@@ -199,10 +229,12 @@ test.describe(`${MUSIC_MEASURE} min-width layout`, () => {
     const flex = await readMeasureFlex(page);
     const describeEndX = await readDescribeEndX(page);
 
-    // 16 × 20 = 320px of notes alone, so minWidth > 300 regardless of describeEndX
     expect(flex.basis).toBeGreaterThan(300);
     expect(
-      Math.abs(flex.basis - (describeEndX + 16 * MIN_NOTE_WIDTH))
+      Math.abs(
+        flex.basis -
+          (describeEndX + LEADING_NOTE_GAP + 16 * UNIFORM_ENTRY_NATURAL)
+      )
     ).toBeLessThanOrEqual(1);
   });
 
@@ -225,11 +257,14 @@ test.describe(`${MUSIC_MEASURE} min-width layout`, () => {
       };
     }, MUSIC_STAFF);
 
-    const proportionalWidth = staffWidth - describeEndX - 15 * MIN_NOTE_WIDTH;
+    const proportionalWidth =
+      staffWidth - describeEndX - LEADING_NOTE_GAP - 15 * MIN_NOTE_WIDTH;
     expect(proportionalWidth).toBeGreaterThanOrEqual(0);
   });
 
-  test('two staves — measure uses the larger minWidth', async ({ page }) => {
+  test('two staves — measure uses the larger natural width and the larger strut', async ({
+    page,
+  }) => {
     await page.evaluate(
       ({ compositionTag, measureTag, staffTag, noteTag }) => {
         const host = document.getElementById('host');
@@ -281,13 +316,21 @@ test.describe(`${MUSIC_MEASURE} min-width layout`, () => {
     await waitForRedrawCycle(page);
 
     const flex = await readMeasureFlex(page);
+    const minWidth = await readMeasureMinWidth(page);
     const describeEndX = await readDescribeEndX(page);
 
-    const minWidthFor1Note = describeEndX + 1 * MIN_NOTE_WIDTH;
-    const minWidthFor8Notes = describeEndX + 8 * MIN_NOTE_WIDTH;
+    // fast staff (8 eighths) drives both values
+    const naturalFor8Notes =
+      describeEndX + LEADING_NOTE_GAP + 8 * UNIFORM_ENTRY_NATURAL;
+    const strutFor8Notes = describeEndX + LEADING_NOTE_GAP + 8 * MIN_NOTE_WIDTH;
+    const naturalFor1Note =
+      describeEndX + LEADING_NOTE_GAP + UNIFORM_ENTRY_NATURAL;
 
-    expect(Math.abs(flex.basis - minWidthFor8Notes)).toBeLessThanOrEqual(1);
-    expect(flex.basis).toBeGreaterThan(minWidthFor1Note);
+    expect(Math.abs(flex.basis - naturalFor8Notes)).toBeLessThanOrEqual(1);
+    expect(
+      Math.abs(minWidth - Math.max(strutFor8Notes, MEASURE_MIN_WIDTH))
+    ).toBeLessThanOrEqual(1);
+    expect(flex.basis).toBeGreaterThan(naturalFor1Note);
   });
 
   test('flex-grow increases monotonically as note count grows', async ({

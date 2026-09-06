@@ -1,14 +1,15 @@
 import {
   AVG_LYRIC_CHAR_WIDTH_PX,
-  COMPOSITION_MAX_WIDTH_PX,
+  LEADING_NOTE_GAP_PX,
   MIN_NOTE_WIDTH,
-  SCORED_MIN_FLEX_GROW,
 } from '../utils/notationDimensions';
 import {
   calculateGuitarTabMinWidth,
   calculateStaffMinWidth,
+  calculateStaffNaturalWidth,
   calculateStaffVocalMinWidth,
-  minWidthToFlexGrow,
+  calculateStaffVocalNaturalWidth,
+  measureFlexValue,
 } from './staffWidth';
 
 const TYPICAL_DESCRIBE_END_X = 90;
@@ -20,15 +21,17 @@ describe('calculateStaffMinWidth', () => {
     );
   });
 
-  it('returns describeEndX + MIN_NOTE_WIDTH for a single whole note', () => {
+  it('returns describeEndX + leadingGap + MIN_NOTE_WIDTH for a single whole note', () => {
     expect(calculateStaffMinWidth(TYPICAL_DESCRIBE_END_X, 1)).toBe(
-      TYPICAL_DESCRIBE_END_X + MIN_NOTE_WIDTH
+      TYPICAL_DESCRIBE_END_X + LEADING_NOTE_GAP_PX + MIN_NOTE_WIDTH
     );
   });
 
-  it('returns describeEndX + 11 × MIN_NOTE_WIDTH for 11 notes (prevents bleed)', () => {
+  it('returns describeEndX + leadingGap + 11 × MIN_NOTE_WIDTH for 11 notes (prevents bleed)', () => {
     const minWidth = calculateStaffMinWidth(TYPICAL_DESCRIBE_END_X, 11);
-    expect(minWidth).toBe(TYPICAL_DESCRIBE_END_X + 11 * MIN_NOTE_WIDTH);
+    expect(minWidth).toBe(
+      TYPICAL_DESCRIBE_END_X + LEADING_NOTE_GAP_PX + 11 * MIN_NOTE_WIDTH
+    );
     expect(minWidth).toBeGreaterThan(300);
   });
 
@@ -71,7 +74,9 @@ describe('calculateStaffVocalMinWidth', () => {
 
   it('uses note-driven width when notes need more space than lyrics', () => {
     const result = calculateStaffVocalMinWidth(TYPICAL_DESCRIBE_END_X, 10, 5);
-    expect(result).toBe(TYPICAL_DESCRIBE_END_X + 10 * MIN_NOTE_WIDTH);
+    expect(result).toBe(
+      TYPICAL_DESCRIBE_END_X + LEADING_NOTE_GAP_PX + 10 * MIN_NOTE_WIDTH
+    );
   });
 
   it('uses lyric-driven width when lyrics need more space than notes', () => {
@@ -82,7 +87,9 @@ describe('calculateStaffVocalMinWidth', () => {
       lyricCharCount
     );
     expect(result).toBe(
-      TYPICAL_DESCRIBE_END_X + lyricCharCount * AVG_LYRIC_CHAR_WIDTH_PX
+      TYPICAL_DESCRIBE_END_X +
+        LEADING_NOTE_GAP_PX +
+        lyricCharCount * AVG_LYRIC_CHAR_WIDTH_PX
     );
   });
 
@@ -91,7 +98,9 @@ describe('calculateStaffVocalMinWidth', () => {
     const lyricWidth = 30 * AVG_LYRIC_CHAR_WIDTH_PX;
     const result = calculateStaffVocalMinWidth(TYPICAL_DESCRIBE_END_X, 4, 30);
     expect(result).toBe(
-      TYPICAL_DESCRIBE_END_X + Math.max(noteWidth, lyricWidth)
+      TYPICAL_DESCRIBE_END_X +
+        LEADING_NOTE_GAP_PX +
+        Math.max(noteWidth, lyricWidth)
     );
   });
 
@@ -119,45 +128,63 @@ describe('calculateGuitarTabMinWidth', () => {
     );
   });
 
-  it('returns describeEndX + MIN_NOTE_WIDTH for a single note', () => {
+  it('returns describeEndX + leadingGap + MIN_NOTE_WIDTH for a single note', () => {
     expect(calculateGuitarTabMinWidth(TYPICAL_DESCRIBE_END_X, 1)).toBe(
-      TYPICAL_DESCRIBE_END_X + MIN_NOTE_WIDTH
+      TYPICAL_DESCRIBE_END_X + LEADING_NOTE_GAP_PX + MIN_NOTE_WIDTH
     );
   });
 
   it('scales linearly with note count', () => {
     const widthFor5 = calculateGuitarTabMinWidth(TYPICAL_DESCRIBE_END_X, 5);
-    expect(widthFor5).toBe(TYPICAL_DESCRIBE_END_X + 5 * MIN_NOTE_WIDTH);
+    expect(widthFor5).toBe(
+      TYPICAL_DESCRIBE_END_X + LEADING_NOTE_GAP_PX + 5 * MIN_NOTE_WIDTH
+    );
   });
 });
 
-describe('minWidthToFlexGrow', () => {
-  it('clamps up to SCORED_MIN_FLEX_GROW for a very narrow minWidth', () => {
-    expect(minWidthToFlexGrow(0)).toBeCloseTo(SCORED_MIN_FLEX_GROW);
-    expect(minWidthToFlexGrow(50)).toBeCloseTo(SCORED_MIN_FLEX_GROW);
+describe('calculateStaffNaturalWidth', () => {
+  it('is the strut min width plus the total slack weight', () => {
+    expect(calculateStaffNaturalWidth(200, 84)).toBe(284);
   });
 
-  it('returns SCORED_MIN_FLEX_GROW for a single-whole-note measure (~110px)', () => {
-    expect(minWidthToFlexGrow(110)).toBeCloseTo(SCORED_MIN_FLEX_GROW);
+  it('increases with the slack weight', () => {
+    const sparse = calculateStaffNaturalWidth(200, 40);
+    const dense = calculateStaffNaturalWidth(200, 160);
+    expect(dense).toBeGreaterThan(sparse);
+  });
+});
+
+describe('calculateStaffVocalNaturalWidth', () => {
+  it('uses the note-driven natural width when it exceeds the lyric width', () => {
+    const result = calculateStaffVocalNaturalWidth(
+      TYPICAL_DESCRIBE_END_X,
+      8,
+      2,
+      120
+    );
+    expect(result).toBe(
+      TYPICAL_DESCRIBE_END_X + LEADING_NOTE_GAP_PX + 8 * MIN_NOTE_WIDTH + 120
+    );
   });
 
-  it('returns a value greater than SCORED_MIN_FLEX_GROW for a 310px measure', () => {
-    expect(minWidthToFlexGrow(310)).toBeGreaterThan(SCORED_MIN_FLEX_GROW);
+  it('uses the lyric-driven width when the lyrics are wider', () => {
+    const result = calculateStaffVocalNaturalWidth(
+      TYPICAL_DESCRIBE_END_X,
+      2,
+      80,
+      10
+    );
+    expect(result).toBe(
+      TYPICAL_DESCRIBE_END_X +
+        LEADING_NOTE_GAP_PX +
+        80 * AVG_LYRIC_CHAR_WIDTH_PX
+    );
   });
+});
 
-  it('clamps to 1.0 for minWidth equal to COMPOSITION_MAX_WIDTH_PX', () => {
-    expect(minWidthToFlexGrow(COMPOSITION_MAX_WIDTH_PX)).toBeCloseTo(1.0);
-  });
-
-  it('clamps to 1.0 for minWidth exceeding COMPOSITION_MAX_WIDTH_PX', () => {
-    expect(minWidthToFlexGrow(COMPOSITION_MAX_WIDTH_PX * 3)).toBeCloseTo(1.0);
-  });
-
-  it('increases monotonically with minWidth between the clamped bounds', () => {
-    const widths = [180, 250, 400, 600, 900];
-    const grows = widths.map(minWidthToFlexGrow);
-    for (let i = 1; i < grows.length; i++) {
-      expect(grows[i]).toBeGreaterThanOrEqual(grows[i - 1]);
-    }
+describe('measureFlexValue', () => {
+  it('emits grow and basis both equal to the rounded natural width', () => {
+    expect(measureFlexValue(388.4)).toBe('388 1 388px');
+    expect(measureFlexValue(300)).toBe('300 1 300px');
   });
 });

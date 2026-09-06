@@ -26,6 +26,7 @@ import {
   isStaffNodeName,
 } from '../utils/consts';
 import {
+  COMPOSITION_MAX_WIDTH_PX,
   COURTESY_CLEF_MARGIN_RIGHT_PX,
   COURTESY_CLEF_SCALE,
   DYNAMICS_BASELINE_Y,
@@ -43,6 +44,7 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
    * @attr {Note} key-sig - Key-signature tonic inherited by child measures/staves (e.g. `C`, `F#`, `Bb`). Defaults to `C`.
    * @attr {'major' | 'minor'} mode - Key-signature mode. Defaults to `major`.
    * @attr {TimeSignature} time - Beats per measure (e.g. `4/4`, `6/8`). Defaults to `4/4`.
+   * @attr {number | 'none'} max-width - Caps the rendered score width in px (default 900); `none` fills the container.
    *
    * @example
    * <music-composition key-sig="G" mode="major" time="4/4">
@@ -61,6 +63,7 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
         COMMON_ATTRIBUTES.KEY_SIG,
         COMMON_ATTRIBUTES.MODE,
         COMMON_ATTRIBUTES.TIME,
+        'max-width',
       ];
     }
 
@@ -102,6 +105,29 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
       this.setAttribute(COMMON_ATTRIBUTES.TIME, value);
     }
 
+    get maxWidth(): string {
+      return this.getAttribute('max-width') ?? String(COMPOSITION_MAX_WIDTH_PX);
+    }
+
+    set maxWidth(value: string) {
+      this.setAttribute('max-width', value);
+    }
+
+    /** `max-width` attribute → a CSS length for `.composition-wrapper`. */
+    #resolveMaxWidthCss(): string {
+      const raw = this.getAttribute('max-width');
+      if (raw === null) {
+        return `${COMPOSITION_MAX_WIDTH_PX}px`;
+      }
+      if (raw.trim().toLowerCase() === 'none') {
+        return 'none';
+      }
+      const parsed = Number(raw);
+      return Number.isFinite(parsed) && parsed > 0
+        ? `${parsed}px`
+        : `${COMPOSITION_MAX_WIDTH_PX}px`;
+    }
+
     connectedCallback(): void {
       this.render();
       this.#manageMeasureCount();
@@ -141,6 +167,11 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
           (staff as any).refreshInheritedAttrs?.()
         );
       }
+      if (name === 'max-width') {
+        // render() already applied the new cap; reflow rows so describe/clef/
+        // time-signature continuity tracks the changed wrapping.
+        this.#scheduleRedraw();
+      }
     }
 
     private render(): void {
@@ -155,7 +186,7 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
           .composition-wrapper {
             position: relative;
             width: 100%;
-            max-width: 900px;
+            max-width: ${this.#resolveMaxWidthCss()};
             margin: 0 auto;
           }
 

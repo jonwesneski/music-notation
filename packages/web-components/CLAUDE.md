@@ -57,7 +57,8 @@ one-step-at-a-time/
 │           │   ├── beamRules.ts
 │           │   ├── clefRules.ts           # Per-clef Y-coord/octave/key-sig data + SVG glyph (CLEF_DEFINITIONS, getClefRenderData)
 │           │   ├── staffGroupRules.ts     # Brace/bracket pairing + validation (resolveStaffGroupPairs) — pure, unit-testable
-│           │   ├── staffWidth.ts          # Measure min-width calculation
+│           │   ├── spacingRules.ts        # Horizontal entry spacing — logarithmic duration weight + slack distribution
+│           │   ├── staffWidth.ts          # Measure strut-min + duration-weighted natural width; flex value
 │           │   ├── theoryConsts.ts        # Duration/semitone lookup maps
 │           │   ├── theoryHelpers.ts       # Chord/note computation
 │           │   └── …                      # also chordRules, restRules, staffHeightRules, staffNoteRules, tupletRules, dynamicsRules
@@ -229,37 +230,52 @@ All components use shadow DOM (`attachShadow({ mode: 'open' })`). Style encapsul
 
 - Y-coordinates are looked up from static maps keyed by note name + octave (e.g., `'C4'`, `'G5'`)
 - Each staff subclass defines its own `noteYCoordinateMap` for its clef range
-- X-spacing is derived from `durationToFactor`: whole=1.0, half=0.5, quarter=0.25, etc.
+- X-spacing: entries are justified to fill the measure width. Beyond a fixed
+  `MIN_NOTE_WIDTH` collision strut per entry, spare width is shared out by a
+  **logarithmic** function of duration — halving a note's value costs roughly a
+  quarter of its space, not half — so long notes are not over-spaced and short
+  notes are not starved. The math is `rules/spacingRules.ts`
+  (`spacingSlackWeight` / `computeSpacingWeights` / `distributeSlack`).
+  `durationToFactor` is a **separate** linear map used only for bar-fit and
+  beam-grouping, never for spacing.
 - SVG rendering lives entirely in `utils/svgCreator/` (a directory, not a single file)
 
 ### Semitone System
 
 Notes are mapped to semitones 0–11 (A=0, Bb=1, B=2, C=3, …, Ab=11). Chord formulas are stored as semitone interval arrays from root (e.g., major = `[4, 7]`). This enables enharmonic equivalents and chord note computation.
 
-### Measure Minimum Width
+### Measure Width
 
-Each staff calculates a `minWidth` — the minimum pixel width required to render its notes without overlap. Formulas:
+Each staff reports **two** widths, both computed in `rules/staffWidth.ts`:
 
-- **Classical/guitar tab**: `describeEndX + noteCount × MIN_NOTE_WIDTH`
-- **Vocal**: `describeEndX + max(noteCount × MIN_NOTE_WIDTH, lyricCharCount × AVG_LYRIC_CHAR_WIDTH_PX)`
+- **strut min width** — the collision floor:
+  `describeEndX + LEADING_NOTE_GAP_PX + noteCount × MIN_NOTE_WIDTH + leftward-overhangs + clefChangeWidth`
+  (vocal takes `max(noteCount × MIN_NOTE_WIDTH, lyricCharCount × AVG_LYRIC_CHAR_WIDTH_PX)`).
+- **natural width** — the strut plus the total logarithmic spacing slack the
+  entries want beyond it (`Σ` of `computeSpacingWeights` from `rules/spacingRules.ts`).
 
-where `describeEndX` is the x-offset where the clef/key-signature/time-signature area ends (stored as `#describeEndX` and updated every time `#spaceElements()` runs).
+`describeEndX` is the x-offset where the clef/key-signature/time-signature area ends (stored as `#describeEndX`, updated every `#spaceElements()` run).
 
-The `minWidth` is dispatched upward via a `STAFF_EVENTS.STAFF_MIN_WIDTH` custom event with `detail: { minWidth: number }`. `<music-measure>` listens for these events, takes the maximum `minWidth` across all child staves, and sets `this.style.flex = "${flexGrow} 1 ${maxMinWidth}px"`. Using `minWidth` directly as the flex-basis guarantees the measure is always wide enough for notes not to bleed into adjacent measures. The calculation logic lives in `rules/staffWidth.ts`.
+Both are dispatched upward on one `STAFF_EVENTS.STAFF_MIN_WIDTH` event, `detail: { minWidth, naturalWidth }`. `<music-measure>` keeps the per-staff max of each and sets:
+
+- `this.style.flex = "${maxNatural} 1 ${maxNatural}px"` — grow **and** basis equal the natural width;
+- `this.style.minWidth = "${max(maxMin, MEASURE_MIN_WIDTH_PX)}px"` — the strut, floored.
+
+Because grow == basis, the measures on a row end up distributed as `naturalWidth_i ÷ Σ naturalWidth × rowWidth` — width proportional to musical content: one measure alone fills the row, equal-content measures split it evenly, a sparse measure beside a dense one splits it proportionally. `min-width` is a real CSS property, kept apart from the basis so a crowded measure can shrink toward its strut before the row wraps.
 
 ### Responsive Layout
 
-`<music-composition>` uses CSS flexbox with `flex-wrap: wrap`, so measures reflow into rows automatically as the container width changes. All layout-sensitive rendering reacts to this via a `ResizeObserver` on the composition element, which schedules a redraw via `#scheduleRedraw()` (debounced to one `requestAnimationFrame`).
+`<music-composition>` uses CSS flexbox with `flex-wrap: wrap`, so measures reflow into rows automatically as the container width changes. A row holds as many measures as their natural widths sum to fit under `.composition-wrapper`, then they stretch uniformly to fill it — there is no fixed measures-per-row cap. `<music-composition>` takes a `max-width` attribute (a px number or `none`, default `COMPOSITION_MAX_WIDTH_PX` = 900) that caps `.composition-wrapper`; the flex math is self-scaling, so nothing else consumes that value. All layout-sensitive rendering reacts to resizes via a `ResizeObserver` on the composition element, which schedules a redraw via `#scheduleRedraw()` (debounced to one `requestAnimationFrame`).
 
 On each redraw cycle the following happen in order:
 
-1. **Note x-spacing** — each staff's `StaffResizeObserver` (on the staff container element) calls `onStaffResize()`, which re-spaces notes proportionally to the new container width and re-emits `STAFF_EVENTS.NOTES_POSITIONED`.
+1. **Note x-spacing** — each staff's `StaffResizeObserver` (on the staff container element) calls `onStaffResize()`, which re-justifies the entries across the new container width (logarithmic duration weight, see SVG Coordinate System above) and re-emits `STAFF_EVENTS.NOTES_POSITIONED`.
 2. **Beams** — redrawn as part of `#renderNotes()` / `onStaffResize()` inside each staff.
 3. **Connectors** — `#redrawConnectors()` in `composition.ts` redraws the vertical bar lines that group staves in a measure.
 4. **Describe (clef/key/time) visibility** — `#updateDescribeVisibility()` in `composition.ts` runs in the **same `requestAnimationFrame`** as connectors, immediately after. It groups measures into visual rows (`#computeMeasureRows()`, tolerance 5 px on `getBoundingClientRect().top`, snapshotted in one pass before any DOM writes) and sets `showDescribe` (a JS property, not an HTML attribute) on each child staff — `true` for the first measure in each row, `false` otherwise. Connectors are absolutely-positioned SVG and do not affect document flow, so no layout settling is needed between the two operations. Staves default to `showDescribe = true`, so standalone staves always show the clef.
 5. **Clef continuity at measure boundaries** — `#updateClefContinuity()` runs right after, reusing the same `#computeMeasureRows()` output. It compares every pair of **adjacent measures** (not just row-boundary pairs — a measure-boundary clef change is just two neighboring `<music-staff>` instances with different `clef` attributes, and can happen mid-row) via each staff's `effectiveStartClef`/`effectiveEndClef` getters (derived from `StaffClassicalElementBase`'s clef-segment machinery — the same one that resolves mid-stream `<music-clef>` markers). When a pair differs: the incoming staff's `clefChangeAtBoundary` property is set so its clef glyph still renders even though `showDescribe` is false (mirrors the existing mid-composition time-signature-change precedent); if the pair also happens to fall exactly at a row wrap, a small courtesy clef preview (scaled by `COURTESY_CLEF_SCALE`) is additionally drawn near the right edge of the outgoing staff, in a separate `.courtesy-clef-overlay` SVG.
 
-**Why `:host { display: block; width: 100% }` on `<music-composition>` matters**: `display: block` alone is not sufficient when the element is placed inside a flex or grid container (e.g. `justify-content: center`). Without an explicit `width`, the element sizes to its max-content as a flex item. For a `flex-wrap: wrap` flex container, browsers compute max-content as the width of the widest single child — so the composition becomes only as wide as its widest measure, causing all other measures to wrap to separate rows. `width: 100%` ensures the composition fills the full parent width in all layout contexts (block, flex, grid), so the `ResizeObserver` fires reliably and measures can share rows as intended. The `.composition-wrapper` inside the shadow DOM has `margin: 0 auto` to center its 900px-capped content when the host is wider than 900px.
+**Why `:host { display: block; width: 100% }` on `<music-composition>` matters**: `display: block` alone is not sufficient when the element is placed inside a flex or grid container (e.g. `justify-content: center`). Without an explicit `width`, the element sizes to its max-content as a flex item. For a `flex-wrap: wrap` flex container, browsers compute max-content as the width of the widest single child — so the composition becomes only as wide as its widest measure, causing all other measures to wrap to separate rows. `width: 100%` ensures the composition fills the full parent width in all layout contexts (block, flex, grid), so the `ResizeObserver` fires reliably and measures can share rows as intended. The `.composition-wrapper` inside the shadow DOM has `margin: 0 auto` to center its content when the host is wider than the `max-width` cap (default 900px; see Responsive Layout above).
 
 **Invariant to maintain**: any change that affects which measure is "first in a row" (resize, dynamic measure insertion/removal) must eventually trigger `#scheduleRedraw()` so `#updateDescribeVisibility()` and `#updateClefContinuity()` re-run.
 
@@ -271,6 +287,7 @@ On each redraw cycle the following happen in order:
 
 ```ts
 type DurationType =
+  | 'double-whole'
   | 'whole'
   | 'half'
   | 'quarter'
@@ -306,14 +323,16 @@ type VoiceType = 'soprano' | 'mezzo' | 'alto' | 'tenor' | 'baritone' | 'bass';
 
 ## Key Utility Maps (`rules/theoryConsts.ts`)
 
-| Map                       | Purpose                                               |
-| ------------------------- | ----------------------------------------------------- |
-| `durationToFlagCountMap`  | Duration → flag count (eighth=1, sixteenth=2, …)      |
-| `noteSemitoneMap`         | Note name → semitone (0–11)                           |
-| `semitoneNoteMap`         | Semitone → note name array (handles enharmonics)      |
-| `ChordSemitoneMap`        | Chord type string → interval array                    |
-| `ChordSemitoneMapAliases` | Alias normalization (`'m'` → `'min'`, `''` → `'maj'`) |
-| `durationToFactor`        | Duration → relative x-spacing factor                  |
+| Map                       | Purpose                                                                                                                    |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `durationToFlagCountMap`  | Duration → flag count (eighth=1, sixteenth=2, …)                                                                           |
+| `noteSemitoneMap`         | Note name → semitone (0–11)                                                                                                |
+| `semitoneNoteMap`         | Semitone → note name array (handles enharmonics)                                                                           |
+| `ChordSemitoneMap`        | Chord type string → interval array                                                                                         |
+| `ChordSemitoneMapAliases` | Alias normalization (`'m'` → `'min'`, `''` → `'maj'`)                                                                      |
+| `durationToFactor`        | Duration → linear whole-note fraction. Bar-fit (`measureRules`) and beam grouping (`beams.ts`) only — **not** note spacing |
+
+Horizontal note spacing uses `rules/spacingRules.ts` (`spacingSlackWeight`, `computeSpacingWeights`, `distributeSlack`), a logarithmic curve, not `durationToFactor`.
 
 `utils/consts.ts` holds custom element tag name constants and event name constants (e.g., `STAFF_EVENTS`).
 
@@ -350,9 +369,9 @@ Rendering flow (classical staves):
 2. `connectedCallback()` (in `StaffElementBase`) builds staff lines, appends `staffContainer` and `transcribeContainer`, wires `slotchange`, starts `staffResizeObserver`
 3. `onConnectedCallback()` (in `StaffClassicalElementBase`) calls `#buildDescribe()`: injects clef SVG, key signature, and time signature into `transcribeContainer`
 4. `slotchange` fires → `onHandleSlotChange()` → `#renderNotes()` converts notes/chords to SVG
-5. Notes spaced by duration factor
+5. Entries justified to fill the measure; each entry's share of the free space is a logarithmic function of its duration (`rules/spacingRules.ts`)
 6. `BeamCreator` connects beamed note groups (eighths, sixteenths, etc.)
-7. Staff dispatches a `STAFF_EVENTS.STAFF_MIN_WIDTH` event after each render with `detail: { minWidth }` — the minimum pixel width needed for the measure to render without note overlap
+7. Staff dispatches a `STAFF_EVENTS.STAFF_MIN_WIDTH` event after each render with `detail: { minWidth, naturalWidth }` — the collision-floor width and the duration-weighted preferred width (see Measure Width above)
 
 ## Drag Handlers (`utils/`)
 
