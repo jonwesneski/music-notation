@@ -50,8 +50,8 @@ const initialNotes: StaffItem[] = [
   { id: 'n3', type: 'note', value: 'B', octave: 4, duration: 'quarter' },
 ];
 
-// Experimental render-only harness. Note editing (pitch / reorder drag) now
-// lives in the real editor under compositionForm/.
+// Experimental render-only harness. Note editing (pitch / reorder drag) lives
+// in the real editor under compositionForm/.
 export default function MusicScore() {
   return (
     <music-composition key-sig="D" mode="major" time="4/4">
