@@ -12,6 +12,7 @@ import type {
   StaffGroupType,
   StressType,
   TimeSignature,
+  TupletRatio,
   Voice,
 } from '../types/theory';
 
@@ -86,9 +87,9 @@ export const STAFF_EVENTS = {
 } as const;
 
 export const COMMON_ATTRIBUTES = {
-  KEY_SIG: 'keysig',
+  KEY_SIG: 'key-sig',
   MODE: 'mode',
-  TIME_SIG: 'time',
+  TIME: 'time',
   //todo
   //TEMPO: tempo,
 } as const;
@@ -130,14 +131,22 @@ export const OCTAVES: Octave[] = [2, 3, 4, 5, 6];
 export const MODES: Mode[] = ['major', 'minor'];
 
 export const TIMES: TimeSignature[] = [
-  '4/4',
-  '3/4',
+  '2/2',
+  '3/2',
+  '4/2',
+  '1/4',
   '2/4',
-  '6/8',
-  '12/8',
-  '9/8',
+  '3/4',
+  '4/4',
   '5/4',
+  '6/4',
   '7/4',
+  '3/8',
+  '5/8',
+  '6/8',
+  '7/8',
+  '9/8',
+  '12/8',
 ];
 
 export const VOICES: Voice[] = [
@@ -210,3 +219,17 @@ export const GRACE_SLURS: GraceSlur[] = ['auto', 'none'];
 export const CLEFS: ClefType[] = ['treble', 'bass'];
 
 export const STAFF_GROUPS: StaffGroupType[] = ['grand', 'bracket'];
+
+// The everyday bare-count ratios. `TupletRatio` also accepts explicit
+// `actual:normal` forms (e.g. `3:2`); those are left for callers that need
+// them rather than listed here.
+export const TUPLET_RATIOS: TupletRatio[] = [
+  '2',
+  '3',
+  '4',
+  '5',
+  '6',
+  '7',
+  '8',
+  '9',
+];

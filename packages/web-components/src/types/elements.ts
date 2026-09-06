@@ -24,6 +24,17 @@ export type NoteLetterOctave = `${NoteLetter}${Octave}`;
 /** Which end of a tie, slur, or technique connector an element marks. */
 export type ConnectorRole = 'start' | 'end';
 
+// The three array-valued grace properties reflect a comma-separated string
+// attribute. Reads return the parsed array (internal renderers rely on that);
+// writes also accept the raw string, since React and Storybook assign the JSX
+// prop as a property rather than an attribute.
+export type GraceNotesType = Note[] | string | null;
+export type GraceOctavesType = (Octave | null)[] | string | null;
+export type GraceArticulationsType =
+  | (ArticulationType | null)[]
+  | string
+  | null;
+
 export interface INoteElement {
   duration: DurationType;
   note: Note;
@@ -41,13 +52,16 @@ export interface INoteElement {
   diminuendo: HairpinRole | null;
   articulation: ArticulationType | null;
   stress: StressType | null;
-  grace: Note[] | null;
+  get grace(): Note[] | null;
+  set grace(value: GraceNotesType);
   // Per-grace-note octave, aligned by index with `grace`. A null slot (or a
   // missing trailing slot) falls back to the host element's own octave.
-  graceOctave: (Octave | null)[] | null;
+  get graceOctave(): (Octave | null)[] | null;
+  set graceOctave(value: GraceOctavesType);
   // Per-grace-note articulation, aligned by index with `grace`. A null slot
   // (or a missing trailing slot) means no mark for that grace note.
-  graceArticulation: (ArticulationType | null)[] | null;
+  get graceArticulation(): (ArticulationType | null)[] | null;
+  set graceArticulation(value: GraceArticulationsType);
   graceType: GraceType;
   graceDuration: GraceDuration | null;
   graceSlur: GraceSlur;
@@ -89,13 +103,16 @@ export interface IChordElement {
   diminuendo: HairpinRole | null;
   articulation: ArticulationType | null;
   stress: StressType | null;
-  grace: Note[] | null;
+  get grace(): Note[] | null;
+  set grace(value: GraceNotesType);
   // Per-grace-note octave, aligned by index with `grace`. A null slot (or a
   // missing trailing slot) falls back to the host element's reference octave.
-  graceOctave: (Octave | null)[] | null;
+  get graceOctave(): (Octave | null)[] | null;
+  set graceOctave(value: GraceOctavesType);
   // Per-grace-note articulation, aligned by index with `grace`. A null slot
   // (or a missing trailing slot) means no mark for that grace note.
-  graceArticulation: (ArticulationType | null)[] | null;
+  get graceArticulation(): (ArticulationType | null)[] | null;
+  set graceArticulation(value: GraceArticulationsType);
   graceType: GraceType;
   graceDuration: GraceDuration | null;
   graceSlur: GraceSlur;

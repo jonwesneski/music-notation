@@ -58,6 +58,7 @@ import {
   COMMON_ATTRIBUTES,
   MUSIC_CHORD_NODE,
   MUSIC_CLEF_NODE,
+  MUSIC_COMPOSITION,
   MUSIC_MEASURE,
   MUSIC_NOTE,
   MUSIC_NOTE_NODE,
@@ -103,7 +104,7 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
     return [
       COMMON_ATTRIBUTES.KEY_SIG,
       COMMON_ATTRIBUTES.MODE,
-      COMMON_ATTRIBUTES.TIME_SIG,
+      COMMON_ATTRIBUTES.TIME,
       'editable',
       'managed',
       'group',
@@ -296,7 +297,7 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
   protected onConnectedCallback() {
     // Re-resolve inherited attrs now that ancestors are reachable via closest()
     this.effectiveTimeSig = this.convertTotimeInts(
-      this.resolveInheritedValue(COMMON_ATTRIBUTES.TIME_SIG, '4/4')
+      this.resolveInheritedValue(COMMON_ATTRIBUTES.TIME, '4/4')
     );
     this.#effectiveMode = this.resolveInheritedValue(
       COMMON_ATTRIBUTES.MODE,
@@ -566,7 +567,7 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
 
   refreshInheritedAttrs() {
     this.effectiveTimeSig = this.convertTotimeInts(
-      this.resolveInheritedValue(COMMON_ATTRIBUTES.TIME_SIG, '4/4')
+      this.resolveInheritedValue(COMMON_ATTRIBUTES.TIME, '4/4')
     );
     this.#effectiveMode = this.resolveInheritedValue(
       COMMON_ATTRIBUTES.MODE,
@@ -605,10 +606,20 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
 
   #appendTimeSignatureSvgIfNecessary(parentSvg: SVGElement, xOffset: number) {
     const measure = this.closest(MUSIC_MEASURE);
-    const measureNumberStr: string | null = measure?.getAttribute('number');
-    const isFirstMeasureOrStandalone = measureNumberStr === '1' || !measure;
+    const composition = this.closest(MUSIC_COMPOSITION);
+    // "First measure" from live DOM position, not the `number` attribute — the
+    // composition writes `number` from a MutationObserver microtask, so a staff
+    // mounted with a freshly-inserted first measure (a framework re-mounting the
+    // measure hierarchy) would otherwise miss its own time signature and never
+    // recover. `number` is kept as the fallback for a standalone `<music-measure>`
+    // with no composition ancestor.
+    const isFirstMeasure =
+      measure != null &&
+      (composition != null
+        ? composition.querySelector(MUSIC_MEASURE) === measure
+        : measure.getAttribute('number') === '1');
 
-    if (isFirstMeasureOrStandalone || this.#timeChangeAtBoundary) {
+    if (isFirstMeasure || measure == null || this.#timeChangeAtBoundary) {
       const timeSigSvg = createTimeSignatureSvg(...this.effectiveTimeSig);
       timeSigSvg.setAttribute(
         'transform',
@@ -666,18 +677,18 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
         this.#enableDrag();
       }
     } else {
-      if (name === 'time') {
+      if (name === COMMON_ATTRIBUTES.TIME) {
         this.effectiveTimeSig = this.convertTotimeInts(
-          this.resolveInheritedValue('time', '4/4')
+          this.resolveInheritedValue(COMMON_ATTRIBUTES.TIME, '4/4')
         );
-      } else if (name === 'mode') {
+      } else if (name === COMMON_ATTRIBUTES.MODE) {
         this.#effectiveMode = this.resolveInheritedValue(
-          'mode',
+          COMMON_ATTRIBUTES.MODE,
           'major'
         ) as Mode;
-      } else if (name === 'keysig') {
+      } else if (name === COMMON_ATTRIBUTES.KEY_SIG) {
         this.#effectiveKeySig = this.resolveInheritedValue(
-          'keysig',
+          COMMON_ATTRIBUTES.KEY_SIG,
           'C'
         ) as Note;
       }

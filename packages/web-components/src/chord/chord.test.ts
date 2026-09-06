@@ -4,7 +4,13 @@
 import '../note/index';
 import '../staff/index';
 import type { ChordElementType, NoteElementType } from '../types/elements';
-import type { Chord, DurationType, Note, Octave } from '../types/theory';
+import type {
+  ArticulationType,
+  Chord,
+  DurationType,
+  Note,
+  Octave,
+} from '../types/theory';
 import {
   COMMON_ATTRIBUTES,
   MUSIC_CHORD,
@@ -228,6 +234,57 @@ describe(MUSIC_CHORD, () => {
       expect(chordElement.graceType).toBe('appoggiatura');
       expect(chordElement.graceSlur).toBe('auto');
       expect(chordElement.graceDuration).toBeNull();
+    });
+
+    it('accepts the comma-separated string form on the grace list setters', () => {
+      const chordElement = makeChordWithNotes([
+        ['C', 4],
+        ['E', 4],
+      ]);
+
+      chordElement.grace = 'D,E';
+      chordElement.graceOctave = '4,,5';
+      chordElement.graceArticulation = ',staccato';
+
+      expect(chordElement.getAttribute('grace')).toBe('D,E');
+      expect(chordElement.grace).toEqual([
+        'D' satisfies Note,
+        'E' satisfies Note,
+      ]);
+      expect(chordElement.graceOctave).toEqual([
+        4 satisfies Octave,
+        null,
+        5 satisfies Octave,
+      ]);
+      expect(chordElement.graceArticulation).toEqual([
+        null,
+        'staccato' satisfies ArticulationType,
+      ]);
+    });
+
+    it('clears the grace list attributes when set to an empty string', () => {
+      const chordElement = makeChordWithNotes([
+        ['C', 4],
+        ['E', 4],
+      ]);
+      chordElement.setAttribute('grace', 'D');
+
+      chordElement.grace = '';
+      expect(chordElement.hasAttribute('grace')).toBe(false);
+      expect(chordElement.grace).toBeNull();
+    });
+
+    it('rejects an invalid grace string set via the property (no attribute written)', () => {
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+      const chordElement = makeChordWithNotes([
+        ['C', 4],
+        ['E', 4],
+      ]);
+
+      chordElement.grace = 'H,I';
+      expect(chordElement.hasAttribute('grace')).toBe(false);
+      expect(warnSpy).toHaveBeenCalled();
+      warnSpy.mockRestore();
     });
 
     it('renders grace notes on a standalone chord', () => {
@@ -671,7 +728,7 @@ function makeStaff(): Element {
   const staff = document.createElement(MUSIC_STAFF) as any;
   staff.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'C');
   staff.setAttribute(COMMON_ATTRIBUTES.MODE, 'major');
-  staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
+  staff.setAttribute(COMMON_ATTRIBUTES.TIME, '4/4');
   document.body.appendChild(staff);
   return staff;
 }

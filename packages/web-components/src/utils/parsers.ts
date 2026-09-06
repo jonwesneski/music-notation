@@ -168,3 +168,22 @@ export const parseGraceArticulations = (
     VALID_ARTICULATIONS.has(token) ? (token as ArticulationType) : null
   );
 };
+
+// Shared setter body for the array-valued grace properties (`grace`,
+// `graceOctave`, `graceArticulation`). The matching attribute is always a
+// comma-separated string, but the property accepts either that string (React
+// sets the JSX prop as a property; Storybook `control: 'text'` does too) or the
+// rich array (vanilla JS). Returns the attribute string to write, or null to
+// remove the attribute. A string is first routed through the element's own
+// parser so an invalid list is rejected the same way as one set via
+// `setAttribute`.
+export const graceListToAttr = (
+  value: readonly (string | number | null)[] | string | null,
+  parse: (value: string | null) => readonly (string | number | null)[] | null
+): string | null => {
+  const list = typeof value === 'string' ? parse(value) : value;
+  if (list === null || list.length === 0) {
+    return null;
+  }
+  return list.map((entry) => entry ?? '').join(',');
+};

@@ -27,7 +27,7 @@ export function App() {
   }, []);
 
   return (
-    <music-composition keysig="G" mode="major" time="4/4">
+    <music-composition key-sig="G" mode="major" time="4/4">
       <music-measure>
         <music-staff ref={staffRef} clef="treble" editable managed>
           <music-note note="G" octave="4" duration="quarter" />

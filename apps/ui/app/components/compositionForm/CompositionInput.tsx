@@ -1,5 +1,11 @@
+import { Button } from '@/design-system';
+import { useUndoRedo } from '@/hooks/useUndoRedo';
 import '@one-step-at-a-time/web-components';
-import type { StaffGroupType } from '@one-step-at-a-time/web-components';
+import type {
+  StaffGroupType,
+  TimeSignature,
+  TupletRatio,
+} from '@one-step-at-a-time/web-components';
 import { useCallback, useEffect } from 'react';
 import {
   FormProvider,
@@ -7,8 +13,6 @@ import {
   useFormContext,
   useWatch,
 } from 'react-hook-form';
-import { Button } from '@/design-system';
-import { useUndoRedo } from '@/hooks/useUndoRedo';
 import { BasicInfoInput } from './BasicInfoInput';
 import {
   CompositionFormSessionProvider,
@@ -18,15 +22,20 @@ import {
   connectorBetween,
   removeConnector,
   upsertConnector,
-} from './connectors';
+} from './connectorsHelpers';
 import { DragSelectOverlay } from './DragSelectOverlay';
+import { applyEntryUpdate } from './entryEditsHelpers';
 import { MeasureInput } from './MeasureInput';
-import { findGroupMembers } from './staffGroups';
+import { rebar } from './rebarHelpers';
+import { findGroupMembers } from './staffGroupsHelpers';
+import { TimeSignatureChangeDialog } from './TimeSignatureChangeDialog';
+import { setTuplet as setTupletInStructure } from './tupletsHelpers';
 import type {
   CompositionFormValues,
   CompositionStructure,
   ConnectorKind,
   DraftMusicEntry,
+  MusicEntry,
   StaffType,
 } from './types';
 import { isSelectionEmpty } from './types';
@@ -114,7 +123,7 @@ function CompositionFormBody({
       </div>
 
       <DragSelectOverlay>
-        <music-composition keySig={keySig} mode={mode} time={timeSig}>
+        <music-composition key-sig={keySig} mode={mode} time={timeSig}>
           {measureOrder.map((measureId) => (
             <MeasureInput key={measureId} measureId={measureId} />
           ))}
@@ -127,6 +136,8 @@ function CompositionFormBody({
           </Button>
         </music-composition>
       </DragSelectOverlay>
+
+      <TimeSignatureChangeDialog />
     </div>
   );
 }
@@ -136,37 +147,42 @@ export function CompositionInput() {
     defaultValues: {
       title: '',
       keySig: 'C',
-      timeSig: '4/4',
       mode: 'major',
+      timeSig: '4/4',
       measureOrder: [firstMeasureId],
       measuresById: { [firstMeasureId]: { id: firstMeasureId, staffIds: [] } },
       stavesById: {},
       entriesById: {},
       connectorsById: {},
       connectorOrder: [],
+      tupletsById: {},
     },
   });
 
   const getStructure = useCallback(
     (): CompositionStructure => ({
+      timeSig: methods.getValues('timeSig'),
       measureOrder: methods.getValues('measureOrder'),
       measuresById: methods.getValues('measuresById'),
       stavesById: methods.getValues('stavesById'),
       entriesById: methods.getValues('entriesById'),
       connectorsById: methods.getValues('connectorsById'),
       connectorOrder: methods.getValues('connectorOrder'),
+      tupletsById: methods.getValues('tupletsById'),
     }),
     [methods]
   );
 
   const setStructure = useCallback(
     (s: CompositionStructure) => {
+      methods.setValue('timeSig', s.timeSig);
       methods.setValue('measureOrder', s.measureOrder);
       methods.setValue('measuresById', s.measuresById);
       methods.setValue('stavesById', s.stavesById);
       methods.setValue('entriesById', s.entriesById);
       methods.setValue('connectorsById', s.connectorsById);
       methods.setValue('connectorOrder', s.connectorOrder);
+      methods.setValue('tupletsById', s.tupletsById);
     },
     [methods]
   );
@@ -308,14 +324,25 @@ export function CompositionInput() {
     });
   }
 
+  function updateEntry(entry: MusicEntry) {
+    const s = getStructure();
+    const next = applyEntryUpdate(s, entry);
+    if (next !== s) {
+      record(next);
+    }
+  }
+
+  // `family` scopes a clear (kind === null) to just tie/slur or just hairpins,
+  // so removing the slur over a pair leaves its crescendo alone.
   function setConnector(
     startEntryId: string,
     endEntryId: string,
-    kind: ConnectorKind | null
+    kind: ConnectorKind | null,
+    family: ConnectorKind[]
   ) {
     const s = getStructure();
     if (kind === null) {
-      const existing = connectorBetween(s, startEntryId, endEntryId);
+      const existing = connectorBetween(s, startEntryId, endEntryId, family);
       if (!existing) {
         return;
       }
@@ -323,6 +350,46 @@ export function CompositionInput() {
       return;
     }
     record(upsertConnector(s, startEntryId, endEntryId, kind));
+  }
+
+  function setTuplet(entryIds: string[], ratio: TupletRatio | null) {
+    record(setTupletInStructure(getStructure(), entryIds, ratio));
+  }
+
+  // A time signature change either re-bars the affected region (`rewrite`) — one
+  // undo step covering the whole reflow — or applies "signature only", leaving
+  // the notes as they are (now-overfull measures are flagged in the editor,
+  // nothing is lost).
+  function setCompositionTimeSignature(
+    timeSig: TimeSignature,
+    rewrite: boolean
+  ) {
+    const s = getStructure();
+    const withTimeSignature = { ...s, timeSig };
+    record(rewrite ? rebar(withTimeSignature, 0) : withTimeSignature);
+  }
+
+  function setMeasureTimeSignature(
+    measureId: string,
+    timeSig: TimeSignature | null,
+    rewrite: boolean
+  ) {
+    const s = getStructure();
+    const measure = s.measuresById[measureId];
+    if (!measure) {
+      return;
+    }
+    const withTimeSignature: CompositionStructure = {
+      ...s,
+      measuresById: {
+        ...s.measuresById,
+        [measureId]: { ...measure, time: timeSig },
+      },
+    };
+    const measureIndex = s.measureOrder.indexOf(measureId);
+    record(
+      rewrite ? rebar(withTimeSignature, measureIndex) : withTimeSignature
+    );
   }
 
   return (
@@ -333,7 +400,11 @@ export function CompositionInput() {
       onAddStaff={addStaff}
       onSetStaffGroup={setStaffGroup}
       onAddEntry={addEntry}
+      onUpdateEntry={updateEntry}
       onSetConnector={setConnector}
+      onSetTuplet={setTuplet}
+      onSetCompositionTimeSignature={setCompositionTimeSignature}
+      onSetMeasureTimeSignature={setMeasureTimeSignature}
     >
       <FormProvider {...methods}>
         <CompositionFormBody

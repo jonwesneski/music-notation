@@ -1,0 +1,81 @@
+import { describe, expect, it } from 'vitest';
+import { effectiveClefOfEntry, resolveEntryOctaves } from './clefsHelpers';
+import type { CompositionStructure } from './types';
+
+function structureWith(entryIds: string[]): CompositionStructure {
+  return {
+    timeSig: '4/4',
+    measureOrder: ['m1'],
+    measuresById: { m1: { id: 'm1', staffIds: ['s1'] } },
+    stavesById: {
+      s1: {
+        id: 's1',
+        type: 'treble',
+        entryIds,
+        group: null,
+        groupId: null,
+      },
+    },
+    entriesById: {
+      n1: { id: 'n1', type: 'note', value: 'C', duration: 'quarter' },
+      c1: { id: 'c1', type: 'clef', clef: 'bass' },
+      n2: { id: 'n2', type: 'note', value: 'C', duration: 'quarter' },
+    },
+    connectorsById: {},
+    connectorOrder: [],
+    tupletsById: {},
+  };
+}
+
+describe('effectiveClefOfEntry', () => {
+  it("defaults to the staff's own type", () => {
+    expect(effectiveClefOfEntry(structureWith(['n1', 'n2']), 'n1')).toBe(
+      'treble'
+    );
+  });
+
+  it('applies a clef entry that precedes the target', () => {
+    expect(effectiveClefOfEntry(structureWith(['n1', 'c1', 'n2']), 'n2')).toBe(
+      'bass'
+    );
+  });
+
+  it('ignores a clef entry that follows the target', () => {
+    expect(effectiveClefOfEntry(structureWith(['n1', 'c1', 'n2']), 'n1')).toBe(
+      'treble'
+    );
+  });
+
+  it('applies a leading clef entry to the first note', () => {
+    expect(effectiveClefOfEntry(structureWith(['c1', 'n1', 'n2']), 'n1')).toBe(
+      'bass'
+    );
+  });
+});
+
+describe('resolveEntryOctaves', () => {
+  it('puts every bare letter at octave 4 under treble', () => {
+    expect(resolveEntryOctaves('treble', [{ value: 'C' }])[0]).toBe(4);
+    expect(resolveEntryOctaves('treble', [{ value: 'G' }])[0]).toBe(4);
+  });
+
+  it('puts bare C and D at octave 3 under bass, the rest at 2', () => {
+    expect(resolveEntryOctaves('bass', [{ value: 'C' }])[0]).toBe(3);
+    expect(resolveEntryOctaves('bass', [{ value: 'D' }])[0]).toBe(3);
+    expect(resolveEntryOctaves('bass', [{ value: 'E' }])[0]).toBe(2);
+    expect(resolveEntryOctaves('bass', [{ value: 'B' }])[0]).toBe(2);
+  });
+
+  it('passes an explicit octave through unchanged', () => {
+    expect(resolveEntryOctaves('bass', [{ value: 'C', octave: 5 }])[0]).toBe(5);
+  });
+
+  it('stacks bare chord notes into an ascending voicing', () => {
+    expect(
+      resolveEntryOctaves('treble', [{ value: 'E' }, { value: 'C' }])
+    ).toEqual([4, 5]);
+    expect(
+      resolveEntryOctaves('treble', [{ value: 'C' }, { value: 'E' }])
+    ).toEqual([4, 4]);
+  });
+});

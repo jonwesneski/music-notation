@@ -104,11 +104,17 @@ describe('pairHairpins', () => {
     ).toHaveLength(0);
   });
 
-  it('drops an orphaned crescendo end with no preceding start', () => {
+  it('drops an orphaned crescendo end with no preceding start and warns', () => {
+    const warn = jest
+      .spyOn(console, 'warn')
+      .mockImplementation(() => undefined);
     const elements = makeElements([{}, { crescendo: 'end' }]);
     expect(
       pairHairpins(elements, makeXPositions(elements.length))
     ).toHaveLength(0);
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining('orphan crescendo end')
+    );
   });
 
   it('returns an empty array for elements with no hairpin attributes', () => {
@@ -145,7 +151,10 @@ describe('pairHairpins', () => {
     expect(pairs[0].endElement).toBe(note2);
   });
 
-  it('uses the nearest end when a start is immediately followed by another start (second start overwrites)', () => {
+  it('uses the nearest end when a start is immediately followed by another start (second start overwrites) and warns', () => {
+    const warn = jest
+      .spyOn(console, 'warn')
+      .mockImplementation(() => undefined);
     const elements = makeElements([
       { crescendo: 'start' },
       { crescendo: 'start' },
@@ -155,6 +164,11 @@ describe('pairHairpins', () => {
     expect(pairs).toHaveLength(1);
     expect(pairs[0].startElement).toBe(elements[1]);
     expect(pairs[0].endElement).toBe(elements[2]);
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining(
+        'a second crescendo started before the first closed'
+      )
+    );
   });
 
   it('computes startX/endX from note positions when there are no dynamics', () => {

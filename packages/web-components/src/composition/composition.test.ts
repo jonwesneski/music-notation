@@ -46,7 +46,7 @@ describe(`${MUSIC_COMPOSITION} attribute propagation`, () => {
     return { composition, measure, staff };
   }
 
-  it('propagates keysig change to a descendant treble staff', () => {
+  it('propagates key-sig change to a descendant treble staff', () => {
     const { composition, staff } = makeTree('treble');
 
     expect(staff.keySig).toBe('C');
@@ -71,12 +71,12 @@ describe(`${MUSIC_COMPOSITION} attribute propagation`, () => {
 
     expect(staff.time).toBe('4/4');
 
-    composition.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '3/4');
+    composition.setAttribute(COMMON_ATTRIBUTES.TIME, '3/4');
 
     expect(staff.time).toBe('3/4');
   });
 
-  it('propagates keysig change to a descendant bass staff', () => {
+  it('propagates key-sig change to a descendant bass staff', () => {
     const { composition, staff } = makeTree('bass');
 
     expect(staff.keySig).toBe('C');
@@ -86,7 +86,7 @@ describe(`${MUSIC_COMPOSITION} attribute propagation`, () => {
     expect(staff.keySig).toBe('Bb');
   });
 
-  it('respects a staff-level keysig override over the composition value', () => {
+  it('respects a staff-level key-sig override over the composition value', () => {
     const { composition, staff } = makeTree('treble');
     staff.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'D');
 
@@ -97,8 +97,8 @@ describe(`${MUSIC_COMPOSITION} attribute propagation`, () => {
     expect(staff.keySig).toBe('D');
   });
 
-  it('respects a measure-level keysig override over the composition value', () => {
-    // Set the measure's keysig BEFORE the staff connects so #resolveInheritedValue
+  it('respects a measure-level key-sig override over the composition value', () => {
+    // Set the measure's key-sig BEFORE the staff connects so #resolveInheritedValue
     // picks it up during onConnectedCallback.
     const composition = document.createElement(MUSIC_COMPOSITION) as any;
     document.body.appendChild(composition);
@@ -168,6 +168,65 @@ describe(`${MUSIC_COMPOSITION} measure numbering`, () => {
     await flushMutations();
 
     expect(freshMeasure.getAttribute('number')).toBe('1');
+  });
+
+  function measureWithStaves(...times: string[]): {
+    measure: HTMLElement;
+    staves: any[];
+  } {
+    const measure = document.createElement(MUSIC_MEASURE);
+    const staves = times.map((time) => {
+      const staff = document.createElement(MUSIC_STAFF) as any;
+      staff.setAttribute(COMMON_ATTRIBUTES.TIME, time);
+      measure.appendChild(staff);
+      return staff;
+    });
+    return { measure, staves };
+  }
+
+  const timeSigText = (staff: any): string | null =>
+    staff.shadowRoot.querySelector('.time-signature')?.textContent ?? null;
+
+  it('shows the first measure’s time signature after it is replaced by a fresh node', async () => {
+    const composition = document.createElement(MUSIC_COMPOSITION) as any;
+    document.body.appendChild(composition);
+
+    const first = measureWithStaves('4/4');
+    composition.appendChild(first.measure);
+    await flushMutations();
+    expect(timeSigText(first.staves[0])).toBe('44');
+
+    // A rebar replaces measure 1 with a brand-new node whose staff connects
+    // before the MutationObserver runs #renumberMeasures.
+    const fresh = measureWithStaves('5/4');
+    composition.replaceChild(fresh.measure, first.measure);
+    await flushMutations();
+
+    expect(fresh.measure.getAttribute('number')).toBe('1');
+    expect(timeSigText(fresh.staves[0])).toBe('54');
+  });
+
+  it('shows the time signature on both staves of a remounted grand-staff first measure', async () => {
+    const composition = document.createElement(MUSIC_COMPOSITION) as any;
+    document.body.appendChild(composition);
+
+    const original = measureWithStaves('4/4', '4/4'); // treble + bass
+    composition.appendChild(original.measure);
+    await flushMutations();
+
+    // Replace measure 1 and add two more fresh measures at once (a multi-measure
+    // rebar): measure 1 remounts as a grand staff, measures 2–3 do not show it.
+    const m1 = measureWithStaves('3/4', '3/4');
+    const m2 = measureWithStaves('3/4', '3/4');
+    const m3 = measureWithStaves('3/4', '3/4');
+    composition.replaceChild(m1.measure, original.measure);
+    composition.appendChild(m2.measure);
+    composition.appendChild(m3.measure);
+    await flushMutations();
+
+    expect(m1.staves.map(timeSigText)).toEqual(['34', '34']);
+    expect(m2.staves.map(timeSigText)).toEqual([null, null]);
+    expect(m3.staves.map(timeSigText)).toEqual([null, null]);
   });
 
   it('renumbers remaining measures with no gap after removing a middle measure', async () => {

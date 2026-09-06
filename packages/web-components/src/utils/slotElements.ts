@@ -46,14 +46,31 @@ export function flattenSlotElements(assigned: Element[]): {
         );
         return;
       }
+      const anchorIndex = flatElements.length - 1;
+      // Consecutive clef markers (no note/chord/rest between them) share one
+      // anchor index and would be positioned on top of each other, so only
+      // the first is honored.
+      if (
+        clefMarkers.length > 0 &&
+        clefMarkers[clefMarkers.length - 1].afterElementIndex === anchorIndex
+      ) {
+        console.warn(
+          '[flattenSlotElements] consecutive <music-clef> elements are not supported; ignoring all but the first'
+        );
+        (element as ClefElementType).style.display = 'none';
+        return;
+      }
       clefMarkers.push({
-        afterElementIndex: flatElements.length - 1,
+        afterElementIndex: anchorIndex,
         element: element as ClefElementType,
       });
     }
   }
 
   for (const element of assigned) {
+    if (element.nodeName === MUSIC_CLEF_NODE) {
+      (element as ClefElementType).style.display = '';
+    }
     flatten(element, []);
   }
 

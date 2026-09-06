@@ -57,7 +57,7 @@ function makeStaff(clef: ClefType = 'treble'): any {
   element.setAttribute('clef', clef);
   element.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'C');
   element.setAttribute(COMMON_ATTRIBUTES.MODE, 'major');
-  element.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
+  element.setAttribute(COMMON_ATTRIBUTES.TIME, '4/4');
   document.body.appendChild(element);
   return element;
 }
@@ -294,7 +294,7 @@ describe(`${MUSIC_STAFF} clef changes`, () => {
 
   it('drops and hides a clef marker whose anchor note is truncated by measure overflow', () => {
     const staff = makeStaff('treble');
-    staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '1/4');
+    staff.setAttribute(COMMON_ATTRIBUTES.TIME, '1/4');
 
     const note1 = document.createElement(MUSIC_NOTE) as NoteElementType;
     note1.setAttribute('duration', 'quarter');
@@ -318,5 +318,121 @@ describe(`${MUSIC_STAFF} clef changes`, () => {
     expect(note2.style.display).toBe('none');
     expect(clefMarker.style.display).toBe('none');
     expect(staff.effectiveEndClef).toBe('treble');
+  });
+
+  it('warns and ignores a second clef marker sitting directly after the first', () => {
+    const staff = makeStaff('treble');
+
+    const note = document.createElement(MUSIC_NOTE) as NoteElementType;
+    note.setAttribute('duration', 'quarter');
+    note.setAttribute('note', 'C');
+    note.setAttribute('octave', '4');
+
+    const firstClef = makeClefMarker('bass');
+    const secondClef = makeClefMarker('treble');
+
+    const noteAfter = document.createElement(MUSIC_NOTE) as NoteElementType;
+    noteAfter.setAttribute('duration', 'quarter');
+    noteAfter.setAttribute('note', 'C');
+    noteAfter.setAttribute('octave', '4');
+
+    const consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    renderElements(staff, [note, firstClef, secondClef, noteAfter]);
+
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining('consecutive <music-clef>')
+    );
+    consoleSpy.mockRestore();
+
+    expect(secondClef.style.display).toBe('none');
+    expect(noteAfter.style.top).toBe(expectedNoteTop('bass', 'C4'));
+    expect(staff.effectiveEndClef).toBe('bass');
+  });
+
+  it('keeps only the first of three consecutive clef markers', () => {
+    const staff = makeStaff('treble');
+
+    const note = document.createElement(MUSIC_NOTE) as NoteElementType;
+    note.setAttribute('duration', 'quarter');
+    note.setAttribute('note', 'C');
+    note.setAttribute('octave', '4');
+
+    const firstClef = makeClefMarker('bass');
+    const secondClef = makeClefMarker('treble');
+    const thirdClef = makeClefMarker('treble');
+
+    const consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    renderElements(staff, [note, firstClef, secondClef, thirdClef]);
+    consoleSpy.mockRestore();
+
+    expect(secondClef.style.display).toBe('none');
+    expect(thirdClef.style.display).toBe('none');
+    expect(staff.effectiveEndClef).toBe('bass');
+  });
+
+  it('honors two clef markers separated by a note without warning', () => {
+    const staff = makeStaff('treble');
+
+    const note1 = document.createElement(MUSIC_NOTE) as NoteElementType;
+    note1.setAttribute('duration', 'quarter');
+    note1.setAttribute('note', 'C');
+    note1.setAttribute('octave', '4');
+
+    const clef1 = makeClefMarker('bass');
+
+    const note2 = document.createElement(MUSIC_NOTE) as NoteElementType;
+    note2.setAttribute('duration', 'quarter');
+    note2.setAttribute('note', 'C');
+    note2.setAttribute('octave', '4');
+
+    const clef2 = makeClefMarker('treble');
+
+    const note3 = document.createElement(MUSIC_NOTE) as NoteElementType;
+    note3.setAttribute('duration', 'quarter');
+    note3.setAttribute('note', 'C');
+    note3.setAttribute('octave', '4');
+
+    const consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    renderElements(staff, [note1, clef1, note2, clef2, note3]);
+
+    expect(consoleSpy).not.toHaveBeenCalled();
+    consoleSpy.mockRestore();
+
+    expect(clef2.style.display).not.toBe('none');
+    expect(note2.style.top).toBe(expectedNoteTop('bass', 'C4'));
+    expect(note3.style.top).toBe(expectedNoteTop('treble', 'C4'));
+  });
+
+  it('re-shows a previously-ignored clef once a note is inserted between the pair', () => {
+    const staff = makeStaff('treble');
+
+    const note1 = document.createElement(MUSIC_NOTE) as NoteElementType;
+    note1.setAttribute('duration', 'quarter');
+    note1.setAttribute('note', 'C');
+    note1.setAttribute('octave', '4');
+
+    const firstClef = makeClefMarker('bass');
+    const secondClef = makeClefMarker('treble');
+
+    const consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    renderElements(staff, [note1, firstClef, secondClef]);
+    expect(secondClef.style.display).toBe('none');
+
+    const inserted = document.createElement(MUSIC_NOTE) as NoteElementType;
+    inserted.setAttribute('duration', 'quarter');
+    inserted.setAttribute('note', 'C');
+    inserted.setAttribute('octave', '4');
+
+    const noteAfter = document.createElement(MUSIC_NOTE) as NoteElementType;
+    noteAfter.setAttribute('duration', 'quarter');
+    noteAfter.setAttribute('note', 'C');
+    noteAfter.setAttribute('octave', '4');
+
+    renderElements(staff, [note1, firstClef, inserted, secondClef, noteAfter]);
+    consoleSpy.mockRestore();
+
+    expect(secondClef.style.display).not.toBe('none');
+    expect(inserted.style.top).toBe(expectedNoteTop('bass', 'C4'));
+    expect(noteAfter.style.top).toBe(expectedNoteTop('treble', 'C4'));
   });
 });

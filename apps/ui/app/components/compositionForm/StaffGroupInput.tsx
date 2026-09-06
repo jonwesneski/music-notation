@@ -1,8 +1,8 @@
+import { Radio } from '@/design-system';
 import type { StaffGroupType } from '@one-step-at-a-time/web-components';
 import { useFormContext } from 'react-hook-form';
-import { Radio } from '@/design-system';
 import { useCompositionFormSession } from './CompositionFormSessionContext';
-import { findGroupMembers } from './staffGroups';
+import { findGroupMembers } from './staffGroupsHelpers';
 import type { CompositionFormValues, StaffType } from './types';
 
 interface StaffGroupInputProps {

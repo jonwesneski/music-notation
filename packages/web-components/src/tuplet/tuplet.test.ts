@@ -109,10 +109,7 @@ describe(MUSIC_TUPLET, () => {
 describe('staff integration', () => {
   it('renders a .tuplets-container svg in the shadow DOM when a tuplet is slotted', () => {
     const staff = document.createElement(MUSIC_STAFF) as any;
-    staff.setAttribute(
-      COMMON_ATTRIBUTES.TIME_SIG,
-      '4/4' satisfies TimeSignature
-    );
+    staff.setAttribute(COMMON_ATTRIBUTES.TIME, '4/4' satisfies TimeSignature);
     document.body.appendChild(staff);
 
     const tuplet = document.createElement(MUSIC_TUPLET) as TupletElementType;
@@ -136,10 +133,7 @@ describe('staff integration', () => {
 
   it('renders a .tuplet-group inside .tuplets-container for a triplet', () => {
     const staff = document.createElement(MUSIC_STAFF) as any;
-    staff.setAttribute(
-      COMMON_ATTRIBUTES.TIME_SIG,
-      '4/4' satisfies TimeSignature
-    );
+    staff.setAttribute(COMMON_ATTRIBUTES.TIME, '4/4' satisfies TimeSignature);
     document.body.appendChild(staff);
 
     const tuplet = document.createElement(MUSIC_TUPLET) as TupletElementType;

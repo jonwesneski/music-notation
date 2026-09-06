@@ -1,35 +1,43 @@
+import type { TimeSignature } from '@one-step-at-a-time/web-components';
 import { useMemo } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
-import type { ConnectorEntryAttributes } from './connectors';
-import { resolveConnectorAttributes } from './connectors';
+import type { ConnectorEntryAttributes } from './connectorsHelpers';
+import { resolveConnectorAttributes } from './connectorsHelpers';
+import { effectiveTimeSignatures } from './timeSignaturesHelpers';
 import type { CompositionFormValues, CompositionStructure } from './types';
 
 // Assembles the normalized structural slice from the form store, reactively.
 export function useCompositionStructure(): CompositionStructure {
   const { control } = useFormContext<CompositionFormValues>();
+  const timeSig = useWatch({ control, name: 'timeSig' });
   const measureOrder = useWatch({ control, name: 'measureOrder' });
   const measuresById = useWatch({ control, name: 'measuresById' });
   const stavesById = useWatch({ control, name: 'stavesById' });
   const entriesById = useWatch({ control, name: 'entriesById' });
   const connectorsById = useWatch({ control, name: 'connectorsById' });
   const connectorOrder = useWatch({ control, name: 'connectorOrder' });
+  const tupletsById = useWatch({ control, name: 'tupletsById' });
 
   return useMemo(
     () => ({
+      timeSig,
       measureOrder,
       measuresById,
       stavesById,
       entriesById,
       connectorsById,
       connectorOrder,
+      tupletsById,
     }),
     [
+      timeSig,
       measureOrder,
       measuresById,
       stavesById,
       entriesById,
       connectorsById,
       connectorOrder,
+      tupletsById,
     ]
   );
 }
@@ -41,4 +49,15 @@ export function useConnectorAttributes(): Map<
 > {
   const structure = useCompositionStructure();
   return useMemo(() => resolveConnectorAttributes(structure), [structure]);
+}
+
+// Effective time signature of every measure, keyed by measure id.
+export function useMeasureTimeSignatures(): Map<string, TimeSignature> {
+  const structure = useCompositionStructure();
+  return useMemo(() => {
+    const timeSignatures = effectiveTimeSignatures(structure);
+    return new Map(
+      structure.measureOrder.map((id, i) => [id, timeSignatures[i]])
+    );
+  }, [structure]);
 }

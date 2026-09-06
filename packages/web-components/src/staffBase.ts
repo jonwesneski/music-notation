@@ -69,7 +69,7 @@ export abstract class StaffElementBase extends _MaybeHTMLElement {
     });
 
     this.effectiveTimeSig = this.convertTotimeInts(
-      this.resolveInheritedValue(COMMON_ATTRIBUTES.TIME_SIG, '4/4')
+      this.resolveInheritedValue(COMMON_ATTRIBUTES.TIME, '4/4')
     );
   }
 
@@ -135,7 +135,7 @@ export abstract class StaffElementBase extends _MaybeHTMLElement {
   }
 
   set time(value: TimeSignature) {
-    this.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, value);
+    this.setAttribute(COMMON_ATTRIBUTES.TIME, value);
   }
 
   protected render() {

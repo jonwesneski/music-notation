@@ -4,7 +4,6 @@
  *
  *   /// <reference types="@one-step-at-a-time/web-components/react" />
  */
-import 'react';
 import type {
   ArticulationType,
   Chord,
@@ -12,7 +11,10 @@ import type {
   ConnectorRole,
   DurationType,
   DynamicMarking,
+  GraceArticulationsType,
   GraceDuration,
+  GraceNotesType,
+  GraceOctavesType,
   GraceSlur,
   GraceType,
   GuitarFret,
@@ -26,12 +28,14 @@ import type {
   TupletRatio,
   Voice,
 } from '@one-step-at-a-time/web-components';
+import 'react';
 
 type WebComponentNoChildrenProps = {
   key?: React.Key;
   ref?: React.Ref<HTMLElement>;
   id?: string;
   className?: string;
+  onClick?: React.MouseEventHandler<HTMLElement>;
 };
 
 type WebComponentProps = WebComponentNoChildrenProps & {
@@ -42,31 +46,25 @@ declare module 'react' {
   namespace JSX {
     interface IntrinsicElements {
       'music-composition': WebComponentProps & {
-        keySig?: Note;
+        'key-sig'?: Note;
         mode?: Mode;
         time?: TimeSignature;
       };
       'music-measure': WebComponentProps & {
         number?: number;
-        keySig?: Note;
+        'key-sig'?: Note;
         mode?: Mode;
         time?: TimeSignature;
-        onClick?: React.MouseEventHandler<HTMLElement>;
       };
       'music-staff': WebComponentProps & {
         clef?: ClefType;
-        keySig?: Note;
+        'key-sig'?: Note;
         mode?: Mode;
         time?: TimeSignature;
         editable?: boolean;
         managed?: boolean;
-        // Pairs this staff with its immediate next sibling under a
-        // brace ("grand") or bracket connector — see StaffElementBase#group.
         group?: StaffGroupType;
-        // Shared identifier joining this staff with other group="bracket"
-        // staves into one multi-staff bracket connector — see StaffElementBase#groupId.
         'group-id'?: string;
-        onClick?: React.MouseEventHandler<HTMLElement>;
       };
       'music-staff-guitar-tab': WebComponentProps & {
         time?: TimeSignature;
@@ -75,7 +73,7 @@ declare module 'react' {
       };
       'music-staff-vocal': WebComponentProps & {
         voice?: Voice;
-        keySig?: Note;
+        'key-sig'?: Note;
         mode?: Mode;
         time?: TimeSignature;
         editable?: boolean;
@@ -91,7 +89,6 @@ declare module 'react' {
       };
       'music-rest': WebComponentNoChildrenProps & {
         duration?: DurationType;
-        onClick?: (e: MouseEvent) => void;
         onPointerDown?: (e: PointerEvent) => void;
         onPointerUp?: (e: PointerEvent) => void;
       };
@@ -103,9 +100,6 @@ declare module 'react' {
         duration?: DurationType;
         tie?: ConnectorRole;
         slur?: ConnectorRole;
-        // Binds this element (as a connector end) to the start element whose
-        // `id` matches — needed only when interleaving same-kind ties/slurs
-        // would otherwise mis-pair on the renderer's LIFO stack.
         for?: string;
         dynamic?: DynamicMarking;
         crescendo?: HairpinRole;
@@ -113,20 +107,13 @@ declare module 'react' {
         diminuendo?: HairpinRole;
         articulation?: ArticulationType;
         stress?: StressType;
-        // Comma-separated grace note letters, e.g. "F#,G"
-        grace?: string;
-        // Comma-separated grace octaves, aligned by index with `grace`.
-        // Omitted or missing slots default to the host element's own octave.
-        'grace-octave'?: string;
-        // Comma-separated per-grace-note articulation, aligned by index with
-        // `grace`. Omitted or missing slots mean no mark for that grace note.
-        'grace-articulation'?: string;
+        grace?: GraceNotesType;
+        'grace-octave'?: GraceOctavesType;
+        'grace-articulation'?: GraceArticulationsType;
         'grace-type'?: GraceType;
         'grace-duration'?: GraceDuration;
         'grace-slur'?: GraceSlur;
-        // A single dynamic for the whole grace group, independent of `dynamic`.
         'grace-dynamic'?: DynamicMarking;
-        onClick?: (e: MouseEvent) => void;
         onPointerDown?: (e: PointerEvent) => void;
         onPointerUp?: (e: PointerEvent) => void;
       };
@@ -136,9 +123,6 @@ declare module 'react' {
         octave?: Octave;
         tie?: ConnectorRole;
         slur?: ConnectorRole;
-        // Binds this element (as a connector end) to the start element whose
-        // `id` matches — needed only when interleaving same-kind ties/slurs
-        // would otherwise mis-pair on the renderer's LIFO stack.
         for?: string;
         dynamic?: DynamicMarking;
         crescendo?: HairpinRole;
@@ -146,20 +130,13 @@ declare module 'react' {
         diminuendo?: HairpinRole;
         articulation?: ArticulationType;
         stress?: StressType;
-        // Comma-separated grace note letters, e.g. "F#,G"
-        grace?: string;
-        // Comma-separated grace octaves, aligned by index with `grace`.
-        // Omitted or missing slots default to the host element's own octave.
-        'grace-octave'?: string;
-        // Comma-separated per-grace-note articulation, aligned by index with
-        // `grace`. Omitted or missing slots mean no mark for that grace note.
-        'grace-articulation'?: string;
+        grace?: GraceNotesType;
+        'grace-octave'?: GraceOctavesType;
+        'grace-articulation'?: GraceArticulationsType;
         'grace-type'?: GraceType;
         'grace-duration'?: GraceDuration;
         'grace-slur'?: GraceSlur;
-        // A single dynamic for the whole grace group, independent of `dynamic`.
         'grace-dynamic'?: DynamicMarking;
-        onClick?: (e: MouseEvent) => void;
         onPointerDown?: (e: PointerEvent) => void;
         onPointerUp?: (e: PointerEvent) => void;
         // Custom events (note-click, note-pointerdown, note-pointerup) require

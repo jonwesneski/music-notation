@@ -49,7 +49,7 @@ describe(`${MUSIC_STAFF_GUITAR_TAB} time signature`, () => {
 
   it('inherits time from a <music-measure> ancestor', () => {
     const measure = document.createElement(MUSIC_MEASURE) as any;
-    measure.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '6/8');
+    measure.setAttribute(COMMON_ATTRIBUTES.TIME, '6/8');
     document.body.appendChild(measure);
 
     const staff = document.createElement(
@@ -62,7 +62,7 @@ describe(`${MUSIC_STAFF_GUITAR_TAB} time signature`, () => {
 
   it('inherits time from a <music-composition> ancestor', () => {
     const composition = document.createElement(MUSIC_COMPOSITION) as any;
-    composition.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '5/4');
+    composition.setAttribute(COMMON_ATTRIBUTES.TIME, '5/4');
     document.body.appendChild(composition);
 
     const measure = document.createElement(MUSIC_MEASURE) as any;
@@ -78,13 +78,13 @@ describe(`${MUSIC_STAFF_GUITAR_TAB} time signature`, () => {
 
   it('respects a staff-level time override over the measure value', () => {
     const measure = document.createElement(MUSIC_MEASURE) as any;
-    measure.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '6/8');
+    measure.setAttribute(COMMON_ATTRIBUTES.TIME, '6/8');
     document.body.appendChild(measure);
 
     const staff = document.createElement(
       MUSIC_STAFF_GUITAR_TAB
     ) as StaffElementBaseType;
-    staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '2/4');
+    staff.setAttribute(COMMON_ATTRIBUTES.TIME, '2/4');
     measure.appendChild(staff);
 
     expect(staff.time).toBe('2/4');

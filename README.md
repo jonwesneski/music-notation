@@ -1,7 +1,7 @@
 # One Step at a Time
 
 Music notation creator.
-app names: one at a time, rest in time, walk in time, walk in the park
+app names: one step at a time, rest in time, walk in time, walk in the park, MusicElement
 
 ## Packages
 

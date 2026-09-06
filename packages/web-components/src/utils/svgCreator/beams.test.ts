@@ -87,7 +87,7 @@ describe('beams', () => {
       const staff = document.createElement(MUSIC_STAFF) as StaffElementType;
       staff.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'C');
       staff.setAttribute(COMMON_ATTRIBUTES.MODE, 'major');
-      staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
+      staff.setAttribute(COMMON_ATTRIBUTES.TIME, '4/4');
       document.body.appendChild(staff);
 
       const notes = [
@@ -103,7 +103,7 @@ describe('beams', () => {
       const staff = document.createElement(MUSIC_STAFF) as StaffElementType;
       staff.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'C');
       staff.setAttribute(COMMON_ATTRIBUTES.MODE, 'major');
-      staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
+      staff.setAttribute(COMMON_ATTRIBUTES.TIME, '4/4');
       document.body.appendChild(staff);
 
       const notes = [
@@ -119,7 +119,7 @@ describe('beams', () => {
       const staff = document.createElement(MUSIC_STAFF) as StaffElementType;
       staff.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'C');
       staff.setAttribute(COMMON_ATTRIBUTES.MODE, 'major');
-      staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
+      staff.setAttribute(COMMON_ATTRIBUTES.TIME, '4/4');
       document.body.appendChild(staff);
 
       const notes = [
@@ -143,7 +143,7 @@ describe('beams', () => {
       const staff = document.createElement(MUSIC_STAFF) as StaffElementType;
       staff.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'C');
       staff.setAttribute(COMMON_ATTRIBUTES.MODE, 'major');
-      staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '6/8');
+      staff.setAttribute(COMMON_ATTRIBUTES.TIME, '6/8');
       document.body.appendChild(staff);
 
       const notes = [
@@ -167,7 +167,7 @@ describe('beams', () => {
       const staff = document.createElement(MUSIC_STAFF) as StaffElementType;
       staff.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'C');
       staff.setAttribute(COMMON_ATTRIBUTES.MODE, 'major');
-      staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
+      staff.setAttribute(COMMON_ATTRIBUTES.TIME, '4/4');
       document.body.appendChild(staff);
 
       const notes = [
@@ -184,7 +184,7 @@ describe('beams', () => {
       const staff = document.createElement(MUSIC_STAFF) as StaffElementType;
       staff.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'C');
       staff.setAttribute(COMMON_ATTRIBUTES.MODE, 'major');
-      staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
+      staff.setAttribute(COMMON_ATTRIBUTES.TIME, '4/4');
       document.body.appendChild(staff);
 
       const notes = [
@@ -204,7 +204,7 @@ describe('beams', () => {
       const staff = document.createElement(MUSIC_STAFF) as StaffElementType;
       staff.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'C');
       staff.setAttribute(COMMON_ATTRIBUTES.MODE, 'major');
-      staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
+      staff.setAttribute(COMMON_ATTRIBUTES.TIME, '4/4');
       document.body.appendChild(staff);
 
       const notes = [
@@ -223,7 +223,7 @@ describe('beams', () => {
       const staff = document.createElement(MUSIC_STAFF) as StaffElementType;
       staff.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'C');
       staff.setAttribute(COMMON_ATTRIBUTES.MODE, 'major');
-      staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
+      staff.setAttribute(COMMON_ATTRIBUTES.TIME, '4/4');
       document.body.appendChild(staff);
 
       const notes = [
@@ -244,7 +244,7 @@ describe('beams', () => {
       const staff = document.createElement(MUSIC_STAFF) as StaffElementType;
       staff.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'C');
       staff.setAttribute(COMMON_ATTRIBUTES.MODE, 'major');
-      staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
+      staff.setAttribute(COMMON_ATTRIBUTES.TIME, '4/4');
       document.body.appendChild(staff);
 
       const notes = [
@@ -264,7 +264,7 @@ describe('beams', () => {
       const staff = document.createElement(MUSIC_STAFF) as StaffElementType;
       staff.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'C');
       staff.setAttribute(COMMON_ATTRIBUTES.MODE, 'major');
-      staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
+      staff.setAttribute(COMMON_ATTRIBUTES.TIME, '4/4');
       document.body.appendChild(staff);
 
       const notes = [
@@ -292,7 +292,7 @@ describe('beams', () => {
       const staff = document.createElement(MUSIC_STAFF) as StaffElementType;
       staff.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'C');
       staff.setAttribute(COMMON_ATTRIBUTES.MODE, 'major');
-      staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
+      staff.setAttribute(COMMON_ATTRIBUTES.TIME, '4/4');
       document.body.appendChild(staff);
 
       const notes = [
@@ -324,7 +324,7 @@ describe('beams', () => {
       const staff = document.createElement(MUSIC_STAFF) as StaffElementType;
       staff.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'C');
       staff.setAttribute(COMMON_ATTRIBUTES.MODE, 'major');
-      staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
+      staff.setAttribute(COMMON_ATTRIBUTES.TIME, '4/4');
       document.body.appendChild(staff);
 
       const notes = [
@@ -358,7 +358,7 @@ describe('beams', () => {
       const staff = document.createElement(MUSIC_STAFF) as StaffElementType;
       staff.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'C');
       staff.setAttribute(COMMON_ATTRIBUTES.MODE, 'major');
-      staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
+      staff.setAttribute(COMMON_ATTRIBUTES.TIME, '4/4');
       document.body.appendChild(staff);
 
       const notes = [
@@ -377,7 +377,7 @@ describe('beams', () => {
       const staff = document.createElement(MUSIC_STAFF) as StaffElementType;
       staff.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'C');
       staff.setAttribute(COMMON_ATTRIBUTES.MODE, 'major');
-      staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
+      staff.setAttribute(COMMON_ATTRIBUTES.TIME, '4/4');
       document.body.appendChild(staff);
 
       const notes = [
@@ -396,7 +396,7 @@ describe('beams', () => {
       const staff = document.createElement(MUSIC_STAFF) as StaffElementType;
       staff.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'C');
       staff.setAttribute(COMMON_ATTRIBUTES.MODE, 'major');
-      staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
+      staff.setAttribute(COMMON_ATTRIBUTES.TIME, '4/4');
       document.body.appendChild(staff);
 
       const notes = [
@@ -417,7 +417,7 @@ describe('beams', () => {
       const staff = document.createElement(MUSIC_STAFF) as StaffElementType;
       staff.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'C');
       staff.setAttribute(COMMON_ATTRIBUTES.MODE, 'major');
-      staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
+      staff.setAttribute(COMMON_ATTRIBUTES.TIME, '4/4');
       document.body.appendChild(staff);
 
       const chords = [
@@ -455,7 +455,7 @@ describe('beams', () => {
       const staff = document.createElement(MUSIC_STAFF) as StaffElementType;
       staff.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'C');
       staff.setAttribute(COMMON_ATTRIBUTES.MODE, 'major');
-      staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
+      staff.setAttribute(COMMON_ATTRIBUTES.TIME, '4/4');
       document.body.appendChild(staff);
 
       const chords = [
@@ -501,7 +501,7 @@ describe('beams', () => {
       const staff = document.createElement(MUSIC_STAFF) as StaffElementType;
       staff.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'C');
       staff.setAttribute(COMMON_ATTRIBUTES.MODE, 'major');
-      staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
+      staff.setAttribute(COMMON_ATTRIBUTES.TIME, '4/4');
       document.body.appendChild(staff);
 
       const chords = [
@@ -562,7 +562,7 @@ describe('beams', () => {
       const staff = document.createElement(MUSIC_STAFF) as StaffElementType;
       staff.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'C');
       staff.setAttribute(COMMON_ATTRIBUTES.MODE, 'major');
-      staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
+      staff.setAttribute(COMMON_ATTRIBUTES.TIME, '4/4');
       document.body.appendChild(staff);
 
       const chords = [
@@ -600,7 +600,7 @@ describe('beams', () => {
       const staff = document.createElement(MUSIC_STAFF) as StaffElementType;
       staff.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'C');
       staff.setAttribute(COMMON_ATTRIBUTES.MODE, 'major');
-      staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
+      staff.setAttribute(COMMON_ATTRIBUTES.TIME, '4/4');
       document.body.appendChild(staff);
 
       const chords = [
@@ -634,7 +634,7 @@ describe('beams', () => {
       const staff = document.createElement(MUSIC_STAFF) as StaffElementType;
       staff.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'C');
       staff.setAttribute(COMMON_ATTRIBUTES.MODE, 'major');
-      staff.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
+      staff.setAttribute(COMMON_ATTRIBUTES.TIME, '4/4');
       document.body.appendChild(staff);
 
       const steepGapNotes = [

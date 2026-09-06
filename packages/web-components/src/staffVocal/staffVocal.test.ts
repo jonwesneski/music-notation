@@ -150,7 +150,7 @@ function expectedNoteTop(
 }
 
 function makeStaff(voice = 'soprano', keySig = 'C', mode = 'major'): Element {
-  document.body.innerHTML = `<${MUSIC_STAFF_VOCAL} voice="${voice}" ${COMMON_ATTRIBUTES.KEY_SIG}="${keySig}" ${COMMON_ATTRIBUTES.MODE}="${mode}" ${COMMON_ATTRIBUTES.TIME_SIG}="4/4"></${MUSIC_STAFF_VOCAL}>`;
+  document.body.innerHTML = `<${MUSIC_STAFF_VOCAL} voice="${voice}" ${COMMON_ATTRIBUTES.KEY_SIG}="${keySig}" ${COMMON_ATTRIBUTES.MODE}="${mode}" ${COMMON_ATTRIBUTES.TIME}="4/4"></${MUSIC_STAFF_VOCAL}>`;
   return document.body.querySelector(MUSIC_STAFF_VOCAL)!;
   /**
    * After change: https://github.com/jonwesneski/one-step-at-a-time/pull/21
@@ -161,7 +161,7 @@ function makeStaff(voice = 'soprano', keySig = 'C', mode = 'major'): Element {
    */
   // const el = document.createElement('music-staff-vocal') as any;
   // el.setAttribute('voice', voice);
-  // el.setAttribute('keysig', 'C');
+  // el.setAttribute('key-sig', 'C');
   // el.setAttribute('mode', 'major');
   // el.setAttribute('time', '4/4');
   // document.body.appendChild(el);
@@ -185,7 +185,7 @@ describe(MUSIC_STAFF_VOCAL, () => {
     el.setAttribute('voice', 'soprano');
     el.setAttribute(COMMON_ATTRIBUTES.KEY_SIG, 'C');
     el.setAttribute(COMMON_ATTRIBUTES.MODE, 'major');
-    el.setAttribute(COMMON_ATTRIBUTES.TIME_SIG, '4/4');
+    el.setAttribute(COMMON_ATTRIBUTES.TIME, '4/4');
     document.body.appendChild(el);
 
     expect(el.voice).toBe('soprano');

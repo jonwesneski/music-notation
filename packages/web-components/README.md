@@ -21,7 +21,7 @@ import '@one-step-at-a-time/web-components';
 ```
 
 ```html
-<music-composition keysig="G" mode="major" time="4/4">
+<music-composition key-sig="G" mode="major" time="4/4">
   <music-measure>
     <music-staff clef="treble">
       <music-note note="G" octave="4" duration="quarter"></music-note>

@@ -1,4 +1,6 @@
+import { effectiveClefOfEntry, resolveEntryOctaves } from './clefsHelpers';
 import type {
+  ChordNote,
   CompositionStructure,
   ConnectorKind,
   ConnectorRole,
@@ -19,9 +21,18 @@ export type ConnectorEndpoints = { startEntryId: string; endEntryId: string };
 export type ConnectorEntryAttributes = {
   tie?: ConnectorRole;
   slur?: ConnectorRole;
+  crescendo?: ConnectorRole;
+  decrescendo?: ConnectorRole;
   id?: string;
   for?: string;
 };
+
+// tie/slur use the id/for LIFO-stack disambiguation; hairpins are paired by the
+// library's nearest-end rule and take only the role attribute.
+const HAIRPIN_KINDS: ConnectorKind[] = ['crescendo', 'decrescendo'];
+export function isHairpinKind(kind: ConnectorKind): boolean {
+  return HAIRPIN_KINDS.includes(kind);
+}
 
 type EntryStaffContext = {
   measureId: string;
@@ -104,7 +115,11 @@ export function isConnectableSelection(
   }
 
   const entries = selection.entryIds.map((id) => structure.entriesById[id]);
-  if (entries.some((entry) => !entry || entry.type === 'rest')) {
+  if (
+    entries.some(
+      (entry) => !entry || entry.type === 'rest' || entry.type === 'clef'
+    )
+  ) {
     return null;
   }
 
@@ -142,7 +157,8 @@ export function isConnectableSelection(
 export function connectorBetween(
   structure: CompositionStructure,
   startEntryId: string,
-  endEntryId: string
+  endEntryId: string,
+  kinds?: ConnectorKind[]
 ): NormalizedConnector | null {
   return (
     structure.connectorOrder
@@ -151,7 +167,8 @@ export function connectorBetween(
         (connector) =>
           connector &&
           connector.startEntryId === startEntryId &&
-          connector.endEntryId === endEntryId
+          connector.endEntryId === endEntryId &&
+          (kinds === undefined || kinds.includes(connector.kind))
       ) ?? null
   );
 }
@@ -166,23 +183,41 @@ export function canTie(
 ): boolean {
   const start = structure.entriesById[endpoints.startEntryId];
   const end = structure.entriesById[endpoints.endEntryId];
-  if (!start || !end || start.type === 'rest' || end.type === 'rest') {
+  if (!start || !end) {
+    return false;
+  }
+  if (start.type === 'rest' || start.type === 'clef') {
     return false;
   }
   if (start.type !== end.type) {
     return false;
   }
-  if (
-    start.type === 'note' &&
-    end.type === 'note' &&
-    start.value !== end.value
-  ) {
-    return false;
+  if (start.type === 'note' && end.type === 'note') {
+    const startClef = effectiveClefOfEntry(structure, endpoints.startEntryId);
+    const endClef = effectiveClefOfEntry(structure, endpoints.endEntryId);
+    if (
+      start.value !== end.value ||
+      resolveEntryOctaves(startClef, [start])[0] !==
+        resolveEntryOctaves(endClef, [end])[0]
+    ) {
+      return false;
+    }
   }
   if (start.type === 'chord' && end.type === 'chord') {
-    const startNotes = [...start.notes].sort().join(',');
-    const endNotes = [...end.notes].sort().join(',');
-    if (startNotes !== endNotes) {
+    const key = (notes: ChordNote[], entryId: string) => {
+      const octaves = resolveEntryOctaves(
+        effectiveClefOfEntry(structure, entryId),
+        notes
+      );
+      return notes
+        .map((n, i) => `${n.value}${octaves[i]}`)
+        .sort()
+        .join(',');
+    };
+    if (
+      key(start.notes, endpoints.startEntryId) !==
+      key(end.notes, endpoints.endEntryId)
+    ) {
       return false;
     }
   }
@@ -255,12 +290,20 @@ export function resolveConnectorAttributes(
 
   for (const span of spans) {
     const { connector } = span;
-    const role = (value: ConnectorRole): ConnectorEntryAttributes =>
-      connector.kind === 'tie' ? { tie: value } : { slur: value };
+    const role = (value: ConnectorRole): ConnectorEntryAttributes => ({
+      [connector.kind]: value,
+    });
 
     patch(connector.startEntryId, role('start'));
     patch(connector.endEntryId, role('end'));
 
+    // Hairpins take only the role attribute: tie/slur get the id/for LIFO-stack
+    // disambiguation, hairpins rely on the library's nearest-end rule. That rule
+    // can't resolve two overlapping same-kind hairpins, so `upsertConnector`
+    // guarantees they never coexist.
+    if (isHairpinKind(connector.kind)) {
+      continue;
+    }
     const needsExplicitPairing = spans.some(
       (other) =>
         other !== span &&
@@ -276,26 +319,60 @@ export function resolveConnectorAttributes(
   return result;
 }
 
-// Adds a connector between the endpoints, replacing any existing connector with
-// the same endpoints (retarget / change kind) and dropping any other same-kind
-// connector that already starts at startEntryId or ends at endEntryId — the
-// renderer allows only one tie and one slur role per element.
+// Adds a connector between the endpoints, replacing any existing connector of
+// the same family (tie/slur, or hairpin) on the same endpoints — so a slur and
+// a crescendo can coexist over one pair, but not a tie and a slur — and
+// dropping any other same-kind connector that already starts at startEntryId or
+// ends at endEntryId, since the renderer allows only one role of each kind per
+// element. For hairpins it goes further and drops any same-kind hairpin whose
+// span overlaps the new one: the library's nearest-end pairing can't resolve
+// two overlapping same-kind hairpins (see resolveConnectorAttributes).
 export function upsertConnector(
   structure: CompositionStructure,
   startEntryId: string,
   endEntryId: string,
   kind: ConnectorKind
 ): CompositionStructure {
+  const sameFamily = (other: ConnectorKind) =>
+    isHairpinKind(other) === isHairpinKind(kind);
+
+  const flat = flattenEntryOrder(structure);
+  const indexOf = new Map(flat.map((id, index) => [id, index]));
+  const newStart = indexOf.get(startEntryId);
+  const newEnd = indexOf.get(endEntryId);
+
+  const overlapsNewHairpinSpan = (connector: NormalizedConnector) => {
+    if (!isHairpinKind(kind) || connector.kind !== kind) {
+      return false;
+    }
+    const otherStart = indexOf.get(connector.startEntryId);
+    const otherEnd = indexOf.get(connector.endEntryId);
+    if (
+      newStart === undefined ||
+      newEnd === undefined ||
+      otherStart === undefined ||
+      otherEnd === undefined
+    ) {
+      return false;
+    }
+    return !(otherEnd < newStart || newEnd < otherStart);
+  };
+
   const removed = new Set<string>();
   for (const [id, connector] of Object.entries(structure.connectorsById)) {
     const samePair =
+      sameFamily(connector.kind) &&
       connector.startEntryId === startEntryId &&
       connector.endEntryId === endEntryId;
     const sameKindEndpointClash =
       connector.kind === kind &&
       (connector.startEntryId === startEntryId ||
         connector.endEntryId === endEntryId);
-    if (samePair || sameKindEndpointClash) {
+    if (
+      samePair ||
+      sameKindEndpointClash ||
+      overlapsNewHairpinSpan(connector)
+    ) {
       removed.add(id);
     }
   }
@@ -316,6 +393,48 @@ export function upsertConnector(
       ...structure.connectorOrder.filter((id) => !removed.has(id)),
       newId,
     ],
+  };
+}
+
+// Drops every tie whose endpoints no longer join a single sustained pitch, using
+// `canTie` as the authority — an entry edit (`applyEntryUpdate`) can change a
+// tied note's pitch/octave, a tied chord's notes, or a `<music-clef>` marker that
+// shifts a downstream tie's octave resolution, none of which the editor blocks.
+// A full scan (not just ties touching the edited entry) because a clef edit
+// invalidates ties it doesn't share an endpoint with. Slurs and hairpins carry
+// no pitch constraint and are left alone. Chosen over blocking the edit in
+// `EntryEditInput` to match the delete cascade in `deleteSelectionHelpers.ts` —
+// repair dangling references rather than prevent the mutation.
+export function pruneBrokenTies(
+  structure: CompositionStructure
+): CompositionStructure {
+  const broken = new Set<string>();
+  for (const id of structure.connectorOrder) {
+    const connector = structure.connectorsById[id];
+    if (
+      connector?.kind === 'tie' &&
+      !canTie(structure, {
+        startEntryId: connector.startEntryId,
+        endEntryId: connector.endEntryId,
+      })
+    ) {
+      broken.add(id);
+    }
+  }
+  if (broken.size === 0) {
+    return structure;
+  }
+
+  const connectorsById: Record<string, NormalizedConnector> = {};
+  for (const [id, connector] of Object.entries(structure.connectorsById)) {
+    if (!broken.has(id)) {
+      connectorsById[id] = connector;
+    }
+  }
+  return {
+    ...structure,
+    connectorsById,
+    connectorOrder: structure.connectorOrder.filter((id) => !broken.has(id)),
   };
 }
 

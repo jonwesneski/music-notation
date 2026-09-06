@@ -1,4 +1,8 @@
-import type { StaffGroupType } from '@one-step-at-a-time/web-components';
+import type {
+  StaffGroupType,
+  TimeSignature,
+  TupletRatio,
+} from '@one-step-at-a-time/web-components';
 import {
   createContext,
   useCallback,
@@ -6,21 +10,29 @@ import {
   useRef,
   useState,
 } from 'react';
-import { removeSelectionFromStructure } from './deleteSelection';
-import { computeBoxSelection } from './selectionHitTest';
+import { removeSelectionFromStructure } from './deleteSelectionHelpers';
+import { computeBoxSelection } from './selectionHelpers';
 import type {
   CompositionStructure,
   ConnectorKind,
   DraftMusicEntry,
+  MusicEntry,
   Selection,
   StaffType,
 } from './types';
 import { EMPTY_SELECTION, isSelectionEmpty } from './types';
 
+// A time signature change the user picked but hasn't confirmed — the
+// TimeSignatureChangeDialog is open on it, asking rewrite / signature-only /
+// cancel.
+export type PendingTimeSignatureChange =
+  | { scope: 'composition'; timeSig: TimeSignature }
+  | { scope: 'measure'; measureId: string; timeSig: TimeSignature | null };
+
 export type CompositionFormSession = {
-  lastActiveEntry: 'note' | 'chord' | 'rest';
   entryPanelTab: string | null;
   selection: Selection;
+  pendingTimeSignatureChange: PendingTimeSignatureChange | null;
 };
 
 type CompositionFormSessionContextValue = {
@@ -61,11 +73,17 @@ type CompositionFormSessionContextValue = {
     staffId: string,
     entry: DraftMusicEntry
   ) => void;
+  updateEntry: (entry: MusicEntry) => void;
   setConnector: (
     startEntryId: string,
     endEntryId: string,
-    kind: ConnectorKind | null
+    kind: ConnectorKind | null,
+    family: ConnectorKind[]
   ) => void;
+  setTuplet: (entryIds: string[], ratio: TupletRatio | null) => void;
+  requestTimeSignatureChange: (request: PendingTimeSignatureChange) => void;
+  confirmTimeSignatureChange: (rewrite: boolean) => void;
+  cancelTimeSignatureChange: () => void;
 };
 
 const CompositionFormSessionContext =
@@ -86,10 +104,22 @@ type CompositionFormSessionProviderProps = {
     staffId: string,
     entry: DraftMusicEntry
   ) => void;
+  onUpdateEntry: (entry: MusicEntry) => void;
   onSetConnector: (
     startEntryId: string,
     endEntryId: string,
-    kind: ConnectorKind | null
+    kind: ConnectorKind | null,
+    family: ConnectorKind[]
+  ) => void;
+  onSetTuplet: (entryIds: string[], ratio: TupletRatio | null) => void;
+  onSetCompositionTimeSignature: (
+    timeSig: TimeSignature,
+    rewrite: boolean
+  ) => void;
+  onSetMeasureTimeSignature: (
+    measureId: string,
+    timeSig: TimeSignature | null,
+    rewrite: boolean
   ) => void;
   children: React.ReactNode;
 };
@@ -102,13 +132,17 @@ export function CompositionFormSessionProvider({
   onAddStaff,
   onSetStaffGroup,
   onAddEntry,
+  onUpdateEntry,
   onSetConnector,
+  onSetTuplet,
+  onSetCompositionTimeSignature,
+  onSetMeasureTimeSignature,
   children,
 }: CompositionFormSessionProviderProps) {
   const [session, setSessionState] = useState<CompositionFormSession>({
-    lastActiveEntry: 'note',
     entryPanelTab: null,
     selection: EMPTY_SELECTION,
+    pendingTimeSignatureChange: null,
   });
   const setSession = useCallback(
     (patch: Partial<CompositionFormSession>) =>
@@ -213,6 +247,40 @@ export function CompositionFormSessionProvider({
     setSession({ selection: EMPTY_SELECTION });
   }, [session.selection, getStructure, recordStructure, setSession]);
 
+  const requestTimeSignatureChange = useCallback(
+    (request: PendingTimeSignatureChange) =>
+      setSession({ pendingTimeSignatureChange: request }),
+    [setSession]
+  );
+  const cancelTimeSignatureChange = useCallback(
+    () => setSession({ pendingTimeSignatureChange: null }),
+    [setSession]
+  );
+  const confirmTimeSignatureChange = useCallback(
+    (rewrite: boolean) => {
+      const pending = session.pendingTimeSignatureChange;
+      if (!pending) {
+        return;
+      }
+      if (pending.scope === 'composition') {
+        onSetCompositionTimeSignature(pending.timeSig, rewrite);
+      } else {
+        onSetMeasureTimeSignature(pending.measureId, pending.timeSig, rewrite);
+      }
+      setSession({
+        pendingTimeSignatureChange: null,
+        // rebar mints fresh measure/staff ids
+        ...(rewrite ? { selection: EMPTY_SELECTION } : {}),
+      });
+    },
+    [
+      session.pendingTimeSignatureChange,
+      onSetCompositionTimeSignature,
+      onSetMeasureTimeSignature,
+      setSession,
+    ]
+  );
+
   return (
     <CompositionFormSessionContext
       value={{
@@ -230,7 +298,12 @@ export function CompositionFormSessionProvider({
         addStaff: onAddStaff,
         setStaffGroup: onSetStaffGroup,
         addEntry: onAddEntry,
+        updateEntry: onUpdateEntry,
         setConnector: onSetConnector,
+        setTuplet: onSetTuplet,
+        requestTimeSignatureChange,
+        confirmTimeSignatureChange,
+        cancelTimeSignatureChange,
       }}
     >
       {children}

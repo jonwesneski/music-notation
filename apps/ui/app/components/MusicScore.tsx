@@ -99,7 +99,7 @@ export default function MusicScore() {
   }, []);
 
   return (
-    <music-composition keySig="D" mode="major" time="4/4">
+    <music-composition key-sig="D" mode="major" time="4/4">
       <music-measure>
         <music-staff clef="treble" editable managed ref={staffRef}>
           {items.map((item) =>

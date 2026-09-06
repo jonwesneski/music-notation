@@ -13,7 +13,7 @@ type Story = StoryObj;
 // Primary only, 2 groups: showing both ascending slant and descending slant
 export const Primary: Story = {
   render: () => html`
-    <music-staff clef="treble" keySig="C" mode="major" time="4/4">
+    <music-staff clef="treble" key-sig="C" mode="major" time="4/4">
       <music-note note="C" duration="eighth"></music-note>
       <music-note note="D" duration="eighth"></music-note>
       <music-note note="E" duration="eighth"></music-note>
@@ -30,7 +30,7 @@ export const Primary: Story = {
 // Including Secondary
 export const Secondary: Story = {
   render: () => html`
-    <music-staff clef="treble" keySig="C" mode="major" time="4/4">
+    <music-staff clef="treble" key-sig="C" mode="major" time="4/4">
       <music-note note="C" duration="eighth"></music-note>
       <music-note note="D" duration="sixteenth"></music-note>
       <music-note note="E" duration="sixteenth"></music-note>
@@ -69,7 +69,7 @@ export const Secondary: Story = {
 // Including fractionals and no slants
 export const Fractional: Story = {
   render: () => html`
-    <music-staff clef="treble" keySig="C" mode="major" time="6/8">
+    <music-staff clef="treble" key-sig="C" mode="major" time="6/8">
       <music-note note="C" duration="sixteenth"></music-note>
       <music-note note="E" duration="eighth"></music-note>
       <music-note note="G" duration="eighth"></music-note>

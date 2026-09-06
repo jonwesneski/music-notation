@@ -1,5 +1,6 @@
-import { findGroupMembers } from './staffGroups';
+import { findGroupMembers } from './staffGroupsHelpers';
 import type { CompositionStructure, Selection } from './types';
+import { isPitchedEntry } from './types';
 
 export function removeSelectionFromStructure(
   structure: CompositionStructure,
@@ -56,13 +57,38 @@ export function removeSelectionFromStructure(
         },
       ])
   );
-  const entriesById = Object.fromEntries(
+  let entriesById = Object.fromEntries(
     Object.entries(structure.entriesById).filter(
       ([id]) => !entryIdsToDelete.has(id)
     )
   );
 
-  // Drop any tie/slur whose start or end entry is gone.
+  // A tuplet needs at least two members; drop any that fell below that and
+  // clear the dangling tupletId on the entries that were left in it.
+  const survivingMembers = new Map<string, number>();
+  for (const entry of Object.values(entriesById)) {
+    if (isPitchedEntry(entry) && entry.tupletId) {
+      survivingMembers.set(
+        entry.tupletId,
+        (survivingMembers.get(entry.tupletId) ?? 0) + 1
+      );
+    }
+  }
+  const tupletsById = Object.fromEntries(
+    Object.entries(structure.tupletsById).filter(
+      ([id]) => (survivingMembers.get(id) ?? 0) >= 2
+    )
+  );
+  entriesById = Object.fromEntries(
+    Object.entries(entriesById).map(([id, entry]) => [
+      id,
+      isPitchedEntry(entry) && entry.tupletId && !tupletsById[entry.tupletId]
+        ? { ...entry, tupletId: null }
+        : entry,
+    ])
+  );
+
+  // Drop any tie/slur/hairpin whose start or end entry is gone.
   const connectorsById = Object.fromEntries(
     Object.entries(structure.connectorsById).filter(
       ([, connector]) =>
@@ -90,11 +116,13 @@ export function removeSelectionFromStructure(
   }
 
   return {
+    timeSig: structure.timeSig,
     measureOrder,
     measuresById,
     stavesById: cleanedStavesById,
     entriesById,
     connectorsById,
     connectorOrder,
+    tupletsById,
   };
 }
