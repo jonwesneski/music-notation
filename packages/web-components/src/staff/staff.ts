@@ -17,8 +17,6 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
    * @attr {Note} key-sig - Key-signature tonic (e.g. `C`, `F#`, `Bb`). Inherited from a parent measure/composition when unset.
    * @attr {'major' | 'minor'} mode - Key-signature mode. Inherited when unset. Defaults to `major`.
    * @attr {TimeSignature} time - Beats per measure (e.g. `4/4`, `6/8`). Inherited when unset.
-   * @attr {boolean} editable - Enables pitch and timing drag interactions on slotted notes.
-   * @attr {boolean} managed - With `editable`, emit reorder/pitch events instead of mutating the DOM (for framework-controlled state).
    * @attr {'grand' | 'bracket'} group - Joins this staff to its next sibling under a brace or bracket connector.
    * @attr {string} group-id - Shared identifier letting a `group="bracket"` connector span more than two contiguous staves.
    *

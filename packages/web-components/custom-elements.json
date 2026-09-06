@@ -1163,7 +1163,7 @@
       "declarations": [
         {
           "kind": "class",
-          "description": "A single note: notehead, stem, flag, ledger lines, plus optional\narticulations, dynamics, hairpins, ties/slurs and grace notes. Renders\nstandalone or, inside a `<music-staff>`, is positioned and beamed by the\nstaff. In an `editable` staff its notehead can be dragged to change pitch and\nits body dragged to reorder.",
+          "description": "A single note: notehead, stem, flag, ledger lines, plus optional\narticulations, dynamics, hairpins, ties/slurs and grace notes. Renders\nstandalone or, inside a `<music-staff>`, is positioned and beamed by the\nstaff.",
           "name": "NoteElement",
           "members": [
             {
@@ -1900,45 +1900,6 @@
             },
             {
               "kind": "field",
-              "name": "#noteTimingDragHandler",
-              "privacy": "private",
-              "type": {
-                "text": "NoteTimingDragHandler | null"
-              },
-              "default": "null",
-              "inheritedFrom": {
-                "name": "StaffClassicalElementBase",
-                "module": "src/staffClassicalBase.ts"
-              }
-            },
-            {
-              "kind": "field",
-              "name": "#notePitchDragHandler",
-              "privacy": "private",
-              "type": {
-                "text": "PitchDragHandler | null"
-              },
-              "default": "null",
-              "inheritedFrom": {
-                "name": "StaffClassicalElementBase",
-                "module": "src/staffClassicalBase.ts"
-              }
-            },
-            {
-              "kind": "field",
-              "name": "#boundPointerDown",
-              "privacy": "private",
-              "type": {
-                "text": "((e: PointerEvent) => void) | null"
-              },
-              "default": "null",
-              "inheritedFrom": {
-                "name": "StaffClassicalElementBase",
-                "module": "src/staffClassicalBase.ts"
-              }
-            },
-            {
-              "kind": "field",
               "name": "#describeEndX",
               "privacy": "private",
               "type": {
@@ -2243,28 +2204,6 @@
             },
             {
               "kind": "field",
-              "name": "editable",
-              "type": {
-                "text": "boolean"
-              },
-              "inheritedFrom": {
-                "name": "StaffClassicalElementBase",
-                "module": "src/staffClassicalBase.ts"
-              }
-            },
-            {
-              "kind": "field",
-              "name": "managed",
-              "type": {
-                "text": "boolean"
-              },
-              "inheritedFrom": {
-                "name": "StaffClassicalElementBase",
-                "module": "src/staffClassicalBase.ts"
-              }
-            },
-            {
-              "kind": "field",
               "name": "keySig",
               "type": {
                 "text": "Note"
@@ -2297,117 +2236,6 @@
               "inheritedFrom": {
                 "name": "StaffElementBase",
                 "module": "src/staffBase.ts"
-              }
-            },
-            {
-              "kind": "method",
-              "name": "#enableDrag",
-              "privacy": "private",
-              "inheritedFrom": {
-                "name": "StaffClassicalElementBase",
-                "module": "src/staffClassicalBase.ts"
-              }
-            },
-            {
-              "kind": "method",
-              "name": "#disableDrag",
-              "privacy": "private",
-              "inheritedFrom": {
-                "name": "StaffClassicalElementBase",
-                "module": "src/staffClassicalBase.ts"
-              }
-            },
-            {
-              "kind": "method",
-              "name": "#findPitchDragTarget",
-              "privacy": "private",
-              "return": {
-                "type": {
-                  "text": "{\n    element: HTMLElement | null;\n    elementIndex: number;\n    chordNoteIndex: number | null;\n  }"
-                }
-              },
-              "parameters": [
-                {
-                  "name": "svgTarget",
-                  "type": {
-                    "text": "Element"
-                  }
-                },
-                {
-                  "name": "elements",
-                  "type": {
-                    "text": "HTMLElement[]"
-                  }
-                }
-              ],
-              "description": "Identify which slotted element and (for chords) which notehead index\ncorresponds to a clicked SVG target.",
-              "inheritedFrom": {
-                "name": "StaffClassicalElementBase",
-                "module": "src/staffClassicalBase.ts"
-              }
-            },
-            {
-              "kind": "method",
-              "name": "#findChordNoteIndex",
-              "privacy": "private",
-              "return": {
-                "type": {
-                  "text": "number | null"
-                }
-              },
-              "parameters": [
-                {
-                  "name": "svgTarget",
-                  "type": {
-                    "text": "Element"
-                  }
-                },
-                {
-                  "name": "chordElement",
-                  "type": {
-                    "text": "HTMLElement"
-                  }
-                }
-              ],
-              "inheritedFrom": {
-                "name": "StaffClassicalElementBase",
-                "module": "src/staffClassicalBase.ts"
-              }
-            },
-            {
-              "kind": "method",
-              "name": "#onPitchLivePreview",
-              "privacy": "private",
-              "parameters": [
-                {
-                  "name": "elementIndex",
-                  "type": {
-                    "text": "number"
-                  }
-                },
-                {
-                  "name": "note",
-                  "type": {
-                    "text": "Note"
-                  }
-                },
-                {
-                  "name": "octave",
-                  "type": {
-                    "text": "Octave"
-                  }
-                },
-                {
-                  "name": "chordNoteIndex",
-                  "type": {
-                    "text": "number | null"
-                  }
-                }
-              ],
-              "description": "Live preview callback: temporarily update the element's pitch during drag.",
-              "inheritedFrom": {
-                "name": "StaffClassicalElementBase",
-                "module": "src/staffClassicalBase.ts"
               }
             },
             {
@@ -3034,28 +2862,6 @@
               },
               "description": "Beats per measure (e.g. `4/4`, `6/8`). Inherited when unset.",
               "name": "time"
-            },
-            {
-              "name": "editable",
-              "type": {
-                "text": "boolean"
-              },
-              "description": "Enables pitch and timing drag interactions on slotted notes.",
-              "inheritedFrom": {
-                "name": "StaffClassicalElementBase",
-                "module": "src/staffClassicalBase.ts"
-              }
-            },
-            {
-              "name": "managed",
-              "type": {
-                "text": "boolean"
-              },
-              "description": "With `editable`, emit reorder/pitch events instead of mutating the DOM (for framework-controlled state).",
-              "inheritedFrom": {
-                "name": "StaffClassicalElementBase",
-                "module": "src/staffClassicalBase.ts"
-              }
             },
             {
               "name": "group",
@@ -4214,45 +4020,6 @@
             },
             {
               "kind": "field",
-              "name": "#noteTimingDragHandler",
-              "privacy": "private",
-              "type": {
-                "text": "NoteTimingDragHandler | null"
-              },
-              "default": "null",
-              "inheritedFrom": {
-                "name": "StaffClassicalElementBase",
-                "module": "src/staffClassicalBase.ts"
-              }
-            },
-            {
-              "kind": "field",
-              "name": "#notePitchDragHandler",
-              "privacy": "private",
-              "type": {
-                "text": "PitchDragHandler | null"
-              },
-              "default": "null",
-              "inheritedFrom": {
-                "name": "StaffClassicalElementBase",
-                "module": "src/staffClassicalBase.ts"
-              }
-            },
-            {
-              "kind": "field",
-              "name": "#boundPointerDown",
-              "privacy": "private",
-              "type": {
-                "text": "((e: PointerEvent) => void) | null"
-              },
-              "default": "null",
-              "inheritedFrom": {
-                "name": "StaffClassicalElementBase",
-                "module": "src/staffClassicalBase.ts"
-              }
-            },
-            {
-              "kind": "field",
               "name": "#describeEndX",
               "privacy": "private",
               "type": {
@@ -4557,28 +4324,6 @@
             },
             {
               "kind": "field",
-              "name": "editable",
-              "type": {
-                "text": "boolean"
-              },
-              "inheritedFrom": {
-                "name": "StaffClassicalElementBase",
-                "module": "src/staffClassicalBase.ts"
-              }
-            },
-            {
-              "kind": "field",
-              "name": "managed",
-              "type": {
-                "text": "boolean"
-              },
-              "inheritedFrom": {
-                "name": "StaffClassicalElementBase",
-                "module": "src/staffClassicalBase.ts"
-              }
-            },
-            {
-              "kind": "field",
               "name": "keySig",
               "type": {
                 "text": "Note"
@@ -4611,117 +4356,6 @@
               "inheritedFrom": {
                 "name": "StaffElementBase",
                 "module": "src/staffBase.ts"
-              }
-            },
-            {
-              "kind": "method",
-              "name": "#enableDrag",
-              "privacy": "private",
-              "inheritedFrom": {
-                "name": "StaffClassicalElementBase",
-                "module": "src/staffClassicalBase.ts"
-              }
-            },
-            {
-              "kind": "method",
-              "name": "#disableDrag",
-              "privacy": "private",
-              "inheritedFrom": {
-                "name": "StaffClassicalElementBase",
-                "module": "src/staffClassicalBase.ts"
-              }
-            },
-            {
-              "kind": "method",
-              "name": "#findPitchDragTarget",
-              "privacy": "private",
-              "return": {
-                "type": {
-                  "text": "{\n    element: HTMLElement | null;\n    elementIndex: number;\n    chordNoteIndex: number | null;\n  }"
-                }
-              },
-              "parameters": [
-                {
-                  "name": "svgTarget",
-                  "type": {
-                    "text": "Element"
-                  }
-                },
-                {
-                  "name": "elements",
-                  "type": {
-                    "text": "HTMLElement[]"
-                  }
-                }
-              ],
-              "description": "Identify which slotted element and (for chords) which notehead index\ncorresponds to a clicked SVG target.",
-              "inheritedFrom": {
-                "name": "StaffClassicalElementBase",
-                "module": "src/staffClassicalBase.ts"
-              }
-            },
-            {
-              "kind": "method",
-              "name": "#findChordNoteIndex",
-              "privacy": "private",
-              "return": {
-                "type": {
-                  "text": "number | null"
-                }
-              },
-              "parameters": [
-                {
-                  "name": "svgTarget",
-                  "type": {
-                    "text": "Element"
-                  }
-                },
-                {
-                  "name": "chordElement",
-                  "type": {
-                    "text": "HTMLElement"
-                  }
-                }
-              ],
-              "inheritedFrom": {
-                "name": "StaffClassicalElementBase",
-                "module": "src/staffClassicalBase.ts"
-              }
-            },
-            {
-              "kind": "method",
-              "name": "#onPitchLivePreview",
-              "privacy": "private",
-              "parameters": [
-                {
-                  "name": "elementIndex",
-                  "type": {
-                    "text": "number"
-                  }
-                },
-                {
-                  "name": "note",
-                  "type": {
-                    "text": "Note"
-                  }
-                },
-                {
-                  "name": "octave",
-                  "type": {
-                    "text": "Octave"
-                  }
-                },
-                {
-                  "name": "chordNoteIndex",
-                  "type": {
-                    "text": "number | null"
-                  }
-                }
-              ],
-              "description": "Live preview callback: temporarily update the element's pitch during drag.",
-              "inheritedFrom": {
-                "name": "StaffClassicalElementBase",
-                "module": "src/staffClassicalBase.ts"
               }
             },
             {
@@ -5336,28 +4970,6 @@
               },
               "description": "Beats per measure. Inherited when unset.",
               "name": "time"
-            },
-            {
-              "name": "editable",
-              "type": {
-                "text": "boolean"
-              },
-              "description": "Enables pitch and timing drag interactions on slotted notes.",
-              "inheritedFrom": {
-                "name": "StaffClassicalElementBase",
-                "module": "src/staffClassicalBase.ts"
-              }
-            },
-            {
-              "name": "managed",
-              "type": {
-                "text": "boolean"
-              },
-              "description": "With `editable`, emit reorder/pitch events instead of mutating the DOM.",
-              "inheritedFrom": {
-                "name": "StaffClassicalElementBase",
-                "module": "src/staffClassicalBase.ts"
-              }
             },
             {
               "name": "group",

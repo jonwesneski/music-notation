@@ -22,7 +22,6 @@ export type {
   GuitarFret,
 } from './types/elements';
 export * from './types/theory';
-export type { PitchChangeDetail } from './utils/pitchDragHandler';
 
 /**
  * Allowed-value arrays for the enumerated attributes, re-exported so app code can

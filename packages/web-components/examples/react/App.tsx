@@ -1,7 +1,6 @@
 /// <reference types="@one-step-at-a-time/web-components/react" />
 import '@one-step-at-a-time/web-components';
 import { useEffect, useRef } from 'react';
-import type { PitchChangeDetail } from '@one-step-at-a-time/web-components';
 
 /**
  * Minimal React usage. Register the package once (the side-effect import above),
@@ -16,20 +15,18 @@ export function App() {
     if (!el) {
       return;
     }
-    const onPitchChange = (event: Event) => {
-      const detail = (event as CustomEvent<PitchChangeDetail>).detail;
-      console.log(
-        `${detail.fromNote}${detail.fromOctave} → ${detail.toNote}${detail.toOctave}`
-      );
+    const onNoteClick = (event: Event) => {
+      const detail = (event as CustomEvent<{ value: string }>).detail;
+      console.log(`clicked ${detail.value}`);
     };
-    el.addEventListener('note-pitch-change', onPitchChange);
-    return () => el.removeEventListener('note-pitch-change', onPitchChange);
+    el.addEventListener('note-click', onNoteClick);
+    return () => el.removeEventListener('note-click', onNoteClick);
   }, []);
 
   return (
     <music-composition key-sig="G" mode="major" time="4/4">
       <music-measure>
-        <music-staff ref={staffRef} clef="treble" editable managed>
+        <music-staff ref={staffRef} clef="treble">
           <music-note note="G" octave="4" duration="quarter" />
           <music-note note="B" octave="4" duration="quarter" />
           <music-note note="D" octave="5" duration="quarter" />

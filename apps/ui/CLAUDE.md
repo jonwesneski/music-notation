@@ -68,10 +68,10 @@ These are throwaway harnesses for eyeballing the web-components library while th
 real editor is built. **Delete them once they've served their purpose; don't build
 on them, and feel free to let them rot rather than maintaining them.**
 
-| Path                                                          | What it is                                                                                                                                                                                              |
-| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `app/routes/sample.tsx` + `app/components/MusicScore.tsx`     | A `managed`/`editable` staff wired to raw web-component events (`note-reorder`, `note-pitch-change`) with local `useState` — a spike of drag-to-reorder and pitch-drag against the library's event API. |
-| `app/routes/standalone.tsx` + `app/components/StandAlone.tsx` | A static gallery rendering `<music-*>` elements in isolation (notes, chords, ties, grand staff, wrapping) to check rendering.                                                                           |
+| Path                                                          | What it is                                                                                                                                                                                           |
+| ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `app/routes/sample.tsx` + `app/components/MusicScore.tsx`     | A render-only harness for eyeballing a few `<music-*>` elements. (Once wired the library's since-removed `editable`/`managed` drag events; note editing now lives in `compositionForm/` — piece 10.) |
+| `app/routes/standalone.tsx` + `app/components/StandAlone.tsx` | A static gallery rendering `<music-*>` elements in isolation (notes, chords, ties, grand staff, wrapping) to check rendering.                                                                        |
 
 The `NavBar` links to these; it stays, but its Sample/Standalone entries go when
 the routes do. The header **"Search…" input in `__root.tsx` is a non-functional
@@ -151,6 +151,11 @@ future save in `CompositionStructure`.
 - What a selection _enables_ is up to each component: `MeasureInput` shows an "Add
   Staff" / "Group Staves" / "Ties & Slurs" tab for measure / multi-staff / entry
   selections; `Backspace`/`Delete` deletes any non-empty selection.
+- **Note drag coexists with the marquee** (piece 10): a pointerdown that lands on a
+  note/chord/rest is claimed by `useEntryDrag` (`e.stopPropagation()` before
+  `DragSelectOverlay`'s bubble-phase handler sees it), so the marquee only ever
+  starts from empty staff/measure whitespace. Same deferred-capture + threshold +
+  post-drag click-swallow as the marquee, so a plain click still selects.
 
 **5. `AnchoredTabPanel` — every entry/structure editor lives here.** Any control
 that edits a measure, staff, entry, or connector renders as a **tab in this panel**,
@@ -227,6 +232,30 @@ node ids needs its own filter here, plus a `deleteSelectionHelpers.test.ts` case
   whole, minting/dropping measures, and re-anchoring ties. The region's final
   measure may be left under-full (no rest padding). Because it mints new
   measure/staff ids, the mutator clears the selection afterward.
+
+**10. Note drag — pitch + reorder — is the app's, not the library's.** The
+web-components library renders notation and reports pointer/click events; it has
+no `editable` staff. `useEntryDrag` (`useEntryDrag.ts`) is the pointer state
+machine, wired onto every note/chord/rest via `onPointerDown` in `StaffInput`.
+
+- **Hit-test** `e.nativeEvent.composedPath()` (`entryDragHelpers.ts`
+  `isNoteheadPath`): a notehead (`.head` / `.head-hit-zone`, rendered
+  unconditionally by the library) → vertical **pitch** drag; anything else on a
+  multi-entry staff → horizontal **reorder** drag.
+- **Pitch** snaps by diatonic step: `pitchAfterVerticalDrag` divides the pointer
+  Δy by `STAFF_Y_STEP` (5px, mirrored from the library's `notationDimensions.ts`;
+  the staff lays vertical positions out in raw CSS px), clamps to the clef range
+  from `clefsHelpers.ts`, and skips a chord's other notes. Live preview writes the
+  `note`/`octave` attribute straight onto the light-DOM element — the library
+  re-renders in place via its `note-y-change` event. Commit reuses `updateEntry`.
+- **Reorder** computes a drop index by geometry over the staff's `entryElements`
+  rects (`reorderTargetIndex`), then `reorderEntry` → `moveEntryInStaff`
+  (`reorderHelpers.ts`), which splices `entryIds` and repairs the fallout:
+  dissolves a tuplet whose run is no longer contiguous, swaps inverted connector
+  endpoints, prunes now-invalid ties.
+- Overlays (drop clone, drop indicator, `D4 → F4` tooltip) are appended to
+  `document.body` at `z-index: 60`. `entryElements` / `staffElements` (the id →
+  DOM maps) are exposed on the session context for this and the marquee.
 
 ### Component tree
 

@@ -59,7 +59,7 @@ import '@one-step-at-a-time/web-components';
 </music-staff>;
 ```
 
-Custom events (`note-pitch-change`, `note-reorder`, …) need `useRef` +
+Custom events (`note-click`, `note-pointerdown`, …) need `useRef` +
 `addEventListener` — see the **Framework Integration** guide.
 
 ## Elements

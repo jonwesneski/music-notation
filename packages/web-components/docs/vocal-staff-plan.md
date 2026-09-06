@@ -5,7 +5,7 @@
 Add a single configurable `<music-staff-vocal>` custom element that supports all six standard voice types via a `voice` attribute. The component extends `StaffClassicalElementBase` and adds lyrics rendering support unique to vocal notation.
 
 ```html
-<music-staff-vocal voice="tenor" keySig="G" mode="major" time="4/4" editable>
+<music-staff-vocal voice="tenor" keySig="G" mode="major" time="4/4">
   <music-note value="C4" duration="quarter"></music-note>
   <music-note value="D4" duration="quarter"></music-note>
 </music-staff-vocal>
@@ -140,7 +140,7 @@ class StaffVocalElement extends StaffClassicalElementBase
 **Attributes:**
 
 - `voice` — `'soprano' | 'mezzo' | 'alto' | 'tenor' | 'baritone' | 'bass'` (default: `'soprano'`)
-- Inherits: `key-sig`, `mode`, `time`, `editable`, `managed`
+- Inherits: `key-sig`, `mode`, `time`
 
 **Static data** (all `static #private`):
 

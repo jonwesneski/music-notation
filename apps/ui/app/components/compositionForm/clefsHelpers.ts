@@ -18,13 +18,28 @@ import type { ChordNote, CompositionStructure } from './types';
 const DIATONIC = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
 
 // A note's position in diatonic steps, for range/stacking comparisons.
-function step(letter: string, octave: number): number {
+export function step(letter: string, octave: number): number {
   return octave * 7 + DIATONIC.indexOf(letter);
 }
 
-type ClefRange = { octaves: Octave[]; lowStep: number; highStep: number };
+// Inverse of `step` — a diatonic-step index back to a natural pitch. Accidentals
+// are not modelled here (vertical staff position is diatonic).
+export function stepToPitch(diatonicStep: number): {
+  value: Note;
+  octave: Octave;
+} {
+  const octave = Math.floor(diatonicStep / 7) as Octave;
+  const index = ((diatonicStep % 7) + 7) % 7;
+  return { value: DIATONIC[index] as Note, octave };
+}
 
-const CLEF_RANGES: Record<ClefType, ClefRange> = {
+export type ClefRange = {
+  octaves: Octave[];
+  lowStep: number;
+  highStep: number;
+};
+
+export const CLEF_RANGES: Record<ClefType, ClefRange> = {
   treble: { octaves: [4, 5, 6], lowStep: step('C', 4), highStep: step('C', 6) },
   bass: { octaves: [2, 3, 4], lowStep: step('E', 2), highStep: step('E', 4) },
 };

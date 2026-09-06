@@ -70,8 +70,6 @@ one-step-at-a-time/
 │               ├── notationDimensions.ts # Pixel sizing and spacing constants
 │               ├── parsers.ts            # Set-backed attribute value validators, parseX → value | null
 │               ├── connectorsBuilder.ts  # Bar-line connector SVG
-│               ├── noteTimingDragHandler.ts
-│               ├── pitchDragHandler.ts
 │               ├── index.ts
 │               └── svgCreator/           # One file per rendered symbol/feature
 │                   ├── index.ts
@@ -373,33 +371,26 @@ Rendering flow (classical staves):
 6. `BeamCreator` connects beamed note groups (eighths, sixteenths, etc.)
 7. Staff dispatches a `STAFF_EVENTS.STAFF_MIN_WIDTH` event after each render with `detail: { minWidth, naturalWidth }` — the collision-floor width and the duration-weighted preferred width (see Measure Width above)
 
-## Drag Handlers (`utils/`)
+## Note Editing — Out of Scope
 
-Editable staves (`<music-staff clef="treble" editable>`) support two drag interactions, coordinated by a single `pointerdown` listener in `StaffClassicalElementBase`. The listener uses `e.composedPath()[0]` to hit-test the SVG target:
-
-- **Notehead hit** (`.head` or `.head-hit-zone` class) → **PitchDragHandler** (vertical)
-- **Everything else** (stem, flag, body) → **NoteTimingDragHandler** (horizontal)
-
-### NoteTimingDragHandler (`noteTimingDragHandler.ts`)
-
-Horizontal drag-and-drop to reorder notes/chords in time. Creates a fixed-position clone that follows the pointer and a dashed drop indicator between elements. Two modes controlled by the `managed` attribute:
-
-- **Unmanaged**: reorders light DOM children directly on drop. `#reorderLightDom()` also carries along any `<music-clef>` marker (via a `getClefMarkers` accessor, mirroring `getSlottedElements`) whose position sits between the dragged note's old and new index, re-inserting each marker immediately after the same note it was anchored to (or as the first child, for a marker anchored at `afterElementIndex === -1`) so it stays correctly anchored once `#clefMarkers` is recomputed from DOM order on the next `slotchange`.
-- **Managed**: only dispatches `note-reorder` event with `{ fromIndex, toIndex }` — the framework (e.g. React) updates state. Clef markers are not moved in this mode; the consuming framework is responsible for keeping marker placement consistent with its own reordered state.
-
-Events: `note-drag-start` (cancelable), `note-reorder`, `note-drag-end`.
-
-### PitchDragHandler (`pitchDragHandler.ts`)
-
-Vertical drag on noteheads to change pitch. Takes a `resolveYCoordinates: (elementIndex: number) => YCoordinates` resolver rather than a static map — `#enableDrag()` wires it to `#renderDataForIndex(elementIndex).yCoordinates`, the same clef-segment-aware lookup `noteToYCoordinate` uses, so a note dragged after a mid-stream `<music-clef>` marker snaps against that marker's clef table instead of the staff's own. The resolver is called once per `tryStart()`, since the dragged note's clef segment doesn't change mid-drag. Shows a tooltip with the note transition (e.g. "D4 → F4"). For chords, drags a single notehead and prevents snapping to a pitch already occupied by another note in the chord.
-
-During drag, calls a live preview callback `(elementIndex, note, octave, chordNoteIndex) => void` that sets the element's `note`/`octave` attributes separately and triggers a full `#renderNotes()` re-render (stem direction, beams, Y positioning all recalculate). On drop, dispatches `note-pitch-change` with `PitchChangeDetail: { element, elementIndex, chordNoteIndex, fromNote, fromOctave, toNote, toOctave }` — `note`/`octave` are always passed as separate fields (`Note`/`Octave`), never combined into one string, matching `music-note`'s own independent `note`/`octave` attributes. Internally the handler still keys its Y-coordinate lookup/snap table by a combined `NoteLetterOctave` string (since that's the table's own key shape), splitting into `note`/`octave` only at these two external boundaries.
-
-**Important**: internal Y-coordinate lookups require the octave digit (e.g. "C6" not "C") to resolve to the correct staff position — without it, `noteToYCoordinate` falls back to the octave search order and may pick the wrong octave. This is purely an internal lookup-key detail; `PitchChangeDetail` and the live-preview callback are unaffected since they already carry octave as its own field.
+This library **renders** notation and reports interaction (`note-click`,
+`note-pointerdown`/`note-pointerup`, layout events); it does **not** implement
+drag-to-repitch or drag-to-reorder. A host app owns editing and drives it from
+the pointer/click events plus `noteToYCoordinate(note, octave?, elementIndex?)`
+(public on the staff element — clef-segment aware via `#renderDataForIndex`).
+`apps/ui`'s `compositionForm/useEntryDrag.ts` + `entryDragHelpers.ts` +
+`reorderHelpers.ts` are the reference implementation. (Drag was previously built
+in as `editable`/`managed` staves + `pitchDragHandler.ts`/`noteTimingDragHandler.ts`
+dispatching `note-pitch-change`/`note-reorder`; all removed.)
 
 ### SVG Hit Zones
 
-Each note SVG includes a transparent `head-hit-zone` ellipse (1.5× the notehead size) rendered behind the visible `.head` ellipse. This enlarged invisible target makes noteheads easier to click for pitch dragging. Both classes are checked by `PitchDragHandler.isNoteheadTarget()`.
+Each note SVG includes a transparent `head-hit-zone` ellipse (1.5× the notehead
+size) rendered behind the visible `.head` ellipse, rendered unconditionally. This
+enlarged invisible target makes noteheads easier to grab; a host app tells
+notehead from stem/flag/body by checking `e.composedPath()` for the `.head` /
+`.head-hit-zone` classes. `svgCreator/graceNotes.ts` strips the hit zone and
+renames `.head` → `.grace-head` on grace notes so they are not drag targets.
 
 ## Grand Staff / Part Connectors
 
@@ -418,7 +409,6 @@ A brace or bracket is an **additional** decoration, drawn further left, spanning
 
 - **`staffGuitarTab.ts`**: `onDisconnectedCallback` is still an empty stub
 - **Chord value parsing**: Parsing a chord name from the `value` attribute into constituent notes is partially implemented
-- **Accidentals during pitch drag**: Pitch drag snaps to natural staff positions only; accidental changes (sharp/flat) need a separate mechanism
 - **Standalone degraded features**: Some capabilities (minimum-width-driven flex layout, attribute inheritance) require a parent `<music-measure>` or `<music-composition>` and will be silently absent when elements are used in isolation. Ledger lines (both main-note and grace-note) require a staff-provided Y position, and grace-note accidentals fall back to suffix-driven rendering (no key-signature suppression) outside a staff
 - **Clef support**: only `treble` and `bass` have data in `rules/clefRules.ts`'s `CLEF_DEFINITIONS` today (`ClefType` is intentionally kept to those two rather than a wider, partially-backed union — see the `// TODO` above its declaration in `types/theory.ts`). Adding alto/tenor is a two-part change: a `ClefDefinition` entry plus a new clef glyph in `utils/svgCreator/clefs.ts`.
 - **SMuFL glyph extraction (transition in progress)**: the repo carries SMuFL infrastructure for deriving notation glyphs from a real engraving font instead of hand-computing bezier shapes — `README.md`'s "Drawing" section, `download-smufl-font.sh`, and the downloaded `smufl/Bravura.otf` + `smufl/bravura_metadata.json` assets. So far only the brace and bracket glyphs (`createBraceSvg()` / `createBracketSvg()` in `utils/svgCreator/brace.ts`) have actually been pulled from it, and by hand via one-off scripts rather than a repeatable pipeline reading `bravura_metadata.json`. Every other `svgCreator/` glyph (clefs, accidentals, noteheads, etc.) is still hand-drawn. Prefer extracting from the SMuFL font/metadata already in the repo over hand-computing new glyphs going forward; brace.ts's source comments deliberately avoid naming SMuFL/Bravura directly — this entry is the canonical place for that context.

@@ -259,11 +259,11 @@ describe(`${MUSIC_STAFF} clef changes`, () => {
     consoleSpy.mockRestore();
   });
 
-  it('noteToYCoordinate with an elementIndex resolves the active segment (the same lookup PitchDragHandler uses)', () => {
-    // PitchDragHandler's Y-coordinate resolver (wired in #enableDrag) calls
-    // exactly this method with the dragged note's elementIndex — this locks
-    // in that a note past a clef marker resolves against the marker's
-    // clef, not the staff's own, so pitch dragging snaps to the right table.
+  it('noteToYCoordinate with an elementIndex resolves the active segment', () => {
+    // A note past a mid-stream clef marker must resolve its Y against the
+    // marker's clef table, not the staff's own — this locks that in for any
+    // caller that passes an elementIndex (rendering, and external consumers
+    // driving their own pitch editing).
     const staff = makeStaff('treble');
 
     const noteBefore = document.createElement(MUSIC_NOTE) as NoteElementType;

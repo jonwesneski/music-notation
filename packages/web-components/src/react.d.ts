@@ -36,6 +36,8 @@ type WebComponentNoChildrenProps = {
   id?: string;
   className?: string;
   onClick?: React.MouseEventHandler<HTMLElement>;
+  onPointerDown?: React.PointerEventHandler<HTMLElement>;
+  onPointerUp?: React.PointerEventHandler<HTMLElement>;
 };
 
 type WebComponentProps = WebComponentNoChildrenProps & {
@@ -62,8 +64,6 @@ declare module 'react' {
         'key-sig'?: Note;
         mode?: Mode;
         time?: TimeSignature;
-        editable?: boolean;
-        managed?: boolean;
         group?: StaffGroupType;
         'group-id'?: string;
       };
@@ -77,8 +77,6 @@ declare module 'react' {
         'key-sig'?: Note;
         mode?: Mode;
         time?: TimeSignature;
-        editable?: boolean;
-        managed?: boolean;
         group?: StaffGroupType;
         'group-id'?: string;
       };
@@ -90,8 +88,6 @@ declare module 'react' {
       };
       'music-rest': WebComponentNoChildrenProps & {
         duration?: DurationType;
-        onPointerDown?: (e: PointerEvent) => void;
-        onPointerUp?: (e: PointerEvent) => void;
       };
       'music-tuplet': WebComponentProps & {
         ratio?: TupletRatio;
@@ -115,8 +111,6 @@ declare module 'react' {
         'grace-duration'?: GraceDuration;
         'grace-slur'?: GraceSlur;
         'grace-dynamic'?: DynamicMarking;
-        onPointerDown?: (e: PointerEvent) => void;
-        onPointerUp?: (e: PointerEvent) => void;
       };
       'music-note': WebComponentNoChildrenProps & {
         note?: Note;
@@ -138,10 +132,6 @@ declare module 'react' {
         'grace-duration'?: GraceDuration;
         'grace-slur'?: GraceSlur;
         'grace-dynamic'?: DynamicMarking;
-        onPointerDown?: (e: PointerEvent) => void;
-        onPointerUp?: (e: PointerEvent) => void;
-        // Custom events (note-click, note-pointerdown, note-pointerup) require
-        // useRef + addEventListener in React — they are not auto-wired by prop name.
       };
       'music-guitar-note': WebComponentNoChildrenProps & {
         fret?: GuitarFret;

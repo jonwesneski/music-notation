@@ -59,35 +59,34 @@ native `click` event). Use a ref:
 
 ```tsx
 import { useEffect, useRef } from 'react';
-import type { PitchChangeDetail } from '@one-step-at-a-time/web-components';
 
-function EditableStaff() {
+function ClickableStaff() {
   const ref = useRef<HTMLElement>(null);
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const onPitch = (e: Event) => {
-      const detail = (e as CustomEvent<PitchChangeDetail>).detail;
-      console.log(
-        `${detail.fromNote}${detail.fromOctave} → ${detail.toNote}${detail.toOctave}`
-      );
+    const onNoteClick = (e: Event) => {
+      const detail = (e as CustomEvent<{ value: string }>).detail;
+      console.log(`clicked ${detail.value}`);
     };
-    el.addEventListener('note-pitch-change', onPitch);
-    return () => el.removeEventListener('note-pitch-change', onPitch);
+    el.addEventListener('note-click', onNoteClick);
+    return () => el.removeEventListener('note-click', onNoteClick);
   }, []);
 
   return (
-    <music-staff ref={ref} clef="treble" editable managed>
+    <music-staff ref={ref} clef="treble">
       <music-note note="C" octave="5" duration="quarter" />
     </music-staff>
   );
 }
 ```
 
-Pass `managed` when your framework owns the note order: the staff then emits
-`note-reorder` / `note-pitch-change` instead of mutating the DOM, and you update
-your own state from the event.
+The elements render notation and report interaction; a host app builds editing on
+top of the pointer/click events and its own state. `noteToYCoordinate(note,
+octave?, elementIndex?)` on a staff element resolves the pixel Y of a pitch under
+the clef segment active at `elementIndex`, which is useful when driving your own
+pitch editing.
 
 ## Vue / Angular / Svelte
 
@@ -95,23 +94,17 @@ your own state from the event.
   (`compilerOptions.isCustomElement` in `@vitejs/plugin-vue`), then use `v-bind`
   and `v-on` as normal.
 - **Angular** — add `CUSTOM_ELEMENTS_SCHEMA` to the module/component.
-- **Svelte** — works out of the box; use `on:note-pitch-change`.
+- **Svelte** — works out of the box; use `on:note-click`.
 
 ## Events
 
-All events bubble and cross shadow-DOM boundaries (`composed: true`). Reorder and
-pitch events only fire on a staff with the `editable` attribute.
+All events bubble and cross shadow-DOM boundaries (`composed: true`).
 
-| Event                                                   | Fired by      | `detail`                                                             | When                                                                               |
-| ------------------------------------------------------- | ------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| `note-click`                                            | `music-note`  | `{ value: Note, duration: DurationType, originalEvent: MouseEvent }` | Notehead/glyph clicked                                                             |
-| `note-pointerdown` / `note-pointerup`                   | `music-note`  | `{ value, duration, originalEvent: PointerEvent }`                   | Pointer pressed / released on the note                                             |
-| `chord-click` / `chord-pointerdown` / `chord-pointerup` | `music-chord` | `{ originalEvent }`                                                  | Same, for a chord                                                                  |
-| `note-pitch-drag-start`                                 | `music-note`  | —                                                                    | A notehead pitch drag begins (`editable`)                                          |
-| `note-pitch-change`                                     | `music-note`  | `PitchChangeDetail`                                                  | A notehead is dropped at a new pitch (`editable`)                                  |
-| `note-drag-start`                                       | `music-note`  | — (cancelable)                                                       | A horizontal reorder drag begins (`editable`); call `preventDefault()` to block it |
-| `note-reorder`                                          | `music-note`  | `{ fromIndex: number, toIndex: number }`                             | A note is dropped at a new position (`editable`)                                   |
-| `note-drag-end`                                         | `music-note`  | —                                                                    | A reorder drag ends (`editable`)                                                   |
+| Event                                                   | Fired by      | `detail`                                                             | When                                   |
+| ------------------------------------------------------- | ------------- | -------------------------------------------------------------------- | -------------------------------------- |
+| `note-click`                                            | `music-note`  | `{ value: Note, duration: DurationType, originalEvent: MouseEvent }` | Notehead/glyph clicked                 |
+| `note-pointerdown` / `note-pointerup`                   | `music-note`  | `{ value, duration, originalEvent: PointerEvent }`                   | Pointer pressed / released on the note |
+| `chord-click` / `chord-pointerdown` / `chord-pointerup` | `music-chord` | `{ originalEvent }`                                                  | Same, for a chord                      |
 
 `<music-rest>` reuses the `note-click` / `note-pointerdown` / `note-pointerup`
 event names, with `detail` `{ duration: DurationType, originalEvent }`.
