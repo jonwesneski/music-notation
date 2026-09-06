@@ -7,6 +7,7 @@ import {
   measureDuration,
   remainingDuration,
   staffOfEntryId,
+  tupletRatioFits,
   usedDuration,
 } from './measureCapacityHelpers';
 import type {
@@ -90,6 +91,12 @@ describe('usedDuration', () => {
     const tuplets = { t1: { id: 't1', ratio: '3' as const } };
     expect(usedDuration(entries, tuplets)).toBeCloseTo(0.25);
   });
+
+  it('scales a partial tuplet run by the ratio', () => {
+    const entries = [note('a', 'eighth', 't1'), note('b', 'eighth', 't1')];
+    const tuplets = { t1: { id: 't1', ratio: '3' as const } };
+    expect(usedDuration(entries, tuplets)).toBeCloseTo(1 / 6);
+  });
 });
 
 describe('remainingDuration', () => {
@@ -134,6 +141,22 @@ describe('availableForDuration', () => {
   it('falls back to the whole-measure budget for an unknown entry', () => {
     const structure = buildStructure({ e1: note('e1', 'quarter') });
     expect(availableForDuration(structure, '3/4', 'missing')).toBeCloseTo(0.75);
+  });
+
+  it('frees a tuplet member’s scaled duration, not its nominal one', () => {
+    const structure = buildStructure(
+      {
+        e1: note('e1', 'eighth', 't1'),
+        e2: note('e2', 'eighth', 't1'),
+        e3: note('e3', 'eighth', 't1'),
+        e4: note('e4', 'quarter'),
+      },
+      { t1: { id: 't1', ratio: '3' } }
+    );
+    // used = 3 * (1/8 * 2/3) + 1/4 = 1/2; freeing e2 (1/12) → 1 - (1/2 - 1/12)
+    expect(availableForDuration(structure, '4/4', 'e2')).toBeCloseTo(
+      1 - 5 / 12
+    );
   });
 });
 
@@ -184,5 +207,45 @@ describe('largestFittingDuration', () => {
 
   it('is null when nothing fits', () => {
     expect(largestFittingDuration(0)).toBeNull();
+  });
+
+  it('handles a tuplet-scaled remainder', () => {
+    expect(largestFittingDuration(1 / 6)).toBe('eighth');
+  });
+});
+
+describe('tupletRatioFits', () => {
+  const threeEighths = {
+    e1: note('e1', 'eighth'),
+    e2: note('e2', 'eighth'),
+    e3: note('e3', 'eighth'),
+  };
+
+  it('accepts a triplet over a run that already fits', () => {
+    const structure = buildStructure(threeEighths);
+    expect(tupletRatioFits(structure, ['e1', 'e2', 'e3'], '3')).toBe(true);
+  });
+
+  it('rejects a duplet that would overfill the measure', () => {
+    // q1 + q2 (the candidate) + a half note = exactly 4/4
+    const structure = buildStructure({
+      q1: note('q1', 'quarter'),
+      q2: note('q2', 'quarter'),
+      h1: note('h1', 'half'),
+    });
+    // duplet: 2 * 1/4 * 3/2 = 3/4; measure would need 1/2 + 3/4 = 5/4
+    expect(tupletRatioFits(structure, ['q1', 'q2'], '2')).toBe(false);
+    // triplet shrinks the pair instead → still fits
+    expect(tupletRatioFits(structure, ['q1', 'q2'], '3')).toBe(true);
+  });
+
+  it('measures against the run’s own time signature', () => {
+    const structure = buildStructure({
+      e1: note('e1', 'quarter'),
+      e2: note('e2', 'quarter'),
+    });
+    structure.measuresById.m1.time = '2/4';
+    expect(tupletRatioFits(structure, ['e1', 'e2'], '2')).toBe(false);
+    expect(tupletRatioFits(structure, ['e1', 'e2'], '3')).toBe(true);
   });
 });

@@ -1,3 +1,4 @@
+import { pruneBrokenTies } from './connectorsHelpers';
 import {
   availableForDuration,
   durationFits,
@@ -17,6 +18,10 @@ import { isPitchedEntry } from './types';
 // last line of defense behind the filtered `DurationSelect`, so no caller can
 // push the measure past its budget (the renderer silently drops entries beyond
 // it).
+//
+// The edit can also break a tie — a new pitch/octave, changed chord notes, a
+// note→rest conversion — so `pruneBrokenTies` drops any tie that no longer joins
+// a single sustained pitch afterward.
 export function applyEntryUpdate(
   structure: CompositionStructure,
   entry: MusicEntry
@@ -24,13 +29,13 @@ export function applyEntryUpdate(
   if (!structure.entriesById[entry.id]) {
     return structure;
   }
-  return {
+  return pruneBrokenTies({
     ...structure,
     entriesById: {
       ...structure.entriesById,
       [entry.id]: clampDuration(structure, entry),
     },
-  };
+  });
 }
 
 function clampDuration(

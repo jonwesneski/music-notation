@@ -4,6 +4,7 @@ import {
   connectorBetween,
   flattenEntryOrder,
   isConnectableSelection,
+  pruneBrokenTies,
   removeConnector,
   resolveConnectorAttributes,
   upsertConnector,
@@ -343,5 +344,84 @@ describe('resolveConnectorAttributes', () => {
     expect(attrs.get('e3')).toEqual({ crescendo: 'end' });
     expect(attrs.get('e2')).toEqual({ decrescendo: 'start' });
     expect(attrs.get('e4')).toEqual({ decrescendo: 'end' });
+  });
+});
+
+describe('pruneBrokenTies', () => {
+  it('returns the same reference when every tie still joins one pitch', () => {
+    const structure = upsertConnector(buildStructure(), 'e1', 'e2', 'tie');
+    expect(pruneBrokenTies(structure)).toBe(structure);
+  });
+
+  it('keeps a tie when only an endpoint duration changed', () => {
+    const structure = upsertConnector(buildStructure(), 'e1', 'e2', 'tie');
+    structure.entriesById.e2 = {
+      id: 'e2',
+      type: 'note',
+      value: 'C',
+      duration: 'eighth',
+    };
+    expect(pruneBrokenTies(structure).connectorOrder).toHaveLength(1);
+  });
+
+  it('drops a tie once an endpoint pitch changes', () => {
+    const structure = upsertConnector(buildStructure(), 'e1', 'e2', 'tie');
+    structure.entriesById.e2 = {
+      id: 'e2',
+      type: 'note',
+      value: 'G',
+      duration: 'quarter',
+    };
+    const next = pruneBrokenTies(structure);
+    expect(next.connectorOrder).toEqual([]);
+    expect(next.connectorsById).toEqual({});
+  });
+
+  it('drops a tie once an endpoint octave changes', () => {
+    const structure = upsertConnector(buildStructure(), 'e1', 'e2', 'tie');
+    structure.entriesById.e2 = {
+      id: 'e2',
+      type: 'note',
+      value: 'C',
+      octave: 5,
+      duration: 'quarter',
+    };
+    expect(pruneBrokenTies(structure).connectorOrder).toEqual([]);
+  });
+
+  it('drops a tie once a tied chord loses a note', () => {
+    const structure = buildStructure();
+    structure.entriesById.e1 = {
+      id: 'e1',
+      type: 'chord',
+      notes: [{ value: 'C' }, { value: 'E' }],
+      duration: 'quarter',
+    };
+    structure.entriesById.e2 = {
+      id: 'e2',
+      type: 'chord',
+      notes: [{ value: 'C' }, { value: 'E' }],
+      duration: 'quarter',
+    };
+    const tied = upsertConnector(structure, 'e1', 'e2', 'tie');
+    tied.entriesById.e2 = {
+      id: 'e2',
+      type: 'chord',
+      notes: [{ value: 'C' }, { value: 'G' }],
+      duration: 'quarter',
+    };
+    expect(pruneBrokenTies(tied).connectorOrder).toEqual([]);
+  });
+
+  it('leaves a slur and a crescendo over a now-mismatched pair intact', () => {
+    let structure = upsertConnector(buildStructure(), 'e1', 'e2', 'slur');
+    structure = upsertConnector(structure, 'e1', 'e2', 'crescendo');
+    structure.entriesById.e2 = {
+      id: 'e2',
+      type: 'note',
+      value: 'G',
+      duration: 'quarter',
+    };
+    expect(pruneBrokenTies(structure).connectorOrder).toHaveLength(2);
   });
 });

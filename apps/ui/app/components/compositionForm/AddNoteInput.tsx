@@ -4,10 +4,9 @@ import type {
   Note,
   Octave,
 } from '@one-step-at-a-time/web-components';
-import { durationToFactor } from '@one-step-at-a-time/web-components';
 import { useState } from 'react';
 import { DurationSelect, OctaveSelect, PitchSelect } from './entryControls';
-import { fittingDurations } from './measureCapacityHelpers';
+import { durationFits, fittingDurations } from './measureCapacityHelpers';
 import type { DraftMusicEntry } from './types';
 
 interface AddNoteInputProps {
@@ -20,7 +19,7 @@ export function AddNoteInput({ onAdd, remainingBeats }: AddNoteInputProps) {
   const [octave, setOctave] = useState<Octave | null>(null);
   const [duration, setDuration] = useState<DurationType>('quarter');
 
-  const canAdd = durationToFactor[duration] <= remainingBeats;
+  const canAdd = durationFits(duration, remainingBeats);
   const durationOptions = fittingDurations(remainingBeats, duration);
 
   return (

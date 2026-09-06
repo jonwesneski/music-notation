@@ -1,9 +1,8 @@
 import { Button } from '@/design-system';
 import type { DurationType } from '@one-step-at-a-time/web-components';
-import { durationToFactor } from '@one-step-at-a-time/web-components';
 import { useState } from 'react';
 import { ChordNoteRows, DurationSelect } from './entryControls';
-import { fittingDurations } from './measureCapacityHelpers';
+import { durationFits, fittingDurations } from './measureCapacityHelpers';
 import type { ChordNote, DraftMusicEntry } from './types';
 
 interface AddChordInputProps {
@@ -18,7 +17,7 @@ export function AddChordInput({ onAdd, remainingBeats }: AddChordInputProps) {
   ]);
   const [duration, setDuration] = useState<DurationType>('quarter');
 
-  const canAdd = durationToFactor[duration] <= remainingBeats;
+  const canAdd = durationFits(duration, remainingBeats);
   const durationOptions = fittingDurations(remainingBeats, duration);
 
   return (

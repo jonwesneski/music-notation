@@ -2,6 +2,7 @@ import { Button, Select } from '@/design-system';
 import type { TupletRatio } from '@one-step-at-a-time/web-components';
 import { TUPLET_RATIOS } from '@one-step-at-a-time/web-components';
 import { useCompositionFormSession } from './CompositionFormSessionContext';
+import { tupletRatioFits } from './measureCapacityHelpers';
 import { tupletCandidate, tupletOfEntries } from './tupletsHelpers';
 import type { CompositionStructure } from './types';
 
@@ -31,6 +32,10 @@ export function TupletInput({ structure }: TupletInputProps) {
 
   const current = tupletOfEntries(structure, candidate.entryIds);
   const value = current?.ratio ?? '';
+  const ratioOptions = TUPLET_RATIOS.filter(
+    (ratio) =>
+      ratio === value || tupletRatioFits(structure, candidate.entryIds, ratio)
+  );
 
   return (
     <div
@@ -52,7 +57,7 @@ export function TupletInput({ structure }: TupletInputProps) {
           }
         >
           <option value="">none</option>
-          {TUPLET_RATIOS.map((r) => (
+          {ratioOptions.map((r) => (
             <option key={r} value={r}>
               {RATIO_LABEL[r] ?? r}
             </option>

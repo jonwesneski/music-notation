@@ -1,12 +1,14 @@
 import type {
   DurationType,
   TimeSignature,
+  TupletRatio,
 } from '@one-step-at-a-time/web-components';
 import {
   DURATIONS,
   durationToFactor,
   parseTupletRatio,
 } from '@one-step-at-a-time/web-components';
+import { timeSignatureOfEntry } from './timeSignaturesHelpers';
 import type {
   CompositionStructure,
   MusicEntry,
@@ -104,6 +106,38 @@ export function availableForDuration(
   const self = structure.entriesById[entryId];
   const freed = self ? entryFactor(self, structure.tupletsById) : 0;
   return total - (used - freed);
+}
+
+// Whether re-ratioing (or creating) a tuplet over `entryIds` to `ratio` keeps
+// the measure within budget. A triplet shrinks the run so it always fits one
+// that already did; a duplet grows it (`normal/actual > 1`) and can overfill.
+// Mirrors `fittingDurations`' role for the Add controls — the tuplet picker
+// filters its options through this.
+export function tupletRatioFits(
+  structure: CompositionStructure,
+  entryIds: string[],
+  ratio: TupletRatio
+): boolean {
+  const staff = staffOfEntryId(structure, entryIds[0]);
+  if (!staff) {
+    return true;
+  }
+  const total = measureDuration(timeSignatureOfEntry(structure, entryIds[0]));
+  const entries = staff.entryIds.map((id) => structure.entriesById[id]);
+  const used = usedDuration(entries, structure.tupletsById);
+  const currentRun = entryIds.reduce(
+    (sum, id) =>
+      sum + entryFactor(structure.entriesById[id], structure.tupletsById),
+    0
+  );
+  const { actual, normal } = parseTupletRatio(ratio);
+  const nextRun = entryIds.reduce((sum, id) => {
+    const entry = structure.entriesById[id];
+    return isPitchedEntry(entry)
+      ? sum + durationToFactor[entry.duration] * (normal / actual)
+      : sum;
+  }, 0);
+  return used - currentRun + nextRun <= total + CAPACITY_EPSILON;
 }
 
 // Durations offerable for an entry currently set to `current`: everything that

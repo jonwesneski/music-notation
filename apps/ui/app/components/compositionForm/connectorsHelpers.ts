@@ -396,6 +396,48 @@ export function upsertConnector(
   };
 }
 
+// Drops every tie whose endpoints no longer join a single sustained pitch, using
+// `canTie` as the authority — an entry edit (`applyEntryUpdate`) can change a
+// tied note's pitch/octave, a tied chord's notes, or a `<music-clef>` marker that
+// shifts a downstream tie's octave resolution, none of which the editor blocks.
+// A full scan (not just ties touching the edited entry) because a clef edit
+// invalidates ties it doesn't share an endpoint with. Slurs and hairpins carry
+// no pitch constraint and are left alone. Chosen over blocking the edit in
+// `EntryEditInput` to match the delete cascade in `deleteSelectionHelpers.ts` —
+// repair dangling references rather than prevent the mutation.
+export function pruneBrokenTies(
+  structure: CompositionStructure
+): CompositionStructure {
+  const broken = new Set<string>();
+  for (const id of structure.connectorOrder) {
+    const connector = structure.connectorsById[id];
+    if (
+      connector?.kind === 'tie' &&
+      !canTie(structure, {
+        startEntryId: connector.startEntryId,
+        endEntryId: connector.endEntryId,
+      })
+    ) {
+      broken.add(id);
+    }
+  }
+  if (broken.size === 0) {
+    return structure;
+  }
+
+  const connectorsById: Record<string, NormalizedConnector> = {};
+  for (const [id, connector] of Object.entries(structure.connectorsById)) {
+    if (!broken.has(id)) {
+      connectorsById[id] = connector;
+    }
+  }
+  return {
+    ...structure,
+    connectorsById,
+    connectorOrder: structure.connectorOrder.filter((id) => !broken.has(id)),
+  };
+}
+
 export function removeConnector(
   structure: CompositionStructure,
   connectorId: string

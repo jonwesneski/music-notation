@@ -52,6 +52,48 @@ describe('applyEntryUpdate', () => {
     expect(next.stavesById).toBe(structure.stavesById);
   });
 
+  it('drops a tie whose endpoint pitch was edited', () => {
+    const structure: CompositionStructure = {
+      ...buildStructure(),
+      entriesById: {
+        e1: { id: 'e1', type: 'note', value: 'C', duration: 'quarter' },
+        e2: { id: 'e2', type: 'note', value: 'C', duration: 'quarter' },
+      },
+      connectorsById: {
+        t1: { id: 't1', kind: 'tie', startEntryId: 'e1', endEntryId: 'e2' },
+      },
+      connectorOrder: ['t1'],
+    };
+    const next = applyEntryUpdate(structure, {
+      id: 'e1',
+      type: 'note',
+      value: 'G',
+      duration: 'quarter',
+    });
+    expect(next.connectorOrder).toEqual([]);
+  });
+
+  it('keeps a tie when the edit only changes duration', () => {
+    const structure: CompositionStructure = {
+      ...buildStructure(),
+      entriesById: {
+        e1: { id: 'e1', type: 'note', value: 'C', duration: 'quarter' },
+        e2: { id: 'e2', type: 'note', value: 'C', duration: 'quarter' },
+      },
+      connectorsById: {
+        t1: { id: 't1', kind: 'tie', startEntryId: 'e1', endEntryId: 'e2' },
+      },
+      connectorOrder: ['t1'],
+    };
+    const next = applyEntryUpdate(structure, {
+      id: 'e1',
+      type: 'note',
+      value: 'C',
+      duration: 'eighth',
+    });
+    expect(next.connectorOrder).toEqual(['t1']);
+  });
+
   it('returns the same structure reference when the entry is unknown', () => {
     const structure = buildStructure();
     const next = applyEntryUpdate(structure, {
