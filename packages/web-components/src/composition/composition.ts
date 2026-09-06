@@ -156,7 +156,6 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
       if (oldValue === newValue) {
         return;
       }
-      this.render();
       if (
         name === COMMON_ATTRIBUTES.KEY_SIG ||
         name === COMMON_ATTRIBUTES.MODE ||
@@ -168,8 +167,16 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
         );
       }
       if (name === 'max-width') {
-        // render() already applied the new cap; reflow rows so describe/clef/
-        // time-signature continuity tracks the changed wrapping.
+        // Push the new cap onto the live wrapper rather than re-rendering: a
+        // shadow-DOM rebuild would replace the <slot> and orphan the
+        // slotchange listener wired in #observeForRedraws(). Then reflow rows
+        // so describe/clef/time-signature continuity tracks the new wrapping.
+        const wrapper = this.shadowRoot?.querySelector<HTMLElement>(
+          '.composition-wrapper'
+        );
+        if (wrapper) {
+          wrapper.style.maxWidth = this.#resolveMaxWidthCss();
+        }
         this.#scheduleRedraw();
       }
     }
