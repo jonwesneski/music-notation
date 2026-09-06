@@ -6,6 +6,7 @@ import { AddClefInput } from './AddClefInput';
 import { AddNoteInput } from './AddNoteInput';
 import { AddRestInput } from './AddRestInput';
 import { AnchoredTabPanel } from './AnchoredTabPanel';
+import { effectiveClefOfEntry } from './clefsHelpers';
 import { useCompositionFormSession } from './CompositionFormSessionContext';
 import { serializeGrace } from './graceHelpers';
 import { remainingDuration } from './measureCapacityHelpers';
@@ -19,6 +20,7 @@ import {
   useCompositionStructure,
   useConnectorAttributes,
 } from './useCompositionStructure';
+import { useEntryDrag } from './useEntryDrag';
 
 interface StaffInputProps {
   staffId: string;
@@ -46,6 +48,7 @@ export function StaffInput({
   } = useCompositionFormSession();
   const connectorAttrs = useConnectorAttributes();
   const structure = useCompositionStructure();
+  const { onEntryPointerDown } = useEntryDrag();
 
   const isSelected = session.selection.staffIds.includes(staffId);
 
@@ -64,11 +67,22 @@ export function StaffInput({
 
   const renderEntry = (entry: MusicEntry) => {
     const isEntrySelected = session.selection.entryIds.includes(entry.id);
-    const entryClass = isEntrySelected ? 'rainbow-selected' : '';
+    const isDraggable = entry.type !== 'clef';
+    const entryClass = `${isEntrySelected ? 'rainbow-selected' : ''} ${
+      isDraggable ? 'cursor-grab' : ''
+    }`.trim();
     const connector = connectorAttrs.get(entry.id);
     const handleEntryClick = (e: React.MouseEvent) => {
       e.stopPropagation();
       selectEntry(measureId, staffId, entry.id, e);
+    };
+    const handleEntryPointerDown = (e: React.PointerEvent) => {
+      onEntryPointerDown(e, {
+        entry,
+        staffId,
+        clef: effectiveClefOfEntry(structure, entry.id),
+        entryIds: staff.entryIds,
+      });
     };
 
     if (entry.type === 'note' || entry.type === 'chord') {
@@ -85,6 +99,7 @@ export function StaffInput({
         ...serializeGrace(entry.grace),
         className: entryClass,
         onClick: handleEntryClick,
+        onPointerDown: handleEntryPointerDown,
       };
       const setRef = (el: HTMLElement | null) => registerEntryRef(entry.id, el);
 
@@ -130,6 +145,7 @@ export function StaffInput({
           duration={entry.duration}
           className={entryClass}
           onClick={handleEntryClick}
+          onPointerDown={handleEntryPointerDown}
         />
       );
     }

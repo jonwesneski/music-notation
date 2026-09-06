@@ -53,8 +53,7 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
    * A single note: notehead, stem, flag, ledger lines, plus optional
    * articulations, dynamics, hairpins, ties/slurs and grace notes. Renders
    * standalone or, inside a `<music-staff>`, is positioned and beamed by the
-   * staff. In an `editable` staff its notehead can be dragged to change pitch and
-   * its body dragged to reorder.
+   * staff.
    *
    * @customElement music-note
    * @attr {Note} note - Pitch letter with optional accidental, e.g. `C`, `F#`, `Bb`.
@@ -136,9 +135,12 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
       return (this.getAttribute('note') as Note) ?? 'C';
     }
 
-    set note(value: Note | null) {
-      if (value === null) this.removeAttribute('note');
-      else this.setAttribute('note', value);
+    set note(value: Note | null | undefined) {
+      if (value === null || value === undefined) {
+        this.removeAttribute('note');
+      } else {
+        this.setAttribute('note', value);
+      }
     }
 
     get octave(): Octave | null {
@@ -150,8 +152,8 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
       return OCTAVES.includes(parsed) ? parsed : null;
     }
 
-    set octave(val: Octave | null) {
-      if (val === null) {
+    set octave(val: Octave | null | undefined) {
+      if (val === null || val === undefined) {
         this.removeAttribute('octave');
       } else {
         this.setAttribute('octave', String(val));

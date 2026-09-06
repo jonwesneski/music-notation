@@ -57,7 +57,8 @@ one-step-at-a-time/
 │           │   ├── beamRules.ts
 │           │   ├── clefRules.ts           # Per-clef Y-coord/octave/key-sig data + SVG glyph (CLEF_DEFINITIONS, getClefRenderData)
 │           │   ├── staffGroupRules.ts     # Brace/bracket pairing + validation (resolveStaffGroupPairs) — pure, unit-testable
-│           │   ├── staffWidth.ts          # Measure min-width calculation
+│           │   ├── spacingRules.ts        # Horizontal entry spacing — logarithmic duration weight + slack distribution
+│           │   ├── staffWidth.ts          # Measure strut-min + duration-weighted natural width; flex value
 │           │   ├── theoryConsts.ts        # Duration/semitone lookup maps
 │           │   ├── theoryHelpers.ts       # Chord/note computation
 │           │   └── …                      # also chordRules, restRules, staffHeightRules, staffNoteRules, tupletRules, dynamicsRules
@@ -69,8 +70,6 @@ one-step-at-a-time/
 │               ├── notationDimensions.ts # Pixel sizing and spacing constants
 │               ├── parsers.ts            # Set-backed attribute value validators, parseX → value | null
 │               ├── connectorsBuilder.ts  # Bar-line connector SVG
-│               ├── noteTimingDragHandler.ts
-│               ├── pitchDragHandler.ts
 │               ├── index.ts
 │               └── svgCreator/           # One file per rendered symbol/feature
 │                   ├── index.ts
@@ -229,37 +228,52 @@ All components use shadow DOM (`attachShadow({ mode: 'open' })`). Style encapsul
 
 - Y-coordinates are looked up from static maps keyed by note name + octave (e.g., `'C4'`, `'G5'`)
 - Each staff subclass defines its own `noteYCoordinateMap` for its clef range
-- X-spacing is derived from `durationToFactor`: whole=1.0, half=0.5, quarter=0.25, etc.
+- X-spacing: entries are justified to fill the measure width. Beyond a fixed
+  `MIN_NOTE_WIDTH` collision strut per entry, spare width is shared out by a
+  **logarithmic** function of duration — halving a note's value costs roughly a
+  quarter of its space, not half — so long notes are not over-spaced and short
+  notes are not starved. The math is `rules/spacingRules.ts`
+  (`spacingSlackWeight` / `computeSpacingWeights` / `distributeSlack`).
+  `durationToFactor` is a **separate** linear map used only for bar-fit and
+  beam-grouping, never for spacing.
 - SVG rendering lives entirely in `utils/svgCreator/` (a directory, not a single file)
 
 ### Semitone System
 
 Notes are mapped to semitones 0–11 (A=0, Bb=1, B=2, C=3, …, Ab=11). Chord formulas are stored as semitone interval arrays from root (e.g., major = `[4, 7]`). This enables enharmonic equivalents and chord note computation.
 
-### Measure Minimum Width
+### Measure Width
 
-Each staff calculates a `minWidth` — the minimum pixel width required to render its notes without overlap. Formulas:
+Each staff reports **two** widths, both computed in `rules/staffWidth.ts`:
 
-- **Classical/guitar tab**: `describeEndX + noteCount × MIN_NOTE_WIDTH`
-- **Vocal**: `describeEndX + max(noteCount × MIN_NOTE_WIDTH, lyricCharCount × AVG_LYRIC_CHAR_WIDTH_PX)`
+- **strut min width** — the collision floor:
+  `describeEndX + LEADING_NOTE_GAP_PX + noteCount × MIN_NOTE_WIDTH + leftward-overhangs + clefChangeWidth`
+  (vocal takes `max(noteCount × MIN_NOTE_WIDTH, lyricCharCount × AVG_LYRIC_CHAR_WIDTH_PX)`).
+- **natural width** — the strut plus the total logarithmic spacing slack the
+  entries want beyond it (`Σ` of `computeSpacingWeights` from `rules/spacingRules.ts`).
 
-where `describeEndX` is the x-offset where the clef/key-signature/time-signature area ends (stored as `#describeEndX` and updated every time `#spaceElements()` runs).
+`describeEndX` is the x-offset where the clef/key-signature/time-signature area ends (stored as `#describeEndX`, updated every `#spaceElements()` run).
 
-The `minWidth` is dispatched upward via a `STAFF_EVENTS.STAFF_MIN_WIDTH` custom event with `detail: { minWidth: number }`. `<music-measure>` listens for these events, takes the maximum `minWidth` across all child staves, and sets `this.style.flex = "${flexGrow} 1 ${maxMinWidth}px"`. Using `minWidth` directly as the flex-basis guarantees the measure is always wide enough for notes not to bleed into adjacent measures. The calculation logic lives in `rules/staffWidth.ts`.
+Both are dispatched upward on one `STAFF_EVENTS.STAFF_MIN_WIDTH` event, `detail: { minWidth, naturalWidth }`. `<music-measure>` keeps the per-staff max of each and sets:
+
+- `this.style.flex = "${maxNatural} 1 ${maxNatural}px"` — grow **and** basis equal the natural width;
+- `this.style.minWidth = "${max(maxMin, MEASURE_MIN_WIDTH_PX)}px"` — the strut, floored.
+
+Because grow == basis, the measures on a row end up distributed as `naturalWidth_i ÷ Σ naturalWidth × rowWidth` — width proportional to musical content: one measure alone fills the row, equal-content measures split it evenly, a sparse measure beside a dense one splits it proportionally. `min-width` is a real CSS property, kept apart from the basis so a crowded measure can shrink toward its strut before the row wraps.
 
 ### Responsive Layout
 
-`<music-composition>` uses CSS flexbox with `flex-wrap: wrap`, so measures reflow into rows automatically as the container width changes. All layout-sensitive rendering reacts to this via a `ResizeObserver` on the composition element, which schedules a redraw via `#scheduleRedraw()` (debounced to one `requestAnimationFrame`).
+`<music-composition>` uses CSS flexbox with `flex-wrap: wrap`, so measures reflow into rows automatically as the container width changes. A row holds as many measures as their natural widths sum to fit under `.composition-wrapper`, then they stretch uniformly to fill it — there is no fixed measures-per-row cap. `<music-composition>` takes a `max-width` attribute (a px number or `none`, default `COMPOSITION_MAX_WIDTH_PX` = 900) that caps `.composition-wrapper`; the flex math is self-scaling, so nothing else consumes that value. All layout-sensitive rendering reacts to resizes via a `ResizeObserver` on the composition element, which schedules a redraw via `#scheduleRedraw()` (debounced to one `requestAnimationFrame`).
 
 On each redraw cycle the following happen in order:
 
-1. **Note x-spacing** — each staff's `StaffResizeObserver` (on the staff container element) calls `onStaffResize()`, which re-spaces notes proportionally to the new container width and re-emits `STAFF_EVENTS.NOTES_POSITIONED`.
+1. **Note x-spacing** — each staff's `StaffResizeObserver` (on the staff container element) calls `onStaffResize()`, which re-justifies the entries across the new container width (logarithmic duration weight, see SVG Coordinate System above) and re-emits `STAFF_EVENTS.NOTES_POSITIONED`.
 2. **Beams** — redrawn as part of `#renderNotes()` / `onStaffResize()` inside each staff.
 3. **Connectors** — `#redrawConnectors()` in `composition.ts` redraws the vertical bar lines that group staves in a measure.
 4. **Describe (clef/key/time) visibility** — `#updateDescribeVisibility()` in `composition.ts` runs in the **same `requestAnimationFrame`** as connectors, immediately after. It groups measures into visual rows (`#computeMeasureRows()`, tolerance 5 px on `getBoundingClientRect().top`, snapshotted in one pass before any DOM writes) and sets `showDescribe` (a JS property, not an HTML attribute) on each child staff — `true` for the first measure in each row, `false` otherwise. Connectors are absolutely-positioned SVG and do not affect document flow, so no layout settling is needed between the two operations. Staves default to `showDescribe = true`, so standalone staves always show the clef.
 5. **Clef continuity at measure boundaries** — `#updateClefContinuity()` runs right after, reusing the same `#computeMeasureRows()` output. It compares every pair of **adjacent measures** (not just row-boundary pairs — a measure-boundary clef change is just two neighboring `<music-staff>` instances with different `clef` attributes, and can happen mid-row) via each staff's `effectiveStartClef`/`effectiveEndClef` getters (derived from `StaffClassicalElementBase`'s clef-segment machinery — the same one that resolves mid-stream `<music-clef>` markers). When a pair differs: the incoming staff's `clefChangeAtBoundary` property is set so its clef glyph still renders even though `showDescribe` is false (mirrors the existing mid-composition time-signature-change precedent); if the pair also happens to fall exactly at a row wrap, a small courtesy clef preview (scaled by `COURTESY_CLEF_SCALE`) is additionally drawn near the right edge of the outgoing staff, in a separate `.courtesy-clef-overlay` SVG.
 
-**Why `:host { display: block; width: 100% }` on `<music-composition>` matters**: `display: block` alone is not sufficient when the element is placed inside a flex or grid container (e.g. `justify-content: center`). Without an explicit `width`, the element sizes to its max-content as a flex item. For a `flex-wrap: wrap` flex container, browsers compute max-content as the width of the widest single child — so the composition becomes only as wide as its widest measure, causing all other measures to wrap to separate rows. `width: 100%` ensures the composition fills the full parent width in all layout contexts (block, flex, grid), so the `ResizeObserver` fires reliably and measures can share rows as intended. The `.composition-wrapper` inside the shadow DOM has `margin: 0 auto` to center its 900px-capped content when the host is wider than 900px.
+**Why `:host { display: block; width: 100% }` on `<music-composition>` matters**: `display: block` alone is not sufficient when the element is placed inside a flex or grid container (e.g. `justify-content: center`). Without an explicit `width`, the element sizes to its max-content as a flex item. For a `flex-wrap: wrap` flex container, browsers compute max-content as the width of the widest single child — so the composition becomes only as wide as its widest measure, causing all other measures to wrap to separate rows. `width: 100%` ensures the composition fills the full parent width in all layout contexts (block, flex, grid), so the `ResizeObserver` fires reliably and measures can share rows as intended. The `.composition-wrapper` inside the shadow DOM has `margin: 0 auto` to center its content when the host is wider than the `max-width` cap (default 900px; see Responsive Layout above).
 
 **Invariant to maintain**: any change that affects which measure is "first in a row" (resize, dynamic measure insertion/removal) must eventually trigger `#scheduleRedraw()` so `#updateDescribeVisibility()` and `#updateClefContinuity()` re-run.
 
@@ -271,6 +285,7 @@ On each redraw cycle the following happen in order:
 
 ```ts
 type DurationType =
+  | 'double-whole'
   | 'whole'
   | 'half'
   | 'quarter'
@@ -306,14 +321,16 @@ type VoiceType = 'soprano' | 'mezzo' | 'alto' | 'tenor' | 'baritone' | 'bass';
 
 ## Key Utility Maps (`rules/theoryConsts.ts`)
 
-| Map                       | Purpose                                               |
-| ------------------------- | ----------------------------------------------------- |
-| `durationToFlagCountMap`  | Duration → flag count (eighth=1, sixteenth=2, …)      |
-| `noteSemitoneMap`         | Note name → semitone (0–11)                           |
-| `semitoneNoteMap`         | Semitone → note name array (handles enharmonics)      |
-| `ChordSemitoneMap`        | Chord type string → interval array                    |
-| `ChordSemitoneMapAliases` | Alias normalization (`'m'` → `'min'`, `''` → `'maj'`) |
-| `durationToFactor`        | Duration → relative x-spacing factor                  |
+| Map                       | Purpose                                                                                                                    |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `durationToFlagCountMap`  | Duration → flag count (eighth=1, sixteenth=2, …)                                                                           |
+| `noteSemitoneMap`         | Note name → semitone (0–11)                                                                                                |
+| `semitoneNoteMap`         | Semitone → note name array (handles enharmonics)                                                                           |
+| `ChordSemitoneMap`        | Chord type string → interval array                                                                                         |
+| `ChordSemitoneMapAliases` | Alias normalization (`'m'` → `'min'`, `''` → `'maj'`)                                                                      |
+| `durationToFactor`        | Duration → linear whole-note fraction. Bar-fit (`measureRules`) and beam grouping (`beams.ts`) only — **not** note spacing |
+
+Horizontal note spacing uses `rules/spacingRules.ts` (`spacingSlackWeight`, `computeSpacingWeights`, `distributeSlack`), a logarithmic curve, not `durationToFactor`.
 
 `utils/consts.ts` holds custom element tag name constants and event name constants (e.g., `STAFF_EVENTS`).
 
@@ -350,37 +367,30 @@ Rendering flow (classical staves):
 2. `connectedCallback()` (in `StaffElementBase`) builds staff lines, appends `staffContainer` and `transcribeContainer`, wires `slotchange`, starts `staffResizeObserver`
 3. `onConnectedCallback()` (in `StaffClassicalElementBase`) calls `#buildDescribe()`: injects clef SVG, key signature, and time signature into `transcribeContainer`
 4. `slotchange` fires → `onHandleSlotChange()` → `#renderNotes()` converts notes/chords to SVG
-5. Notes spaced by duration factor
+5. Entries justified to fill the measure; each entry's share of the free space is a logarithmic function of its duration (`rules/spacingRules.ts`)
 6. `BeamCreator` connects beamed note groups (eighths, sixteenths, etc.)
-7. Staff dispatches a `STAFF_EVENTS.STAFF_MIN_WIDTH` event after each render with `detail: { minWidth }` — the minimum pixel width needed for the measure to render without note overlap
+7. Staff dispatches a `STAFF_EVENTS.STAFF_MIN_WIDTH` event after each render with `detail: { minWidth, naturalWidth }` — the collision-floor width and the duration-weighted preferred width (see Measure Width above)
 
-## Drag Handlers (`utils/`)
+## Note Editing — Out of Scope
 
-Editable staves (`<music-staff clef="treble" editable>`) support two drag interactions, coordinated by a single `pointerdown` listener in `StaffClassicalElementBase`. The listener uses `e.composedPath()[0]` to hit-test the SVG target:
-
-- **Notehead hit** (`.head` or `.head-hit-zone` class) → **PitchDragHandler** (vertical)
-- **Everything else** (stem, flag, body) → **NoteTimingDragHandler** (horizontal)
-
-### NoteTimingDragHandler (`noteTimingDragHandler.ts`)
-
-Horizontal drag-and-drop to reorder notes/chords in time. Creates a fixed-position clone that follows the pointer and a dashed drop indicator between elements. Two modes controlled by the `managed` attribute:
-
-- **Unmanaged**: reorders light DOM children directly on drop. `#reorderLightDom()` also carries along any `<music-clef>` marker (via a `getClefMarkers` accessor, mirroring `getSlottedElements`) whose position sits between the dragged note's old and new index, re-inserting each marker immediately after the same note it was anchored to (or as the first child, for a marker anchored at `afterElementIndex === -1`) so it stays correctly anchored once `#clefMarkers` is recomputed from DOM order on the next `slotchange`.
-- **Managed**: only dispatches `note-reorder` event with `{ fromIndex, toIndex }` — the framework (e.g. React) updates state. Clef markers are not moved in this mode; the consuming framework is responsible for keeping marker placement consistent with its own reordered state.
-
-Events: `note-drag-start` (cancelable), `note-reorder`, `note-drag-end`.
-
-### PitchDragHandler (`pitchDragHandler.ts`)
-
-Vertical drag on noteheads to change pitch. Takes a `resolveYCoordinates: (elementIndex: number) => YCoordinates` resolver rather than a static map — `#enableDrag()` wires it to `#renderDataForIndex(elementIndex).yCoordinates`, the same clef-segment-aware lookup `noteToYCoordinate` uses, so a note dragged after a mid-stream `<music-clef>` marker snaps against that marker's clef table instead of the staff's own. The resolver is called once per `tryStart()`, since the dragged note's clef segment doesn't change mid-drag. Shows a tooltip with the note transition (e.g. "D4 → F4"). For chords, drags a single notehead and prevents snapping to a pitch already occupied by another note in the chord.
-
-During drag, calls a live preview callback `(elementIndex, note, octave, chordNoteIndex) => void` that sets the element's `note`/`octave` attributes separately and triggers a full `#renderNotes()` re-render (stem direction, beams, Y positioning all recalculate). On drop, dispatches `note-pitch-change` with `PitchChangeDetail: { element, elementIndex, chordNoteIndex, fromNote, fromOctave, toNote, toOctave }` — `note`/`octave` are always passed as separate fields (`Note`/`Octave`), never combined into one string, matching `music-note`'s own independent `note`/`octave` attributes. Internally the handler still keys its Y-coordinate lookup/snap table by a combined `NoteLetterOctave` string (since that's the table's own key shape), splitting into `note`/`octave` only at these two external boundaries.
-
-**Important**: internal Y-coordinate lookups require the octave digit (e.g. "C6" not "C") to resolve to the correct staff position — without it, `noteToYCoordinate` falls back to the octave search order and may pick the wrong octave. This is purely an internal lookup-key detail; `PitchChangeDetail` and the live-preview callback are unaffected since they already carry octave as its own field.
+This library **renders** notation and reports interaction (`note-click`,
+`note-pointerdown`/`note-pointerup`, layout events); it does **not** implement
+drag-to-repitch or drag-to-reorder. A host app owns editing and drives it from
+the pointer/click events plus `noteToYCoordinate(note, octave?, elementIndex?)`
+(public on the staff element — clef-segment aware via `#renderDataForIndex`).
+`apps/ui`'s `compositionForm/useEntryDrag.ts` + `entryDragHelpers.ts` +
+`reorderHelpers.ts` are the reference implementation. (Drag was previously built
+in as `editable`/`managed` staves + `pitchDragHandler.ts`/`noteTimingDragHandler.ts`
+dispatching `note-pitch-change`/`note-reorder`; all removed.)
 
 ### SVG Hit Zones
 
-Each note SVG includes a transparent `head-hit-zone` ellipse (1.5× the notehead size) rendered behind the visible `.head` ellipse. This enlarged invisible target makes noteheads easier to click for pitch dragging. Both classes are checked by `PitchDragHandler.isNoteheadTarget()`.
+Each note SVG includes a transparent `head-hit-zone` ellipse (1.5× the notehead
+size) rendered behind the visible `.head` ellipse, rendered unconditionally. This
+enlarged invisible target makes noteheads easier to grab; a host app tells
+notehead from stem/flag/body by checking `e.composedPath()` for the `.head` /
+`.head-hit-zone` classes. `svgCreator/graceNotes.ts` strips the hit zone and
+renames `.head` → `.grace-head` on grace notes so they are not drag targets.
 
 ## Grand Staff / Part Connectors
 
@@ -399,7 +409,6 @@ A brace or bracket is an **additional** decoration, drawn further left, spanning
 
 - **`staffGuitarTab.ts`**: `onDisconnectedCallback` is still an empty stub
 - **Chord value parsing**: Parsing a chord name from the `value` attribute into constituent notes is partially implemented
-- **Accidentals during pitch drag**: Pitch drag snaps to natural staff positions only; accidental changes (sharp/flat) need a separate mechanism
 - **Standalone degraded features**: Some capabilities (minimum-width-driven flex layout, attribute inheritance) require a parent `<music-measure>` or `<music-composition>` and will be silently absent when elements are used in isolation. Ledger lines (both main-note and grace-note) require a staff-provided Y position, and grace-note accidentals fall back to suffix-driven rendering (no key-signature suppression) outside a staff
 - **Clef support**: only `treble` and `bass` have data in `rules/clefRules.ts`'s `CLEF_DEFINITIONS` today (`ClefType` is intentionally kept to those two rather than a wider, partially-backed union — see the `// TODO` above its declaration in `types/theory.ts`). Adding alto/tenor is a two-part change: a `ClefDefinition` entry plus a new clef glyph in `utils/svgCreator/clefs.ts`.
 - **SMuFL glyph extraction (transition in progress)**: the repo carries SMuFL infrastructure for deriving notation glyphs from a real engraving font instead of hand-computing bezier shapes — `README.md`'s "Drawing" section, `download-smufl-font.sh`, and the downloaded `smufl/Bravura.otf` + `smufl/bravura_metadata.json` assets. So far only the brace and bracket glyphs (`createBraceSvg()` / `createBracketSvg()` in `utils/svgCreator/brace.ts`) have actually been pulled from it, and by hand via one-off scripts rather than a repeatable pipeline reading `bravura_metadata.json`. Every other `svgCreator/` glyph (clefs, accidentals, noteheads, etc.) is still hand-drawn. Prefer extracting from the SMuFL font/metadata already in the repo over hand-computing new glyphs going forward; brace.ts's source comments deliberately avoid naming SMuFL/Bravura directly — this entry is the canonical place for that context.

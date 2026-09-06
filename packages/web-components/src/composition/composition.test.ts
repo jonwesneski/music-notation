@@ -119,6 +119,32 @@ describe(`${MUSIC_COMPOSITION} attribute propagation`, () => {
   });
 });
 
+describe(`${MUSIC_COMPOSITION} max-width`, () => {
+  it('updates the wrapper cap in place without replacing the shadow slot', () => {
+    const composition = document.createElement(MUSIC_COMPOSITION) as any;
+    document.body.appendChild(composition);
+
+    const slotBefore = composition.shadowRoot.querySelector('slot');
+    const wrapper = composition.shadowRoot.querySelector(
+      '.composition-wrapper'
+    ) as HTMLElement;
+
+    composition.setAttribute('max-width', '500');
+
+    // The slot must survive so the slotchange listener wired in
+    // #observeForRedraws() keeps firing on later measure inserts/reorders.
+    expect(composition.shadowRoot.querySelector('slot')).toBe(slotBefore);
+    expect(wrapper.isConnected).toBe(true);
+    expect(wrapper.style.maxWidth).toBe('500px');
+
+    composition.setAttribute('max-width', 'none');
+    expect(wrapper.style.maxWidth).toBe('none');
+
+    composition.removeAttribute('max-width');
+    expect(wrapper.style.maxWidth).toBe('900px');
+  });
+});
+
 describe(`${MUSIC_COMPOSITION} measure numbering`, () => {
   function flushMutations(): Promise<void> {
     return new Promise((resolve) => queueMicrotask(resolve));

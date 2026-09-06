@@ -41,6 +41,10 @@ type CompositionFormSessionContextValue = {
   registerMeasureRef: (id: string, el: HTMLElement | null) => void;
   registerStaffRef: (id: string, el: HTMLElement | null) => void;
   registerEntryRef: (id: string, el: HTMLElement | null) => void;
+  // The live DOM elements behind the id maps, for hit-testing and geometry
+  // (marquee select, note drag). Same Map instances for the provider's lifetime.
+  staffElements: Map<string, HTMLElement>;
+  entryElements: Map<string, HTMLElement>;
   selectMeasure: (measureId: string) => void;
   selectStaff: (
     measureId: string,
@@ -74,6 +78,7 @@ type CompositionFormSessionContextValue = {
     entry: DraftMusicEntry
   ) => void;
   updateEntry: (entry: MusicEntry) => void;
+  reorderEntry: (staffId: string, entryId: string, toIndex: number) => void;
   setConnector: (
     startEntryId: string,
     endEntryId: string,
@@ -105,6 +110,7 @@ type CompositionFormSessionProviderProps = {
     entry: DraftMusicEntry
   ) => void;
   onUpdateEntry: (entry: MusicEntry) => void;
+  onReorderEntry: (staffId: string, entryId: string, toIndex: number) => void;
   onSetConnector: (
     startEntryId: string,
     endEntryId: string,
@@ -133,6 +139,7 @@ export function CompositionFormSessionProvider({
   onSetStaffGroup,
   onAddEntry,
   onUpdateEntry,
+  onReorderEntry,
   onSetConnector,
   onSetTuplet,
   onSetCompositionTimeSignature,
@@ -289,6 +296,8 @@ export function CompositionFormSessionProvider({
         registerMeasureRef,
         registerStaffRef,
         registerEntryRef,
+        staffElements: staffRefs.current,
+        entryElements: entryRefs.current,
         selectMeasure,
         selectStaff,
         selectEntry,
@@ -299,6 +308,7 @@ export function CompositionFormSessionProvider({
         setStaffGroup: onSetStaffGroup,
         addEntry: onAddEntry,
         updateEntry: onUpdateEntry,
+        reorderEntry: onReorderEntry,
         setConnector: onSetConnector,
         setTuplet: onSetTuplet,
         requestTimeSignatureChange,

@@ -3,9 +3,7 @@ import type {
   DurationType,
   Note,
   Octave,
-  PitchChangeDetail,
 } from '@one-step-at-a-time/web-components';
-import { useEffect, useRef, useState } from 'react';
 
 type NoteItem = {
   id: string;
@@ -52,57 +50,14 @@ const initialNotes: StaffItem[] = [
   { id: 'n3', type: 'note', value: 'B', octave: 4, duration: 'quarter' },
 ];
 
+// Experimental render-only harness. Note editing (pitch / reorder drag) lives
+// in the real editor under compositionForm/.
 export default function MusicScore() {
-  const staffRef = useRef<HTMLElement>(null);
-  const [items, setItems] = useState<StaffItem[]>(initialNotes);
-
-  useEffect(() => {
-    const staff = staffRef.current;
-    if (!staff) return;
-
-    const onReorder = (e: Event) => {
-      const { fromIndex, toIndex } = (e as CustomEvent).detail;
-
-      setItems((prev) => {
-        const next = [...prev];
-        const [moved] = next.splice(fromIndex, 1);
-        next.splice(toIndex > fromIndex ? toIndex - 1 : toIndex, 0, moved);
-        return next;
-      });
-    };
-
-    const onPitchChange = (e: Event) => {
-      const { elementIndex, chordNoteIndex, toNote, toOctave } = (
-        e as CustomEvent
-      ).detail as PitchChangeDetail;
-
-      setItems((prev) => {
-        const next = [...prev];
-        const item = next[elementIndex];
-        if (item.type === 'chord' && chordNoteIndex !== null) {
-          const updatedNotes = [...item.notes];
-          updatedNotes[chordNoteIndex] = { value: toNote, octave: toOctave };
-          next[elementIndex] = { ...item, notes: updatedNotes };
-        } else if (item.type === 'note') {
-          next[elementIndex] = { ...item, value: toNote, octave: toOctave };
-        }
-        return next;
-      });
-    };
-
-    staff.addEventListener('note-reorder', onReorder);
-    staff.addEventListener('note-pitch-change', onPitchChange);
-    return () => {
-      staff.removeEventListener('note-reorder', onReorder);
-      staff.removeEventListener('note-pitch-change', onPitchChange);
-    };
-  }, []);
-
   return (
     <music-composition key-sig="D" mode="major" time="4/4">
       <music-measure>
-        <music-staff clef="treble" editable managed ref={staffRef}>
-          {items.map((item) =>
+        <music-staff clef="treble">
+          {initialNotes.map((item) =>
             item.type === 'chord' ? (
               <music-chord key={item.id} duration={item.duration}>
                 {item.notes.map((n, j) => (

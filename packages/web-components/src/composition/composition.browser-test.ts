@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 import {
   buildComposition,
   resizeHost,
@@ -2071,5 +2071,175 @@ test.describe(`${MUSIC_COMPOSITION} responsive layout`, () => {
     // Staves are on separate rows (200px host), so the new hairpin renders as
     // a two-segment cross-system split.
     expect(await countHairpins()).toBe(2);
+  });
+});
+
+test.describe(`${MUSIC_COMPOSITION} measure width sharing`, () => {
+  async function readMeasureWidths(page: Page): Promise<number[]> {
+    return page.evaluate(
+      (measureTag) =>
+        Array.from(document.querySelectorAll(measureTag)).map(
+          (m) => m.getBoundingClientRect().width
+        ),
+      MUSIC_MEASURE
+    );
+  }
+
+  async function readWrapperWidth(page: Page): Promise<number> {
+    return page.evaluate((compositionTag) => {
+      const wrapper = document
+        .querySelector(compositionTag)
+        ?.shadowRoot?.querySelector('.composition-wrapper');
+      if (!wrapper) {
+        throw new Error('wrapper not found');
+      }
+      return wrapper.getBoundingClientRect().width;
+    }, MUSIC_COMPOSITION);
+  }
+
+  async function readMeasureRowCount(page: Page): Promise<number> {
+    return page.evaluate((measureTag) => {
+      const tops = Array.from(document.querySelectorAll(measureTag)).map((m) =>
+        Math.round(m.getBoundingClientRect().top)
+      );
+      return new Set(tops).size;
+    }, MUSIC_MEASURE);
+  }
+
+  test('a lone measure fills the composition row', async ({ page }) => {
+    await buildComposition(page, {
+      measureCount: 1,
+      notesPerMeasure: 4,
+      duration: 'quarter',
+      hostWidth: 900,
+    });
+    await waitForRedrawCycle(page);
+
+    const [measureWidth] = await readMeasureWidths(page);
+    const wrapperWidth = await readWrapperWidth(page);
+    expect(Math.abs(measureWidth - wrapperWidth)).toBeLessThanOrEqual(2);
+  });
+
+  test('equal-content measures split the row evenly (past the first, which carries the clef)', async ({
+    page,
+  }) => {
+    await buildComposition(page, {
+      measureCount: 3,
+      notesPerMeasure: 4,
+      duration: 'quarter',
+      hostWidth: 900,
+    });
+    await waitForRedrawCycle(page);
+    await waitForRedrawCycle(page);
+
+    const widths = await readMeasureWidths(page);
+    expect(widths).toHaveLength(3);
+    expect(await readMeasureRowCount(page)).toBe(1);
+    // measures 2 and 3 have identical content and neither shows the describe
+    // area, so they get identical widths
+    expect(Math.abs(widths[1] - widths[2])).toBeLessThan(3);
+    // the first measure is wider — it carries the clef / key / time
+    expect(widths[0]).toBeGreaterThan(widths[1]);
+  });
+
+  test('a sparse measure and a dense measure split the row in proportion to content', async ({
+    page,
+  }) => {
+    await page.evaluate(
+      ({ compositionTag, measureTag, staffTag, noteTag }) => {
+        const host = document.getElementById('host');
+        if (host === null) {
+          throw new Error('host missing');
+        }
+        host.innerHTML = '';
+        host.style.width = '900px';
+        const composition = document.createElement(compositionTag);
+
+        const sparse = document.createElement(measureTag);
+        const sparseStaff = document.createElement(staffTag);
+        sparseStaff.setAttribute('clef', 'treble');
+        const wholeNote = document.createElement(noteTag);
+        wholeNote.setAttribute('note', 'C');
+        wholeNote.setAttribute('octave', '4');
+        wholeNote.setAttribute('duration', 'whole');
+        sparseStaff.appendChild(wholeNote);
+        sparse.appendChild(sparseStaff);
+
+        const dense = document.createElement(measureTag);
+        const denseStaff = document.createElement(staffTag);
+        denseStaff.setAttribute('clef', 'treble');
+        for (let i = 0; i < 8; i++) {
+          const note = document.createElement(noteTag);
+          note.setAttribute('note', 'CDEFGABC'[i]);
+          note.setAttribute('octave', '4');
+          note.setAttribute('duration', 'sixteenth');
+          denseStaff.appendChild(note);
+        }
+        dense.appendChild(denseStaff);
+
+        composition.appendChild(sparse);
+        composition.appendChild(dense);
+        host.appendChild(composition);
+      },
+      {
+        compositionTag: MUSIC_COMPOSITION,
+        measureTag: MUSIC_MEASURE,
+        staffTag: MUSIC_STAFF,
+        noteTag: MUSIC_NOTE,
+      }
+    );
+    await waitForRedrawCycle(page);
+    await waitForRedrawCycle(page);
+
+    const [sparseWidth, denseWidth] = await readMeasureWidths(page);
+    // both fit on one row
+    expect(await readMeasureRowCount(page)).toBe(1);
+    // the busier measure claims more of the row
+    expect(denseWidth).toBeGreaterThan(sparseWidth * 1.5);
+  });
+
+  test('max-width attribute caps the composition wrapper', async ({ page }) => {
+    await buildComposition(page, {
+      measureCount: 1,
+      notesPerMeasure: 4,
+      duration: 'quarter',
+      hostWidth: 1400,
+    });
+    await waitForRedrawCycle(page);
+    expect(await readWrapperWidth(page)).toBeLessThanOrEqual(905);
+
+    await page.evaluate((compositionTag) => {
+      document.querySelector(compositionTag)?.setAttribute('max-width', '600');
+    }, MUSIC_COMPOSITION);
+    await waitForRedrawCycle(page);
+    expect(Math.abs((await readWrapperWidth(page)) - 600)).toBeLessThanOrEqual(
+      2
+    );
+
+    await page.evaluate((compositionTag) => {
+      document.querySelector(compositionTag)?.setAttribute('max-width', 'none');
+    }, MUSIC_COMPOSITION);
+    await waitForRedrawCycle(page);
+    expect(await readWrapperWidth(page)).toBeGreaterThan(1300);
+  });
+
+  test('raising max-width lets more measures share a row', async ({ page }) => {
+    await buildComposition(page, {
+      measureCount: 6,
+      notesPerMeasure: 6,
+      duration: 'quarter',
+      hostWidth: 1800,
+    });
+    await waitForRedrawCycle(page);
+    const cappedRows = await readMeasureRowCount(page);
+
+    await page.evaluate((compositionTag) => {
+      document.querySelector(compositionTag)?.setAttribute('max-width', 'none');
+    }, MUSIC_COMPOSITION);
+    await waitForRedrawCycle(page);
+    await waitForRedrawCycle(page);
+    const uncappedRows = await readMeasureRowCount(page);
+
+    expect(uncappedRows).toBeLessThan(cappedRows);
   });
 });

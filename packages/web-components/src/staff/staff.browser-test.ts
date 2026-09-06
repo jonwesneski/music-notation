@@ -5,6 +5,7 @@ import {
   waitForRedrawCycle,
   waitForStaffNotesPositioned,
 } from '../../test-fixtures/helpers';
+import type { DurationType } from '../types/theory';
 import {
   MUSIC_CLEF,
   MUSIC_NOTE,
@@ -940,5 +941,85 @@ test.describe('staves authored as parsed HTML markup', () => {
     expect(rendered.notesRendered).toBe(rendered.totalNotes);
     expect(rendered.guitarTabRendered).toBe(true);
     expect(rendered.vocalRendered).toBe(true);
+  });
+});
+
+test.describe(`${MUSIC_STAFF} justified spacing`, () => {
+  async function buildStaffWithDurations(
+    page: Page,
+    durations: DurationType[]
+  ): Promise<void> {
+    const positioned = waitForStaffNotesPositioned(page);
+    await page.evaluate(
+      ({ staffTag, noteTag, durations }) => {
+        const host = document.getElementById('host');
+        if (host === null) {
+          throw new Error('host missing');
+        }
+        host.innerHTML = '';
+        host.style.width = '800px';
+        const staff = document.createElement(staffTag);
+        staff.setAttribute('clef', 'treble');
+        const pitches = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+        durations.forEach((duration, i) => {
+          const note = document.createElement(noteTag);
+          note.setAttribute('note', pitches[i % pitches.length]);
+          note.setAttribute('octave', '4');
+          note.setAttribute('duration', duration);
+          staff.appendChild(note);
+        });
+        host.appendChild(staff);
+      },
+      { staffTag: MUSIC_STAFF, noteTag: MUSIC_NOTE, durations }
+    );
+    await positioned;
+    await waitForRedrawCycle(page);
+  }
+
+  async function readNotesAreaBounds(
+    page: Page
+  ): Promise<{ left: number; right: number }> {
+    return page.evaluate((staffTag) => {
+      const staff = document.querySelector(staffTag) as
+        | (Element & { describeEndX: number })
+        | null;
+      if (staff === null) {
+        throw new Error('staff not found');
+      }
+      const rect = staff.getBoundingClientRect();
+      return { left: rect.left + staff.describeEndX, right: rect.right };
+    }, MUSIC_STAFF);
+  }
+
+  test('an underfull bar spreads its notes across the full width', async ({
+    page,
+  }) => {
+    // two quarter notes in a nominal 4/4 bar — rhythmically half-full
+    await buildStaffWithDurations(page, ['quarter', 'quarter']);
+
+    const lefts = await readNoteLefts(page);
+    const { left, right } = await readNotesAreaBounds(page);
+    const notesAreaWidth = right - left;
+
+    // the second note sits well past the first quarter of the notes area, and
+    // there is real trailing space after it (not bunched against the left)
+    expect(lefts[1] - left).toBeGreaterThan(notesAreaWidth * 0.35);
+    expect(right - lefts[1]).toBeGreaterThan(notesAreaWidth * 0.25);
+  });
+
+  test('a longer final note leaves more trailing space than a shorter one', async ({
+    page,
+  }) => {
+    await buildStaffWithDurations(page, ['quarter', 'quarter', 'half']);
+    let lefts = await readNoteLefts(page);
+    let bounds = await readNotesAreaBounds(page);
+    const trailingWithHalf = bounds.right - lefts[lefts.length - 1];
+
+    await buildStaffWithDurations(page, ['quarter', 'quarter', 'eighth']);
+    lefts = await readNoteLefts(page);
+    bounds = await readNotesAreaBounds(page);
+    const trailingWithEighth = bounds.right - lefts[lefts.length - 1];
+
+    expect(trailingWithHalf).toBeGreaterThan(trailingWithEighth);
   });
 });

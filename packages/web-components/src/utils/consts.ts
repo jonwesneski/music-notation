@@ -63,11 +63,6 @@ export const NOTE_EVENTS = {
   CLICK: 'note-click',
   POINTERDOWN: 'note-pointerdown',
   POINTERUP: 'note-pointerup',
-  DRAG_START: 'note-drag-start',
-  REORDER: 'note-reorder',
-  DRAG_END: 'note-drag-end',
-  PITCH_DRAG_START: 'note-pitch-drag-start',
-  PITCH_CHANGE: 'note-pitch-change',
 } as const;
 
 export const CHORD_EVENTS = {

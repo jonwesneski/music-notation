@@ -6,9 +6,9 @@
 //
 // Two independent axes exist:
 //   1. Vertical / sizing  — everything here, rooted at STAFF_LINE_SPACING
-//   2. Horizontal / timing — note x-spacing is driven by duration factors
-//      (durationToFactor in consts.ts) and available container width, which is
-//      dynamic and cannot be derived from a fixed base.
+//   2. Horizontal / spacing — entry x-spacing is driven by a logarithmic duration
+//      weight (rules/spacingRules.ts) distributed across the available container
+//      width, which is dynamic and cannot be derived from a fixed base.
 //
 // Note SVG internals (COORD_WIDTH, NOTE_SCALE, etc.) live in svgCreator/note.ts
 // because they belong to that rendering subsystem's coordinate math, not to the
@@ -219,39 +219,25 @@ export const TIME_SIG_Y_TRANSLATE = STAFF_LINE_SPACING * 3;
 // ─── Measure layout ───────────────────────────────────────────────────────────
 
 /**
- * Maximum number of measures that can appear side-by-side in one row when all
- * measures have the highest busyness score (score 5 → flex-grow 1.0).
- */
-export const MAX_MEASURES_PER_ROW = 5;
-
-/**
- * flex-grow for an empty measure (no staves have reported a score yet).
- * At 1/3, three empty measures occupy roughly one full row width.
- */
-export const MIN_FLEX_GROW = 1 / 3;
-
-/**
- * flex-grow floor for a scored measure (busyness score 1 — e.g. a single whole note).
- * At 1/5, five score-1 measures occupy one full row width.
- */
-export const SCORED_MIN_FLEX_GROW = 1 / MAX_MEASURES_PER_ROW;
-
-/**
- * Maximum composition width in pixels. Used to derive flex-basis values so that
- * the correct number of measures wrap per row.
+ * Default cap (px) for a composition's rendered width, overridable per element
+ * via the <music-composition max-width> attribute. Measures still fill and share
+ * whatever width the wrapper ends up with — this only bounds how wide that is on
+ * a large container so long horizontal scans stay readable.
  */
 export const COMPOSITION_MAX_WIDTH_PX = 900;
 
 /**
- * flex-basis for an empty measure: composition width / 3 empty measures per row.
+ * flex-basis (and flex-grow) for a measure with no scored staves yet, so ~3 empty
+ * measures fill one row at the default max-width.
  */
 export const EMPTY_MEASURE_FLEX_BASIS_PX = COMPOSITION_MAX_WIDTH_PX / 3;
 
 /**
- * flex-basis floor for a score-1 (whole note) measure: composition width / 5 per row.
+ * Absolute lower bound (px) on a measure's rendered width. The per-staff
+ * collision strut overrides this upward for a busy measure; a sparse one never
+ * shrinks below it, so a row can't pack in an unreadable number of measures.
  */
-export const SCORED_MIN_FLEX_BASIS_PX =
-  COMPOSITION_MAX_WIDTH_PX / MAX_MEASURES_PER_ROW;
+export const MEASURE_MIN_WIDTH_PX = 100;
 
 /**
  * Approximate pixel width per lyric character in vocal staves.
@@ -266,6 +252,35 @@ export const AVG_LYRIC_CHAR_WIDTH_PX = STAFF_LINE_SPACING * 0.9;
  * in non-first measures where describeEndX ≈ 0.
  */
 export const NOTES_AREA_LEFT_MARGIN = 2;
+
+// ─── Note spacing (horizontal) ────────────────────────────────────────────────
+//
+// Entries are justified to fill the measure. Beyond a fixed MIN_NOTE_WIDTH strut
+// per entry, spare width is shared out by a logarithmic function of duration:
+// halving a note's value costs roughly a quarter of its space, not half, so long
+// notes are not over-spaced and short notes are not starved. Starting values —
+// tune visually in Storybook.
+
+/**
+ * Slack (px) beyond the MIN_NOTE_WIDTH strut given to the measure's shortest
+ * entry when there is room to spare — the floor of the logarithmic curve.
+ * = 2 × STAFF_LINE_SPACING
+ */
+export const SPACING_SHORTEST_SLACK_PX = STAFF_LINE_SPACING * 2;
+
+/**
+ * Additional slack (px) per doubling of an entry's duration relative to the
+ * measure's shortest entry.
+ * = 1.4 × STAFF_LINE_SPACING
+ */
+export const SPACING_LOG_INCREMENT_PX = STAFF_LINE_SPACING * 1.4;
+
+/**
+ * Gap (px) between the end of the clef/key/time area and the first entry, so a
+ * lone whole note is not jammed against the clef. Part of the collision floor.
+ * = 1 × STAFF_LINE_SPACING
+ */
+export const LEADING_NOTE_GAP_PX = STAFF_LINE_SPACING;
 
 // ─── Accidental symbol dimensions ────────────────────────────────────────────
 

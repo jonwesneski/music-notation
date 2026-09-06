@@ -1,4 +1,7 @@
-import { calculateStaffVocalMinWidth } from '../rules/staffWidth';
+import {
+  calculateStaffVocalMinWidth,
+  calculateStaffVocalNaturalWidth,
+} from '../rules/staffWidth';
 import {
   generateKeySignatureYCoordinates,
   generateYCoordinates,
@@ -41,8 +44,6 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
    * @attr {Note} key-sig - Key-signature tonic. Inherited from a parent measure/composition when unset.
    * @attr {'major' | 'minor'} mode - Key-signature mode. Inherited when unset. Defaults to `major`.
    * @attr {TimeSignature} time - Beats per measure. Inherited when unset.
-   * @attr {boolean} editable - Enables pitch and timing drag interactions on slotted notes.
-   * @attr {boolean} managed - With `editable`, emit reorder/pitch events instead of mutating the DOM.
    * @attr {'grand' | 'bracket'} group - Joins this staff to its next sibling under a brace or bracket connector.
    * @attr {string} group-id - Shared identifier letting a `group="bracket"` connector span more than two contiguous staves.
    *
@@ -447,11 +448,17 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
           this.#slottedElements.length,
           maxLyricChars
         );
+        const naturalWidth = calculateStaffVocalNaturalWidth(
+          this.describeEndX,
+          this.#slottedElements.length,
+          maxLyricChars,
+          this.currentSpacingSlackWeight
+        );
         this.dispatchEvent(
           new CustomEvent(STAFF_EVENTS.STAFF_MIN_WIDTH, {
             bubbles: true,
             composed: false,
-            detail: { minWidth },
+            detail: { minWidth, naturalWidth },
           })
         );
       }

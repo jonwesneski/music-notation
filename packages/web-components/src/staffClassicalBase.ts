@@ -12,15 +12,17 @@ import {
 } from './rules/graceRules';
 import { computeAllowedElementCount } from './rules/measureRules';
 import { restToYCoordinate } from './rules/restRules';
-import { calculateStaffMinWidth } from './rules/staffWidth';
-import { durationToFactor } from './rules/theoryConsts';
+import { computeSpacingWeights, distributeSlack } from './rules/spacingRules';
+import {
+  calculateStaffMinWidth,
+  calculateStaffNaturalWidth,
+} from './rules/staffWidth';
 import {
   buildTupletGroups,
   computeOuterBracketBaseY,
   computeTupletBracketGeometry,
+  computeTupletScaleByIndex,
   computeTupletScaledNoteCount,
-  parseTupletRatio,
-  resolveInnermostTuplet,
   TupletBracketGeometry,
   TupletGroup,
 } from './rules/tupletRules';
@@ -60,7 +62,6 @@ import {
   MUSIC_CLEF_NODE,
   MUSIC_COMPOSITION,
   MUSIC_MEASURE,
-  MUSIC_NOTE,
   MUSIC_NOTE_NODE,
   MUSIC_REST_NODE,
   MUSIC_TUPLET_NODE,
@@ -76,6 +77,7 @@ import {
   KEY_SIG_FLAT_WIDTH,
   KEY_SIG_FLAT_Y_OFFSET,
   KEY_SIG_SHARP_WIDTH,
+  LEADING_NOTE_GAP_PX,
   MID_STREAM_CLEF_Y_OFFSET,
   MIN_NOTE_WIDTH,
   NOTES_AREA_LEFT_MARGIN,
@@ -87,8 +89,6 @@ import {
   TUPLET_NUMERAL_FONT_SIZE,
   TUPLET_STAFF_CLEARANCE_PX,
 } from './utils/notationDimensions';
-import { NoteTimingDragHandler } from './utils/noteTimingDragHandler';
-import { PitchDragHandler } from './utils/pitchDragHandler';
 import { flattenSlotElements } from './utils/slotElements';
 import {
   ACCIDENTAL_NOTE_GAP,
@@ -105,8 +105,6 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
       COMMON_ATTRIBUTES.KEY_SIG,
       COMMON_ATTRIBUTES.MODE,
       COMMON_ATTRIBUTES.TIME,
-      'editable',
-      'managed',
       'group',
       'group-id',
     ];
@@ -121,10 +119,8 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
   #dynamicsContainer: SVGSVGElement = document.createElementNS(SVG_NS, 'svg');
   #beamRenderer: ReturnType<BeamsBuilder['buildRenderer']> | null = null;
   #currentElements: NoteChordOrRestElementType[] = [];
-  #noteTimingDragHandler: NoteTimingDragHandler | null = null;
-  #notePitchDragHandler: PitchDragHandler | null = null;
-  #boundPointerDown: ((e: PointerEvent) => void) | null = null;
   #describeEndX = 0;
+  #currentSpacingSlackWeight = 0;
   #showDescribe = true;
   #clefChangeAtBoundary = false;
   #timeChangeAtBoundary = false;
@@ -159,6 +155,15 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
 
   protected get describeEndX(): number {
     return this.#describeEndX;
+  }
+
+  /**
+   * Σ of the current entries' logarithmic spacing slack weights, set on every
+   * #spaceElements() pass. StaffVocalElement reads it to compute its natural
+   * width after re-scoring against lyric widths.
+   */
+  protected get currentSpacingSlackWeight(): number {
+    return this.#currentSpacingSlackWeight;
   }
 
   get showDescribe(): boolean {
@@ -236,35 +241,7 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
       ::slotted(music-tuplet) {
         display: contents;
       }
-
-      :host([editable]) ::slotted(music-note),
-      :host([editable]) ::slotted(music-chord) {
-        cursor: grab;
-      }
     `;
-  }
-
-  get editable(): boolean {
-    return this.hasAttribute('editable');
-  }
-
-  set editable(v: boolean) {
-    if (v) this.setAttribute('editable', '');
-    else this.removeAttribute('editable');
-  }
-
-  // This piece of state is to help prevent double renders in UI Frameworks
-  // such as React. after 'certain' state changes, we then check this
-  // to see if we should render here or let the UI Framework do it.
-  // The only certain state change(s) this is for currently is:
-  // - When the timing changes on a note/chord
-  get managed(): boolean {
-    return this.hasAttribute('managed');
-  }
-
-  set managed(v: boolean) {
-    if (v) this.setAttribute('managed', '');
-    else this.removeAttribute('managed');
   }
 
   get keySig(): Note {
@@ -309,9 +286,6 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
     ) as Note;
 
     this.#buildDescribe(this.clefSvg);
-    if (this.editable) {
-      this.#enableDrag();
-    }
     this.addEventListener(
       NOTE_EVENTS.CONNECTOR_ATTRIBUTE_CHANGE,
       this.#boundDrawConnectors
@@ -325,195 +299,6 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
       CLEF_EVENTS.ATTRIBUTE_CHANGE,
       this.#boundClefMarkerChange
     );
-  }
-
-  #enableDrag() {
-    if (this.#boundPointerDown) {
-      return;
-    }
-
-    const wrapper = this.shadowRoot?.querySelector(
-      '.staff-wrapper'
-    ) as HTMLElement | null;
-    if (!wrapper) {
-      return;
-    }
-
-    const host = this as unknown as HTMLElement;
-    const getElements = () => this.#currentElements as unknown as HTMLElement[];
-    const getClefMarkers = () => this.#clefMarkers;
-
-    this.#noteTimingDragHandler = new NoteTimingDragHandler(
-      host,
-      wrapper,
-      getElements,
-      getClefMarkers,
-      this.managed
-    );
-
-    this.#notePitchDragHandler = new PitchDragHandler(
-      host,
-      (elementIndex) => this.#renderDataForIndex(elementIndex).yCoordinates,
-      (elementIndex, note, octave, chordNoteIndex) => {
-        this.#onPitchLivePreview(elementIndex, note, octave, chordNoteIndex);
-      }
-    );
-
-    // Coordinated pointerdown: hit-test notehead → pitch drag, else → timing drag
-    this.#boundPointerDown = (e: PointerEvent) => {
-      if (e.button !== 0) {
-        return;
-      }
-
-      const elements = getElements();
-      if (elements.length === 0) {
-        return;
-      }
-
-      // Walk up from the composed event target to find which element was hit
-      const composedTarget = e.composedPath()[0] as Element;
-
-      if (PitchDragHandler.isNoteheadTarget(composedTarget)) {
-        // Notehead hit — start pitch drag
-        const { element, elementIndex, chordNoteIndex } =
-          this.#findPitchDragTarget(composedTarget, elements);
-        if (element) {
-          this.#notePitchDragHandler?.tryStart(
-            e,
-            element,
-            elementIndex,
-            chordNoteIndex
-          );
-          return;
-        }
-      }
-    };
-
-    host.addEventListener('pointerdown', this.#boundPointerDown);
-
-    // Attach timing drag handler (it registers its own pointerdown too,
-    // but the pitch handler's early return prevents conflicts)
-    this.#noteTimingDragHandler.attach();
-  }
-
-  #disableDrag() {
-    const host = this as unknown as HTMLElement;
-
-    if (this.#boundPointerDown) {
-      host.removeEventListener('pointerdown', this.#boundPointerDown);
-      this.#boundPointerDown = null;
-    }
-
-    if (this.#notePitchDragHandler) {
-      this.#notePitchDragHandler.detach();
-      this.#notePitchDragHandler = null;
-    }
-
-    if (this.#noteTimingDragHandler) {
-      this.#noteTimingDragHandler.detach();
-      this.#noteTimingDragHandler = null;
-    }
-  }
-
-  /**
-   * Identify which slotted element and (for chords) which notehead index
-   * corresponds to a clicked SVG target.
-   */
-  #findPitchDragTarget(
-    svgTarget: Element,
-    elements: HTMLElement[]
-  ): {
-    element: HTMLElement | null;
-    elementIndex: number;
-    chordNoteIndex: number | null;
-  } {
-    // Walk up from the SVG target through shadow DOM boundaries to find the host element
-    let current: Element | null = svgTarget;
-    while (current) {
-      const rootNode: Node = current.getRootNode();
-      if (rootNode instanceof ShadowRoot) {
-        const host: Element = rootNode.host;
-        const idx = elements.indexOf(host as HTMLElement);
-        if (idx !== -1) {
-          if (host.nodeName === MUSIC_CHORD_NODE) {
-            const chordNoteIndex = this.#findChordNoteIndex(
-              svgTarget,
-              host as HTMLElement
-            );
-            return {
-              element: host as HTMLElement,
-              elementIndex: idx,
-              chordNoteIndex,
-            };
-          }
-          return {
-            element: host as HTMLElement,
-            elementIndex: idx,
-            chordNoteIndex: null,
-          };
-        }
-        current = host;
-      } else {
-        current = current.parentElement;
-      }
-    }
-    return { element: null, elementIndex: -1, chordNoteIndex: null };
-  }
-
-  #findChordNoteIndex(
-    svgTarget: Element,
-    chordElement: HTMLElement
-  ): number | null {
-    const chordShadow = chordElement.shadowRoot;
-    if (!chordShadow) {
-      return null;
-    }
-
-    const chordSvg = chordShadow.querySelector('.chord');
-    if (!chordSvg) {
-      return null;
-    }
-
-    const noteSvgs = Array.from(chordShadow.querySelectorAll('.chord > .note'));
-
-    let current: Element | null = svgTarget;
-    while (current && current !== chordSvg) {
-      const idx = noteSvgs.indexOf(current);
-      if (idx !== -1) return idx;
-      current = current.parentElement;
-    }
-
-    return null;
-  }
-
-  /**
-   * Live preview callback: temporarily update the element's pitch during drag.
-   */
-  #onPitchLivePreview(
-    elementIndex: number,
-    note: Note,
-    octave: Octave,
-    chordNoteIndex: number | null
-  ) {
-    const element = this.#currentElements[elementIndex];
-    if (!element) {
-      return;
-    }
-
-    if (element.nodeName === MUSIC_CHORD_NODE && chordNoteIndex !== null) {
-      const noteElements = element.querySelectorAll(MUSIC_NOTE);
-      const noteEl = noteElements[chordNoteIndex] as HTMLElement | undefined;
-      if (noteEl) {
-        noteEl.setAttribute('note', note);
-        noteEl.setAttribute('octave', String(octave));
-      }
-    } else if (element.nodeName === MUSIC_NOTE_NODE) {
-      element.setAttribute('note', note);
-      element.setAttribute('octave', String(octave));
-    }
-
-    // Re-render this element in place (recalculate Y position, stem direction, beams)
-    this.#renderNotes(this.#currentElements);
   }
 
   // Describe is: clef, key signature, time signature, and beams overlay
@@ -630,7 +415,6 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
   }
 
   protected override onDisconnectedCallback(): void {
-    this.#disableDrag();
     this.removeEventListener(
       NOTE_EVENTS.CONNECTOR_ATTRIBUTE_CHANGE,
       this.#boundDrawConnectors
@@ -665,35 +449,22 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
       return;
     }
 
-    if (name === 'editable') {
-      if (this.editable) {
-        this.#enableDrag();
-      } else {
-        this.#disableDrag();
-      }
-    } else if (name === 'managed') {
-      if (this.editable) {
-        this.#disableDrag();
-        this.#enableDrag();
-      }
-    } else {
-      if (name === COMMON_ATTRIBUTES.TIME) {
-        this.effectiveTimeSig = this.convertTotimeInts(
-          this.resolveInheritedValue(COMMON_ATTRIBUTES.TIME, '4/4')
-        );
-      } else if (name === COMMON_ATTRIBUTES.MODE) {
-        this.#effectiveMode = this.resolveInheritedValue(
-          COMMON_ATTRIBUTES.MODE,
-          'major'
-        ) as Mode;
-      } else if (name === COMMON_ATTRIBUTES.KEY_SIG) {
-        this.#effectiveKeySig = this.resolveInheritedValue(
-          COMMON_ATTRIBUTES.KEY_SIG,
-          'C'
-        ) as Note;
-      }
-      this.#refreshDescribe();
+    if (name === COMMON_ATTRIBUTES.TIME) {
+      this.effectiveTimeSig = this.convertTotimeInts(
+        this.resolveInheritedValue(COMMON_ATTRIBUTES.TIME, '4/4')
+      );
+    } else if (name === COMMON_ATTRIBUTES.MODE) {
+      this.#effectiveMode = this.resolveInheritedValue(
+        COMMON_ATTRIBUTES.MODE,
+        'major'
+      ) as Mode;
+    } else if (name === COMMON_ATTRIBUTES.KEY_SIG) {
+      this.#effectiveKeySig = this.resolveInheritedValue(
+        COMMON_ATTRIBUTES.KEY_SIG,
+        'C'
+      ) as Note;
     }
+    this.#refreshDescribe();
   }
 
   protected onHandleSlotChange(event: Event) {
@@ -736,9 +507,6 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
   }
 
   #renderNotes(elements: NoteChordOrRestElementType[]) {
-    // Cancel any in-progress drag before clearing rendered content
-    this.#noteTimingDragHandler?.cancelDrag();
-
     // Clear previously rendered beams, tuplet brackets, and dynamics
     this.#beamsContainer.innerHTML = '';
     this.#tupletContainer.innerHTML = '';
@@ -926,11 +694,16 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
         extraLeftwardWidth,
         this.#clefMarkers.length * CLEF_CHANGE_RESERVED_WIDTH_PX
       );
+      const { totalWeight } = computeSpacingWeights(
+        elements,
+        computeTupletScaleByIndex(elements, this.#tupletsByIndex)
+      );
+      const naturalWidth = calculateStaffNaturalWidth(minWidth, totalWeight);
       this.dispatchEvent(
         new CustomEvent(STAFF_EVENTS.STAFF_MIN_WIDTH, {
           bubbles: true,
           composed: false,
-          detail: { minWidth },
+          detail: { minWidth, naturalWidth },
         })
       );
     }
@@ -1105,25 +878,41 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
       `${STAFF_TRANSCRIPTION_HEIGHT}`
     );
 
-    const [beatsInMeasure, beatType] = this.effectiveTimeSig;
-    const measureDuration = beatsInMeasure / beatType;
-
+    const tupletScaleByIndex = computeTupletScaleByIndex(
+      this.#currentElements,
+      this.#tupletsByIndex
+    );
     const scaledNoteCount = computeTupletScaledNoteCount(
       this.#currentElements,
       this.#tupletsByIndex
     );
+    const { weights, totalWeight } = computeSpacingWeights(
+      this.#currentElements,
+      tupletScaleByIndex
+    );
+    this.#currentSpacingSlackWeight = totalWeight;
+
+    // Entries are justified to fill the notes area: every entry keeps a fixed
+    // MIN_NOTE_WIDTH strut, and the width left over is shared out by each entry's
+    // logarithmic duration weight — including the trailing space after the last
+    // entry, so an underfull bar spreads rather than bunching to the left.
     const proportionalWidth =
       remainingWidth -
+      LEADING_NOTE_GAP_PX -
       scaledNoteCount * MIN_NOTE_WIDTH -
       this.#clefMarkers.length * CLEF_CHANGE_RESERVED_WIDTH_PX;
+    const slackOffsets = distributeSlack(
+      weights,
+      totalWeight,
+      proportionalWidth
+    );
 
     const clefMarkersByAfterIndex = new Map(
       this.#clefMarkers.map((marker) => [marker.afterElementIndex, marker])
     );
 
-    let beatOffset = 0;
     let minWidthAccumulator = 0;
-    let previousRightEdge = this.#describeEndX;
+    let previousRightEdge = this.#describeEndX + LEADING_NOTE_GAP_PX;
 
     // A marker before the first note/chord/rest (afterElementIndex === -1)
     // is positioned here, ahead of the loop, since there's no element index
@@ -1142,8 +931,7 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
       const element = this.#currentElements[i];
       const duration = element.duration as DurationType;
       const xOffsetInNotesSpace =
-        minWidthAccumulator +
-        (beatOffset / measureDuration) * proportionalWidth;
+        LEADING_NOTE_GAP_PX + minWidthAccumulator + slackOffsets[i];
 
       // Position the light DOM element via inline styles
       let xInWrapper = this.#describeEndX + xOffsetInNotesSpace;
@@ -1247,23 +1035,10 @@ export abstract class StaffClassicalElementBase extends StaffElementBase {
         element.style.top = '0px';
       }
 
-      const innermostTupletForElement = resolveInnermostTuplet(
-        this.#tupletsByIndex,
-        i
-      );
-      if (innermostTupletForElement !== undefined) {
-        const { actual, normal } = parseTupletRatio(
-          innermostTupletForElement.ratio
-        );
-        beatOffset += durationToFactor[duration] * (normal / actual);
-        minWidthAccumulator += MIN_NOTE_WIDTH * (normal / actual);
-      } else {
-        beatOffset += durationToFactor[duration];
-        minWidthAccumulator += MIN_NOTE_WIDTH;
-      }
+      minWidthAccumulator += MIN_NOTE_WIDTH * (tupletScaleByIndex.get(i) ?? 1);
 
       // A marker following this element (afterElementIndex === i) is
-      // zero-duration — it does not advance beatOffset — but does reserve
+      // zero-duration — it does not consume spacing slack — but does reserve
       // horizontal space, same as MIN_NOTE_WIDTH does for a real note.
       const trailingClefMarker = clefMarkersByAfterIndex.get(i);
       if (trailingClefMarker) {

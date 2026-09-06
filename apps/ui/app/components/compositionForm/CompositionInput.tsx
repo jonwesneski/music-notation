@@ -27,6 +27,7 @@ import { DragSelectOverlay } from './DragSelectOverlay';
 import { applyEntryUpdate } from './entryEditsHelpers';
 import { MeasureInput } from './MeasureInput';
 import { rebar } from './rebarHelpers';
+import { moveEntryInStaff } from './reorderHelpers';
 import { findGroupMembers } from './staffGroupsHelpers';
 import { TimeSignatureChangeDialog } from './TimeSignatureChangeDialog';
 import { setTuplet as setTupletInStructure } from './tupletsHelpers';
@@ -332,6 +333,14 @@ export function CompositionInput() {
     }
   }
 
+  function reorderEntry(staffId: string, entryId: string, toIndex: number) {
+    const s = getStructure();
+    const next = moveEntryInStaff(s, staffId, entryId, toIndex);
+    if (next !== s) {
+      record(next);
+    }
+  }
+
   // `family` scopes a clear (kind === null) to just tie/slur or just hairpins,
   // so removing the slur over a pair leaves its crescendo alone.
   function setConnector(
@@ -401,6 +410,7 @@ export function CompositionInput() {
       onSetStaffGroup={setStaffGroup}
       onAddEntry={addEntry}
       onUpdateEntry={updateEntry}
+      onReorderEntry={reorderEntry}
       onSetConnector={setConnector}
       onSetTuplet={setTuplet}
       onSetCompositionTimeSignature={setCompositionTimeSignature}

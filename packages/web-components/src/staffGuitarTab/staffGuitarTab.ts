@@ -1,5 +1,8 @@
-import { calculateGuitarTabMinWidth } from '../rules/staffWidth';
-import { durationToFactor } from '../rules/theoryConsts';
+import { computeSpacingWeights, distributeSlack } from '../rules/spacingRules';
+import {
+  calculateGuitarTabMinWidth,
+  calculateStaffNaturalWidth,
+} from '../rules/staffWidth';
 import { StaffElementBase } from '../staffBase';
 import { GuitarNoteElementType } from '../types/elements';
 import {
@@ -12,6 +15,7 @@ import {
   SVG_NS,
 } from '../utils/consts';
 import {
+  LEADING_NOTE_GAP_PX,
   MIN_NOTE_WIDTH,
   STAFF_LINE_SPACING,
   STAFF_LINE_START,
@@ -164,19 +168,26 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
         })
       );
       this.drawConnectorsWhenStandalone();
-      if (assignedElements.length > 0) {
-        const minWidth = calculateGuitarTabMinWidth(
-          this.#describeEndX,
-          assignedElements.length
-        );
-        this.dispatchEvent(
-          new CustomEvent(STAFF_EVENTS.STAFF_MIN_WIDTH, {
-            bubbles: true,
-            composed: false,
-            detail: { minWidth },
-          })
-        );
+      this.#dispatchStaffWidths(assignedElements);
+    }
+
+    #dispatchStaffWidths(elements: GuitarNoteElementType[]) {
+      if (elements.length === 0) {
+        return;
       }
+      const minWidth = calculateGuitarTabMinWidth(
+        this.#describeEndX,
+        elements.length
+      );
+      const { totalWeight } = computeSpacingWeights(elements);
+      const naturalWidth = calculateStaffNaturalWidth(minWidth, totalWeight);
+      this.dispatchEvent(
+        new CustomEvent(STAFF_EVENTS.STAFF_MIN_WIDTH, {
+          bubbles: true,
+          composed: false,
+          detail: { minWidth, naturalWidth },
+        })
+      );
     }
 
     #spaceElements(assignedElements: GuitarNoteElementType[]) {
@@ -184,19 +195,25 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
       const describeRect = this.#describeContainer.getBoundingClientRect();
       this.#describeEndX = Math.round(describeRect.right - transcribeRect.left);
       const remainingWidth = transcribeRect.width - this.#describeEndX;
+      const { weights, totalWeight } = computeSpacingWeights(assignedElements);
       const proportionalWidth =
-        remainingWidth - assignedElements.length * MIN_NOTE_WIDTH;
+        remainingWidth -
+        LEADING_NOTE_GAP_PX -
+        assignedElements.length * MIN_NOTE_WIDTH;
+      const slackOffsets = distributeSlack(
+        weights,
+        totalWeight,
+        proportionalWidth
+      );
 
-      let beatOffset = 0;
       for (let i = 0; i < assignedElements.length; i++) {
         const element = assignedElements[i];
         const xOffsetInNotesSpace =
-          i * MIN_NOTE_WIDTH + beatOffset * proportionalWidth;
+          LEADING_NOTE_GAP_PX + i * MIN_NOTE_WIDTH + slackOffsets[i];
         element.style.left = `${this.#describeEndX + xOffsetInNotesSpace}px`;
         element.style.top = `${
           this.#yCoordinates[element.string] ?? STAFF_LINE_START
         }px`;
-        beatOffset += durationToFactor[element.duration];
       }
     }
 
@@ -210,17 +227,7 @@ if (typeof window !== 'undefined' && typeof customElements !== 'undefined') {
           })
         );
         this.drawConnectorsWhenStandalone();
-        const minWidth = calculateGuitarTabMinWidth(
-          this.#describeEndX,
-          this.#currentElements.length
-        );
-        this.dispatchEvent(
-          new CustomEvent(STAFF_EVENTS.STAFF_MIN_WIDTH, {
-            bubbles: true,
-            composed: false,
-            detail: { minWidth },
-          })
-        );
+        this.#dispatchStaffWidths(this.#currentElements);
       }
     }
   }
