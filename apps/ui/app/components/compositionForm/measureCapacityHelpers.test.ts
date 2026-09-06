@@ -8,7 +8,7 @@ import {
   remainingDuration,
   staffOfEntryId,
   usedDuration,
-} from './measureCapacity';
+} from './measureCapacityHelpers';
 import type {
   CompositionStructure,
   MusicEntry,

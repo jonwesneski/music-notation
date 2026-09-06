@@ -1,9 +1,9 @@
 import type { TimeSignature } from '@one-step-at-a-time/web-components';
 import { useMemo } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
-import type { ConnectorEntryAttributes } from './connectors';
-import { resolveConnectorAttributes } from './connectors';
-import { effectiveTimeSignatures } from './timeSignatures';
+import type { ConnectorEntryAttributes } from './connectorsHelpers';
+import { resolveConnectorAttributes } from './connectorsHelpers';
+import { effectiveTimeSignatures } from './timeSignaturesHelpers';
 import type { CompositionFormValues, CompositionStructure } from './types';
 
 // Assembles the normalized structural slice from the form store, reactively.

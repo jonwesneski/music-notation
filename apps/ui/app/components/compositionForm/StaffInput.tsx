@@ -7,9 +7,9 @@ import { AddNoteInput } from './AddNoteInput';
 import { AddRestInput } from './AddRestInput';
 import { AnchoredTabPanel } from './AnchoredTabPanel';
 import { useCompositionFormSession } from './CompositionFormSessionContext';
-import { serializeGrace } from './grace';
-import { remainingDuration } from './measureCapacity';
-import { resolveTupletRuns } from './tuplets';
+import { serializeGrace } from './graceHelpers';
+import { remainingDuration } from './measureCapacityHelpers';
+import { resolveTupletRuns } from './tupletsHelpers';
 import type {
   CompositionFormValues,
   DraftMusicEntry,

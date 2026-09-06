@@ -1,16 +1,16 @@
 import type { DurationType } from '@one-step-at-a-time/web-components';
 import { durationToFactor } from '@one-step-at-a-time/web-components';
-import { decomposeToDurations } from './durationMath';
+import { decomposeToDurations } from './durationHelpers';
 import {
   CAPACITY_EPSILON,
   entryFactor,
   measureDuration,
-} from './measureCapacity';
+} from './measureCapacityHelpers';
 import {
   effectiveTimeSignatures,
   timeSignatureRegionAt,
-} from './timeSignatures';
-import { resolveTupletRuns } from './tuplets';
+} from './timeSignaturesHelpers';
+import { resolveTupletRuns } from './tupletsHelpers';
 import type {
   CompositionStructure,
   MusicEntry,
@@ -26,7 +26,7 @@ import { isPitchedEntry } from './types';
 // notes that cross a new barline are split into a tie chain, and measures are
 // minted or dropped to fit. Measures outside the region are untouched — a later
 // explicit `measure.time` is a fixed point. Parts are matched by staff index,
-// mirroring `connectors.ts`'s "same voice = same staff index".
+// mirroring `connectorsHelpers.ts`'s "same voice = same staff index".
 //
 // Alternatives rejected: padding every region tail with rests (MuseScore's
 // full-measure invariant) — this app already renders under-full measures, so a

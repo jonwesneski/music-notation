@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { resolveTupletRuns, setTuplet, tupletCandidate } from './tuplets';
+import {
+  resolveTupletRuns,
+  setTuplet,
+  tupletCandidate,
+} from './tupletsHelpers';
 import type { CompositionStructure, MusicEntry, Selection } from './types';
 import { isPitchedEntry } from './types';
 

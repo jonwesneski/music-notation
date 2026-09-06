@@ -5,7 +5,7 @@ import {
   timeSignatureAt,
   timeSignatureOfEntry,
   timeSignatureRegionAt,
-} from './timeSignatures';
+} from './timeSignaturesHelpers';
 import type { CompositionStructure, NormalizedMeasure } from './types';
 
 function structureOf(

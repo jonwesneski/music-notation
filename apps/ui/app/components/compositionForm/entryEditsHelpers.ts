@@ -2,8 +2,8 @@ import {
   availableForDuration,
   durationFits,
   largestFittingDuration,
-} from './measureCapacity';
-import { timeSignatureOfEntry } from './timeSignatures';
+} from './measureCapacityHelpers';
+import { timeSignatureOfEntry } from './timeSignaturesHelpers';
 import type { CompositionStructure, MusicEntry } from './types';
 import { isPitchedEntry } from './types';
 

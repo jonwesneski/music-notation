@@ -1,4 +1,4 @@
-import { findGroupMembers } from './staffGroups';
+import { findGroupMembers } from './staffGroupsHelpers';
 import type { CompositionStructure, Selection } from './types';
 import { isPitchedEntry } from './types';
 

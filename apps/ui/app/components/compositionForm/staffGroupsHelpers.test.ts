@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { findGroupMembers } from './staffGroups';
+import { findGroupMembers } from './staffGroupsHelpers';
 import type { NormalizedStaff } from './types';
 
 function staff(

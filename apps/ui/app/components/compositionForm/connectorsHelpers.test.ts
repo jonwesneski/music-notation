@@ -7,7 +7,7 @@ import {
   removeConnector,
   resolveConnectorAttributes,
   upsertConnector,
-} from './connectors';
+} from './connectorsHelpers';
 import type { CompositionStructure, Selection } from './types';
 
 function buildStructure(): CompositionStructure {
@@ -151,6 +151,37 @@ describe('canTie', () => {
       duration: 'quarter',
     };
     expect(canTie(structure, { startEntryId: 'e1', endEntryId: 'e2' })).toBe(
+      false
+    );
+  });
+
+  it('allows a bare octave tied to the equivalent explicit octave', () => {
+    const structure = buildStructure();
+    structure.entriesById.e2 = {
+      id: 'e2',
+      type: 'note',
+      value: 'C',
+      octave: 4,
+      duration: 'quarter',
+    };
+    expect(canTie(structure, { startEntryId: 'e1', endEntryId: 'e2' })).toBe(
+      true
+    );
+  });
+
+  it('rejects a cross-measure tie when the next staff renders the letter an octave off', () => {
+    const structure = buildStructure();
+    structure.stavesById.s2.type = 'bass';
+    expect(canTie(structure, { startEntryId: 'e4', endEntryId: 'e5' })).toBe(
+      false
+    );
+  });
+
+  it('rejects a cross-measure tie when a mid-stream clef change shifts the start octave', () => {
+    const structure = buildStructure();
+    structure.stavesById.s1.entryIds = ['e1', 'e2', 'e3', 'ec', 'e4'];
+    structure.entriesById.ec = { id: 'ec', type: 'clef', clef: 'bass' };
+    expect(canTie(structure, { startEntryId: 'e4', endEntryId: 'e5' })).toBe(
       false
     );
   });

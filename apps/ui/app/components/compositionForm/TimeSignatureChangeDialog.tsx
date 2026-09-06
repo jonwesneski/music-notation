@@ -1,8 +1,8 @@
 import { Button } from '@/design-system';
 import type { PendingTimeSignatureChange } from './CompositionFormSessionContext';
 import { useCompositionFormSession } from './CompositionFormSessionContext';
-import { remainingDuration } from './measureCapacity';
-import { effectiveTimeSignatures } from './timeSignatures';
+import { remainingDuration } from './measureCapacityHelpers';
+import { effectiveTimeSignatures } from './timeSignaturesHelpers';
 import type { CompositionStructure } from './types';
 import { useCompositionStructure } from './useCompositionStructure';
 

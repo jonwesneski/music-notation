@@ -33,7 +33,7 @@ export type ChordNote = { value: Note; octave?: Octave | null };
 
 // A grace-note group preceding a note/chord. `octaves` / `articulations` are
 // aligned by index with `notes` (a null slot = "no value for that grace note").
-// Serialized to the seven `grace-*` attributes by grace.ts.
+// Serialized to the seven `grace-*` attributes by graceHelpers.ts.
 export type GraceGroup = {
   notes: Note[];
   octaves?: (Octave | null)[];

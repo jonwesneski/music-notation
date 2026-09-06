@@ -3,7 +3,7 @@ import {
   DURATIONS,
   durationToFactor,
 } from '@one-step-at-a-time/web-components';
-import { CAPACITY_EPSILON } from './measureCapacity';
+import { CAPACITY_EPSILON } from './measureCapacityHelpers';
 
 // The model has no augmentation dots, so a duration that isn't a single power of
 // two (e.g. a dotted-eighth 0.1875, or the 0.3125 a barline can leave) is written

@@ -7,7 +7,7 @@ import type {
 import { durationToFactor } from '@one-step-at-a-time/web-components';
 import { useState } from 'react';
 import { DurationSelect, OctaveSelect, PitchSelect } from './entryControls';
-import { fittingDurations } from './measureCapacity';
+import { fittingDurations } from './measureCapacityHelpers';
 import type { DraftMusicEntry } from './types';
 
 interface AddNoteInputProps {

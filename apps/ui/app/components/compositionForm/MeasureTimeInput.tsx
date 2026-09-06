@@ -1,7 +1,7 @@
 import { Button, Select } from '@/design-system';
 import type { TimeSignature } from '@one-step-at-a-time/web-components';
 import { useCompositionFormSession } from './CompositionFormSessionContext';
-import { fieldLabelClass } from './formLabel';
+import { fieldLabelClass } from './formLabelHelpers';
 import type { NormalizedMeasure } from './types';
 import { TIME_SIGNATURE_OPTIONS } from './types';
 

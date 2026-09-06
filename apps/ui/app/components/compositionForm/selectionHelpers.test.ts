@@ -5,7 +5,7 @@ import {
   coverageRatio,
   intersects,
   type ElementRefMaps,
-} from './selectionHitTest';
+} from './selectionHelpers';
 import type { CompositionStructure } from './types';
 
 function rect(

@@ -9,7 +9,7 @@ import { isPitchedEntry } from './types';
 
 // Tuplet resolution for the composition form. A tuplet groups a contiguous run
 // of entries within one staff; membership is a flat `tupletId` on each entry,
-// order comes from `staff.entryIds`. Mirrors the shape of staffGroups.ts — this
+// order comes from `staff.entryIds`. Mirrors the shape of staffGroupsHelpers.ts — this
 // app is the sole writer, so the helpers only handle well-formed data.
 //
 // The library renderer wants each `<music-tuplet>` as a direct child of

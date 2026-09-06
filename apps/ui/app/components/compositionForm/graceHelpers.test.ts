@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { serializeGrace } from './grace';
+import { serializeGrace } from './graceHelpers';
 
 describe('serializeGrace', () => {
   it('returns nothing for null or an empty group', () => {

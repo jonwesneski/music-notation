@@ -10,8 +10,8 @@ import {
   useRef,
   useState,
 } from 'react';
-import { removeSelectionFromStructure } from './deleteSelection';
-import { computeBoxSelection } from './selectionHitTest';
+import { removeSelectionFromStructure } from './deleteSelectionHelpers';
+import { computeBoxSelection } from './selectionHelpers';
 import type {
   CompositionStructure,
   ConnectorKind,

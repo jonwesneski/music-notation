@@ -4,7 +4,7 @@ import { AnchoredTabPanel } from './AnchoredTabPanel';
 import { ClefEntryInput } from './ClefEntryInput';
 import { useCompositionFormSession } from './CompositionFormSessionContext';
 import { ConnectorInput } from './ConnectorInput';
-import { isConnectableSelection } from './connectors';
+import { isConnectableSelection } from './connectorsHelpers';
 import { EntryEditInput } from './EntryEditInput';
 import { GraceInput } from './GraceInput';
 import { MeasureBasicInput } from './MeasureBasicInput';
@@ -12,11 +12,11 @@ import {
   availableForDuration,
   fittingDurations,
   remainingDuration,
-} from './measureCapacity';
+} from './measureCapacityHelpers';
 import { StaffGroupInput } from './StaffGroupInput';
 import { StaffInput } from './StaffInput';
 import { TupletInput } from './TupletInput';
-import { tupletCandidate } from './tuplets';
+import { tupletCandidate } from './tupletsHelpers';
 import type { CompositionFormValues } from './types';
 import { isSingleEntrySelection } from './types';
 import {

@@ -101,7 +101,7 @@ form values, passed straight to `<music-composition>`, and the library flows it
 down. **Time signature is different: it's positional** — see piece 9.
 
 Editing an existing entry goes through `updateEntry` → `applyEntryUpdate`
-(`entryEdits.ts`, in-place replace by id). `EntryEditInput` is its panel.
+(`entryEditsHelpers.ts`, in-place replace by id). `EntryEditInput` is its panel.
 
 ### The pieces — patterns to follow for new features
 
@@ -141,7 +141,7 @@ future save in `CompositionStructure`.
 - **Shift / Cmd / Ctrl + click an entry** → toggles it in `selection.entryIds`
   (added for tie/slur, which need 2+ entries).
 - **Drag-marquee** (`DragSelectOverlay` wraps `<music-composition>`) →
-  `computeBoxSelection` (`selectionHitTest.ts`, pure + unit-tested) turns a
+  `computeBoxSelection` (`selectionHelpers.ts`, pure + unit-tested) turns a
   `DOMRect` into a `Selection`, promoting to measure/staff level when the box
   covers ≥ `COVERAGE_THRESHOLD` of the element. Mouse defers pointer-capture until
   it crosses `DRAG_THRESHOLD_PX` so plain clicks still bubble; touch needs a
@@ -183,31 +183,32 @@ contract is declared in `packages/web-components/src/react.d.ts` (published as t
   callback ref for hit-testing.
 
 **7. Pure logic + colocated tests.** Non-trivial transforms live in a plain
-`.ts` next to a `.test.ts` (vitest, no React): `deleteSelection.ts`,
-`selectionHitTest.ts`, `staffGroups.ts`, `connectors.ts`. Keep them
+`.ts` next to a `.test.ts` (vitest, no React): `deleteSelectionHelpers.ts`,
+`selectionHelpers.ts`, `staffGroupsHelpers.ts`, `connectorsHelpers.ts`. Keep them
 `this`-free and structure-in/structure-out so they're trivially testable — the
 components stay thin. When such a helper mirrors a rule that also lives in
-`packages/web-components` (e.g. `staffGroups.ts` ↔ the library's brace/bracket
-pairing, `connectors.ts` ↔ `pairConnectors`), say so in a header comment and note
-that this app only has to handle well-formed data since it's the sole writer.
+`packages/web-components` (e.g. `staffGroupsHelpers.ts` ↔ the library's brace/bracket
+pairing, `connectorsHelpers.ts` ↔ `pairConnectors`, `clefsHelpers.ts` ↔ `staffClassicalBase.ts`
+clef-segment + octave resolution), say so in a header comment and note that this
+app only has to handle well-formed data since it's the sole writer.
 
 **8. Cascade cleanup on delete.** `removeSelectionFromStructure`
-(`deleteSelection.ts`) computes the ids to remove, then rebuilds every collection
+(`deleteSelectionHelpers.ts`) computes the ids to remove, then rebuilds every collection
 without them **and** repairs anything left dangling — a group that dropped below 2
 staves, a connector whose endpoint is gone. Any new collection that references
-node ids needs its own filter here, plus a `deleteSelection.test.ts` case.
+node ids needs its own filter here, plus a `deleteSelectionHelpers.test.ts` case.
 
 **9. Time signature is positional; measure capacity is enforced.**
 
 - **Positional meter.** `structure.timeSig` is the measure-1 meter;
   `NormalizedMeasure.time` is a **sparse** override that holds until the next one.
-  `timeSignatures.ts` resolves it (`effectiveMeters`, `meterAt`, `meterOfEntry`,
+  `timeSignaturesHelpers.ts` resolves it (`effectiveMeters`, `meterAt`, `meterOfEntry`,
   `meterRegionAt` — a _meter region_ is a run of measures under one meter). The app
   is the authoritative writer: `MeasureInput` writes the resolved `time` onto
   **every** `<music-measure>` (via `useMeasureMeters()`), so the library never has
   to infer it. Measure 1 never carries an override (`MeasureMeterInput` routes it
   to the composition meter).
-- **Capacity.** `measureCapacity.ts` mirrors the library's
+- **Capacity.** `measureCapacityHelpers.ts` mirrors the library's
   `measureRules.computeAllowedElementCount` (tuplet-aware). The renderer silently
   drops entries past a measure's budget, so overfill must be prevented: the
   duration dropdowns filter to `fittingDurations(...)`, and `applyEntryUpdate`
@@ -219,9 +220,9 @@ node ids needs its own filter here, plus a `deleteSelection.test.ts` case.
   `CompositionFormBody`) offers **Rewrite** vs **Signature only** vs Cancel.
   `confirmMeterChange(rewrite)` calls `setCompositionMeter` / `setMeasureMeter`
   (`rewrite: boolean`) — one `record()` per change.
-- **Rebar** (`rebar.ts`) is the reflow for `rewrite: true`: per staff index, it
+- **Rebar** (`rebarHelpers.ts`) is the reflow for `rewrite: true`: per staff index, it
   concatenates the region's entry stream and re-slices it to the new capacity,
-  splitting barline-crossing notes into **tie chains** (`durationMath.ts`
+  splitting barline-crossing notes into **tie chains** (`durationHelpers.ts`
   `decomposeToDurations` — no dotted durations in the model), moving tuplet runs
   whole, minting/dropping measures, and re-anchoring ties. The region's final
   measure may be left under-full (no rest padding). Because it mints new
@@ -243,10 +244,10 @@ CompositionInput                       owns useForm + useUndoRedo + all mutators
 ```
 
 Worked examples of the full pattern: **staff groups** (commit `ab52d52` —
-`staffGroups.ts`, `StaffGroupInput.tsx`, cleanup in `deleteSelection.ts`),
-**ties/slurs** (`connectors.ts`, `ConnectorInput.tsx`, `useCompositionStructure.ts`),
-and **positional time signatures + rebar** (piece 9 — `timeSignatures.ts`,
-`rebar.ts`, `durationMath.ts`, `MeterChangeDialog.tsx`, `MeasureMeterInput.tsx`;
+`staffGroupsHelpers.ts`, `StaffGroupInput.tsx`, cleanup in `deleteSelectionHelpers.ts`),
+**ties/slurs** (`connectorsHelpers.ts`, `ConnectorInput.tsx`, `useCompositionStructure.ts`),
+and **positional time signatures + rebar** (piece 9 — `timeSignaturesHelpers.ts`,
+`rebarHelpers.ts`, `durationHelpers.ts`, `MeterChangeDialog.tsx`, `MeasureMeterInput.tsx`;
 first field on `CompositionStructure` and first modal in the app).
 
 ## Adding a feature to the Create form
@@ -260,7 +261,7 @@ Use as a menu, not a mandatory sequence.
    (a collection owned by a parent node is ordered by the parent's id array
    instead, like `entryIds`); wire the four spots in `CompositionInput.tsx`
    (type, `defaultValues`, `getStructure`, `setStructure`).
-3. **Pure logic** → `<feature>.ts` + `<feature>.test.ts` (mirror `staffGroups.ts`).
+3. **Pure logic** → `<feature>.ts` + `<feature>.test.ts` (mirror `staffGroupsHelpers.ts`).
 4. **Mutator** → a function in `CompositionInput.tsx` that builds the next
    structure and calls `record(next)`; thread it through the provider `on*` prop
    and the context value.

@@ -1,3 +1,4 @@
+import { effectiveClefOfEntry, resolveEntryOctaves } from './clefsHelpers';
 import type {
   ChordNote,
   CompositionStructure,
@@ -191,21 +192,32 @@ export function canTie(
   if (start.type !== end.type) {
     return false;
   }
-  if (
-    start.type === 'note' &&
-    end.type === 'note' &&
-    (start.value !== end.value ||
-      (start.octave ?? null) !== (end.octave ?? null))
-  ) {
-    return false;
+  if (start.type === 'note' && end.type === 'note') {
+    const startClef = effectiveClefOfEntry(structure, endpoints.startEntryId);
+    const endClef = effectiveClefOfEntry(structure, endpoints.endEntryId);
+    if (
+      start.value !== end.value ||
+      resolveEntryOctaves(startClef, [start])[0] !==
+        resolveEntryOctaves(endClef, [end])[0]
+    ) {
+      return false;
+    }
   }
   if (start.type === 'chord' && end.type === 'chord') {
-    const key = (notes: ChordNote[]) =>
-      notes
-        .map((n) => `${n.value}${n.octave ?? ''}`)
+    const key = (notes: ChordNote[], entryId: string) => {
+      const octaves = resolveEntryOctaves(
+        effectiveClefOfEntry(structure, entryId),
+        notes
+      );
+      return notes
+        .map((n, i) => `${n.value}${octaves[i]}`)
         .sort()
         .join(',');
-    if (key(start.notes) !== key(end.notes)) {
+    };
+    if (
+      key(start.notes, endpoints.startEntryId) !==
+      key(end.notes, endpoints.endEntryId)
+    ) {
       return false;
     }
   }

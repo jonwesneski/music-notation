@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { decomposeToDurations } from './durationMath';
+import { decomposeToDurations } from './durationHelpers';
 
 describe('decomposeToDurations', () => {
   it('returns a single duration for an exact power of two', () => {

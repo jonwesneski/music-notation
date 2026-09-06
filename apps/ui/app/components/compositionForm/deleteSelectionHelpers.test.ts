@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { removeSelectionFromStructure } from './deleteSelection';
+import { removeSelectionFromStructure } from './deleteSelectionHelpers';
 import type { CompositionStructure, NoteEntry } from './types';
 
 const tupleted = (id: string, tupletId: string): NoteEntry => ({

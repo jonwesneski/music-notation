@@ -1,6 +1,6 @@
 import { Radio } from '@/design-system';
-import type { ConnectorEndpoints } from './connectors';
-import { canTie, connectorBetween } from './connectors';
+import type { ConnectorEndpoints } from './connectorsHelpers';
+import { canTie, connectorBetween } from './connectorsHelpers';
 import type { CompositionStructure, ConnectorKind, MusicEntry } from './types';
 
 const TIE_SLUR: ConnectorKind[] = ['tie', 'slur'];

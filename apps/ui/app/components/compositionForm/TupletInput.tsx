@@ -2,7 +2,7 @@ import { Button, Select } from '@/design-system';
 import type { TupletRatio } from '@one-step-at-a-time/web-components';
 import { TUPLET_RATIOS } from '@one-step-at-a-time/web-components';
 import { useCompositionFormSession } from './CompositionFormSessionContext';
-import { tupletCandidate, tupletOfEntries } from './tuplets';
+import { tupletCandidate, tupletOfEntries } from './tupletsHelpers';
 import type { CompositionStructure } from './types';
 
 const RATIO_LABEL: Partial<Record<TupletRatio, string>> = {

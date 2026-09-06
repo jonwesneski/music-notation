@@ -3,7 +3,7 @@ import type {
   TimeSignature,
 } from '@one-step-at-a-time/web-components';
 import { describe, expect, it } from 'vitest';
-import { rebar } from './rebar';
+import { rebar } from './rebarHelpers';
 import type {
   CompositionStructure,
   MusicEntry,

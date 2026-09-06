@@ -1,6 +1,6 @@
 import type { TimeSignature } from '@one-step-at-a-time/web-components';
 import { describe, expect, it } from 'vitest';
-import { applyEntryUpdate } from './entryEdits';
+import { applyEntryUpdate } from './entryEditsHelpers';
 import type { CompositionStructure } from './types';
 
 function buildStructure(timeSig: TimeSignature = '4/4'): CompositionStructure {

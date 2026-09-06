@@ -22,14 +22,14 @@ import {
   connectorBetween,
   removeConnector,
   upsertConnector,
-} from './connectors';
+} from './connectorsHelpers';
 import { DragSelectOverlay } from './DragSelectOverlay';
-import { applyEntryUpdate } from './entryEdits';
+import { applyEntryUpdate } from './entryEditsHelpers';
 import { MeasureInput } from './MeasureInput';
-import { rebar } from './rebar';
-import { findGroupMembers } from './staffGroups';
+import { rebar } from './rebarHelpers';
+import { findGroupMembers } from './staffGroupsHelpers';
 import { TimeSignatureChangeDialog } from './TimeSignatureChangeDialog';
-import { setTuplet as setTupletInStructure } from './tuplets';
+import { setTuplet as setTupletInStructure } from './tupletsHelpers';
 import type {
   CompositionFormValues,
   CompositionStructure,

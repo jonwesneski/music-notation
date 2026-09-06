@@ -1,6 +1,6 @@
 import type { TimeSignature } from '@one-step-at-a-time/web-components';
 import { AddStaffInput } from './AddStaffInput';
-import { fieldLabelClass } from './formLabel';
+import { fieldLabelClass } from './formLabelHelpers';
 import { MeasureTimeInput } from './MeasureTimeInput';
 import type { NormalizedMeasure } from './types';
 
